@@ -1,0 +1,39 @@
+---
+/*
+  Section : wrapper container + rythme vertical.
+  La prop tone pilote fond et couleur de texte.
+    dark       : fond vert profond, texte clair
+    cream      : fond creme, texte encre
+    cream-soft : fond creme tres clair, texte encre
+*/
+interface Props {
+  id?: string;
+  tone?: 'dark' | 'cream' | 'cream-soft';
+  /** Retire le container interne pour gerer un fond full-bleed */
+  bleed?: boolean;
+  class?: string;
+}
+const { id, tone = 'dark', bleed = false, class: className = '' } = Astro.props;
+
+const toneClasses: Record<string, string> = {
+  dark: 'bg-green-900 text-on-dark',
+  cream: 'bg-cream text-ink',
+  'cream-soft': 'bg-cream-soft text-ink',
+};
+---
+
+<section
+  id={id}
+  data-tone={tone}
+  class={`relative py-section scroll-mt-24 ${toneClasses[tone]} ${className}`}
+>
+  {
+    bleed ? (
+      <slot />
+    ) : (
+      <div class="container">
+        <slot />
+      </div>
+    )
+  }
+</section>

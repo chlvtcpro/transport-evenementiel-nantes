@@ -1,0 +1,75 @@
+---
+/*
+  ButtonArrow : bouton pilule avec rond-fleche, style Wedlux.
+  Variantes :
+    solid   = pilule doree, texte encre, rond fleche
+    outline = bordure fine, fond transparent, rond fleche
+    icon    = rond seul avec fleche (CTA discret)
+  Micro hover : la fleche se translate en diagonale.
+  Rend un <a> si href fourni, sinon un <button>.
+*/
+import ArrowIcon from './ArrowIcon.astro';
+
+interface Props {
+  variant?: 'solid' | 'outline' | 'icon';
+  href?: string;
+  label?: string;
+  type?: 'button' | 'submit';
+  /** Sur fond sombre, adapte la variante outline */
+  tone?: 'dark' | 'light';
+  class?: string;
+  'aria-label'?: string;
+}
+const {
+  variant = 'solid',
+  href,
+  label,
+  type = 'button',
+  tone = 'light',
+  class: className = '',
+  'aria-label': ariaLabel,
+} = Astro.props;
+
+const isIcon = variant === 'icon';
+
+const base =
+  'group inline-flex items-center transition-colors duration-300 ease-smooth';
+
+const variantClasses: Record<string, string> = {
+  solid:
+    'gap-3 rounded-full bg-gold pl-6 pr-1.5 py-1.5 text-ink hover:bg-gold-soft',
+  outline:
+    tone === 'dark'
+      ? 'gap-3 rounded-full border border-[var(--line-on-dark)] pl-6 pr-1.5 py-1.5 text-on-dark hover:border-gold'
+      : 'gap-3 rounded-full border border-line pl-6 pr-1.5 py-1.5 text-ink hover:border-gold',
+  icon: '',
+};
+
+/* Le rond qui porte la fleche */
+const circleClasses: Record<string, string> = {
+  solid: 'bg-ink text-cream',
+  outline: tone === 'dark' ? 'bg-on-dark text-green-900' : 'bg-ink text-cream',
+  icon:
+    tone === 'dark'
+      ? 'border border-[var(--line-on-dark)] text-on-dark group-hover:bg-gold group-hover:text-ink group-hover:border-gold'
+      : 'border border-line text-ink group-hover:bg-gold group-hover:text-ink group-hover:border-gold',
+};
+
+const circle = `flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300 ease-smooth ${circleClasses[variant]}`;
+
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+  class={`${base} ${variantClasses[variant]} ${className}`}
+  href={href}
+  type={href ? undefined : type}
+  aria-label={ariaLabel ?? (isIcon ? label : undefined)}
+>
+  {!isIcon && label && <span class="type-button">{label}</span>}
+  <span class={circle}>
+    <ArrowIcon
+      class="transition-transform duration-300 ease-smooth group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+    />
+  </span>
+</Tag>

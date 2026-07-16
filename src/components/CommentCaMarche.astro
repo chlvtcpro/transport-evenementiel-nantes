@@ -1,0 +1,157 @@
+---
+/*
+  Section #comment-ca-marche de Cortege.
+  Double objectif : message de scalabilite (transport quel que soit le
+  volume, un seul interlocuteur) capte en 3 secondes via l'en-tete, ET
+  credibilite d'un process carre en 3 etapes qui se lisent comme un
+  parcours (01 vers 02 vers 03), pas comme trois blocs isoles.
+
+  Tone cream (respiration claire entre les sections sombres). Titres en
+  --ink, corps en --ink-muted, numeros et accents en --gold. Display en
+  Fraunces (police validee via --font-display). Reveal en cascade :
+  en-tete d'abord, puis les 3 etapes en stagger (progression).
+*/
+import Eyebrow from './Eyebrow.astro';
+import ButtonArrow from './ButtonArrow.astro';
+
+// En-tete : message de scalabilite. Editez en un point.
+const H2 = 'Un événement. Un interlocuteur. N\'importe quel volume.';
+const SOUS_TITRE =
+  'Une berline pour deux invités ou dix véhicules pour deux cents personnes, c\'est le même contact et le même niveau de maîtrise.';
+
+// Les 3 etapes du parcours. Ajouter ou reformuler = editer cette table.
+const ETAPES = [
+  {
+    num: '01',
+    titre: 'Vous nous briefez',
+    texte:
+      'Date, lieux, nombre de personnes, contraintes. Un seul échange suffit, vous avez un interlocuteur unique du début à la fin.',
+  },
+  {
+    num: '02',
+    titre: 'On assemble et on orchestre la flotte',
+    texte:
+      'On dimensionne les véhicules selon le volume, berlines, vans ou autocars, et on cale trajets, rotations, horaires et chauffeurs. Vous ne gérez aucun déplacement.',
+  },
+  {
+    num: '03',
+    titre: 'Le jour J, tout roule',
+    texte:
+      'Arrivées à l\'heure, navettes, transferts, retours de nuit. Tout est coordonné, vous profitez de votre événement.',
+  },
+];
+
+// Phrase incitative au dessus du CTA de fin.
+const CTA_PHRASE = 'Décrivez-nous votre événement, on orchestre tous les trajets.';
+---
+
+<section
+  id="comment-ca-marche"
+  data-tone="cream"
+  class="relative bg-cream py-section text-ink scroll-mt-24"
+>
+  <div class="container">
+    <!-- En-tete : cascade eyebrow, H2, sous-titre -->
+    <div class="mx-auto max-w-3xl text-center" data-reveal-stagger="120">
+      <div class="flex justify-center" data-reveal>
+        <Eyebrow tone="light">Comment ça marche</Eyebrow>
+      </div>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+      <p class="type-body mx-auto mt-6 max-w-[60ch] text-ink-muted" data-reveal>
+        {SOUS_TITRE}
+      </p>
+    </div>
+
+    <!-- Les 3 etapes en parcours. Stagger 140ms = progression 01 vers 03. -->
+    <ol
+      class="etapes mt-16 grid gap-y-12 md:mt-20 md:grid-cols-3 md:gap-x-0"
+      data-reveal-stagger="140"
+    >
+      {
+        ETAPES.map((etape, index) => (
+          <li class="etape relative flex flex-col px-0 md:px-8" data-reveal>
+            {/* Filet dore vertical entre les etapes (desktop) */}
+            {index > 0 && (
+              <span
+                class="etape-line absolute inset-y-2 left-0 hidden w-px md:block"
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Fleche de progression discrete (mobile, entre les etapes) */}
+            {index > 0 && (
+              <span
+                class="etape-arrow mx-auto mb-8 flex h-8 w-8 items-center justify-center text-gold md:hidden"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+                  <path
+                    d="M12 4v16M12 20l-5-5M12 20l5-5"
+                    stroke="currentColor"
+                    stroke-width="1.25"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            )}
+
+            {/* Grand numero dore, accent premium */}
+            <span class="etape-num text-gold" aria-hidden="true">{etape.num}</span>
+
+            <h3 class="type-h3 mt-4 text-ink">{etape.titre}</h3>
+            <p class="type-body mt-3 text-ink-muted">{etape.texte}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <!-- CTA de fin de section, centre -->
+    <div class="mt-16 flex flex-col items-center text-center md:mt-20" data-reveal>
+      <p class="type-body mb-6 max-w-md text-ink-muted">{CTA_PHRASE}</p>
+      <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Grand numero d'etape : Fraunces (display), gros mais elegant, en
+     accent dore. Tabular pour aligner 01/02/03 proprement. */
+  .etape-num {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: clamp(2.75rem, 4vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Filet dore vertical qui relie les etapes en desktop : la progression
+     se sent, ce n'est pas trois blocs isoles. Degrade doux aux extremites. */
+  .etape-line {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(201, 162, 75, 0.35) 15%,
+      rgba(201, 162, 75, 0.35) 85%,
+      transparent 100%
+    );
+  }
+
+  /* La fleche de progression mobile apparait avec un leger retard doux
+     une fois l'etape revelee (subtil, pas de sur-animation). */
+  .etape-arrow {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity 700ms var(--ease),
+      transform 700ms var(--ease);
+    transition-delay: 200ms;
+  }
+
+  :global([data-reveal].is-revealed) .etape-arrow {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>

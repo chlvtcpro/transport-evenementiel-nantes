@@ -1,0 +1,20 @@
+---
+/*
+  Reveal : enveloppe son slot avec l'animation de reveal
+  (opacity + translateY + blur), pilotee par src/lib/reveal.ts.
+  - as    : balise de rendu (defaut div)
+  - delay : delai fixe en ms (sinon herite du stagger parent)
+*/
+interface Props {
+  as?: keyof HTMLElementTagNameMap;
+  delay?: number;
+  class?: string;
+}
+const { as = 'div', delay, class: className = '' } = Astro.props;
+const Tag = as;
+const style = delay != null ? `--reveal-delay:${delay}ms` : undefined;
+---
+
+<Tag data-reveal class={className} style={style}>
+  <slot />
+</Tag>

@@ -1,0 +1,113 @@
+---
+/*
+  Section #differenciateurs de Cortege.
+  Trois raisons de choisir Cortege, en colonnes. Tone cream. Titres H3 en
+  Fraunces (--font-display) via classe locale, corps --ink-muted. Chaque
+  point porte un petit accent dore (filet + icone SVG inline, aucune
+  librairie). Air genereux, 3 colonnes desktop, empile mobile. Reveal en
+  cascade.
+*/
+import Eyebrow from './Eyebrow.astro';
+
+// En-tete de section.
+const H2 = 'Un métier à part entière, pas une ligne de service.';
+
+// Les 3 differenciateurs. Editez en un point.
+const DIFFERENCIATEURS = [
+  {
+    titre: 'Local et humain',
+    texte:
+      'Vous parlez à la personne qui coordonne votre événement, pas à un centre d\'appel national. Un contact dédié, joignable, qui connaît votre dossier.',
+  },
+  {
+    titre: 'Démarche bas-carbone',
+    texte:
+      'Priorité à l\'électrique sur nos berlines et un engagement écoresponsable honnête. On ne promet pas une flotte 100 pour cent électrique qu\'un autocar dément, on réduit l\'empreinte là où c\'est réel.',
+  },
+  {
+    titre: 'Transport orchestré clé en main',
+    texte:
+      'Véhicules, trajets, rotations, horaires, itinéraires, retours de nuit. On gère toute la logistique de déplacement de bout en bout, vous ne coordonnez aucun chauffeur.',
+  },
+];
+---
+
+<section
+  id="differenciateurs"
+  data-tone="cream"
+  class="relative bg-cream py-section text-ink scroll-mt-24"
+>
+  <div class="container">
+    <!-- En-tete : cascade eyebrow, H2 -->
+    <div class="max-w-3xl" data-reveal-stagger="120">
+      <div data-reveal>
+        <Eyebrow tone="light">Pourquoi nous</Eyebrow>
+      </div>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+    </div>
+
+    <!-- Les 3 differenciateurs, stagger 120ms -->
+    <div
+      class="mt-14 grid gap-x-8 gap-y-12 md:mt-20 md:grid-cols-3 md:gap-x-10"
+      data-reveal-stagger="120"
+    >
+      {
+        DIFFERENCIATEURS.map((item) => (
+          <div class="diff-item" data-reveal>
+            <!-- Accent dore : petit rond fin avec icone diagonale inline -->
+            <span class="diff-accent text-gold" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M4 12L12 4M12 4H5.5M12 4V10.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+
+            <h3 class="diff-titre mt-6 text-ink">{item.titre}</h3>
+            <p class="type-body mt-4 text-ink-muted">{item.texte}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Colonne differenciateur : filet dore fin en haut, aere. */
+  .diff-item {
+    position: relative;
+    padding-top: 1.75rem;
+    border-top: 1px solid rgba(201, 162, 75, 0.32);
+  }
+
+  /* Rond d'accent dore fin, portant la fleche diagonale. */
+  .diff-accent {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid rgba(201, 162, 75, 0.45);
+    border-radius: 9999px;
+  }
+
+  .diff-accent svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Titre du point : display Fraunces, applique localement sans toucher
+     au role global .type-h3 (qui reste en Playfair ailleurs). */
+  .diff-titre {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+    line-height: 1.14;
+    letter-spacing: -0.01em;
+  }
+</style>

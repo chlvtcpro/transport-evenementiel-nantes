@@ -1,0 +1,165 @@
+---
+/*
+  Layout de base : head, styles globaux, shell (header + footer),
+  et branchement des primitives client (Lenis, Reveal, Parallax).
+*/
+import 'lenis/dist/lenis.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_DATA, SERVICES } from '../data/site.ts';
+import { FAQ } from '../data/faq.ts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'Transport Événementiel Nantes à Nantes et dans le Grand Ouest',
+  description = SITE_DATA.description,
+} = Astro.props;
+
+// URL canonique de la page courante, calculee sur Astro.site (defini dans
+// astro.config). Fallback sur l'URL du SITE_DATA si site non defini.
+const canonicalURL = new URL(
+  Astro.url.pathname,
+  Astro.site ?? SITE_DATA.url
+).href;
+
+// Image de partage en URL absolue (requis par les crawlers OG).
+const ogImageURL = new URL(SITE_DATA.ogImage, Astro.site ?? SITE_DATA.url).href;
+
+// Un placeholder n'est jamais publie dans le schema : on ne garde que les
+// valeurs reellement renseignees.
+const isFilled = (v: string) => !!v && !v.includes('A REMPLIR');
+
+// Identifiant stable de l'entite, reutilise comme provider des services.
+const orgId = `${SITE_DATA.url}#organization`;
+
+// areaServed reutilise par le LocalBusiness et par chaque Service.
+const areaServedNodes = SITE_DATA.areaServed.map((zone) => ({
+  '@type': zone === 'Loire-Atlantique' ? 'AdministrativeArea' : 'Place',
+  name: zone,
+}));
+
+// Noeud Organization + LocalBusiness (LocalBusiness est un sous-type
+// d'Organization : une seule entite porte les deux types).
+const localBusinessNode: Record<string, unknown> = {
+  '@type': ['Organization', 'LocalBusiness'],
+  '@id': orgId,
+  name: SITE_DATA.name,
+  url: SITE_DATA.url,
+  description: SITE_DATA.description,
+  image: ogImageURL,
+  priceRange: SITE_DATA.priceRange,
+  foundingDate: SITE_DATA.foundingDate,
+  // Service-area business : pas d'adresse physique exposee, on decrit la zone.
+  areaServed: areaServedNodes,
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: SITE_DATA.geo.latitude,
+    longitude: SITE_DATA.geo.longitude,
+  },
+};
+// Contact et profils : ajoutes seulement si renseignes (jamais de placeholder).
+if (isFilled(SITE_DATA.telephone)) {
+  localBusinessNode.telephone = SITE_DATA.telephone;
+}
+if (isFilled(SITE_DATA.email)) {
+  localBusinessNode.email = SITE_DATA.email;
+}
+if (SITE_DATA.sameAs.length > 0) {
+  localBusinessNode.sameAs = SITE_DATA.sameAs;
+}
+// Note : pas d'aggregateRating tant qu'il n'y a pas de vrais avis on-site.
+// Ne jamais fabriquer de note. Ajouter aggregateRating uniquement avec des
+// avis reels collectes sur le site.
+
+// Trois noeuds Service, rattaches au provider LocalBusiness.
+const serviceNodes = SERVICES.map((service) => ({
+  '@type': 'Service',
+  name: service.name,
+  description: service.description,
+  provider: { '@id': orgId },
+  areaServed: areaServedNodes,
+}));
+
+// Noeud FAQPage, alimente par la meme source que la section FAQ visible.
+const faqNode = {
+  '@type': 'FAQPage',
+  dateModified: SITE_DATA.dateModified,
+  mainEntity: FAQ.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.reponse,
+    },
+  })),
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [localBusinessNode, ...serviceNodes, faqNode],
+};
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#14261C" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="mask-icon" href="/favicon.svg" color="#14261C" />
+
+    <!-- Indexation : ouvert aux moteurs classiques et IA. Canonical. -->
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_DATA.name} />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <!-- JSON-LD : LocalBusiness + 3 Service + FAQPage, en @graph. -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(jsonLd)}
+    />
+  </head>
+  <body>
+    <a
+      href="#hero"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-gold focus:px-4 focus:py-2 focus:text-ink"
+    >
+      Aller au contenu
+    </a>
+
+    <Header />
+
+    <main>
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script>
+      import '../lib/init.ts';
+    </script>
+  </body>
+</html>

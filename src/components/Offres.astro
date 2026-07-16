@@ -1,0 +1,238 @@
+---
+/*
+  Section #offres de Cortege.
+  Trois offres presentees en cartes, seminaire en tete (moteur de CA
+  recurrent, mis en avant par un accent dore discret), puis mariage
+  (vitrine), puis navette de groupe. Tone cream-soft. Titres --ink,
+  corps --ink-muted, display en Fraunces (police validee).
+
+  Pas de visuel fourni pour l'instant : rendu typographique et sobre,
+  slot image prevu cote SmartImage mais non active (fallback propre).
+  Chaque carte : tag numero, titre H3, promesse, liste de prestations
+  concretes (fine fleche doree devant chaque item, pas de grosses
+  puces), et un CTA outline vers #devis. Reveal en cascade.
+*/
+import Eyebrow from './Eyebrow.astro';
+import ButtonArrow from './ButtonArrow.astro';
+
+// En-tete de section. Editez en un point.
+const H2 = 'Trois façons d\'orchestrer vos déplacements.';
+const SOUS_TITRE =
+  'Chaque événement a sa logistique. On l\'assemble sur mesure, du transfert d\'un dirigeant à la navette de deux cents invités.';
+
+// Les 3 offres. Ordre : seminaire (phare), mariage, navette.
+// phare = accent dore discret pour signaler l'offre moteur.
+const OFFRES = [
+  {
+    tag: '01',
+    titre: 'Séminaire et événement d\'entreprise',
+    phare: true,
+    promesse:
+      'Vos collaborateurs et invités déplacés sans friction, vous restez concentré sur l\'événement.',
+    prestations: [
+      'Transferts gare et aéroport',
+      'Navettes inter-sites et hôtel vers lieu',
+      'Rotations sur toute la durée de l\'événement',
+      'Un interlocuteur unique, une facture unique',
+    ],
+  },
+  {
+    tag: '02',
+    titre: 'Mariage',
+    phare: false,
+    promesse:
+      'De l\'arrivée des invités aux retours de nuit, chaque trajet est réglé, vous vivez votre journée.',
+    prestations: [
+      'Transferts invités gare et aéroport',
+      'Navettes cérémonie, réception, hébergement',
+      'Rotations et retours de nuit',
+      'Coordination multi-véhicules, berlines à autocar',
+    ],
+  },
+  {
+    tag: '03',
+    titre: 'Navette de groupe',
+    phare: false,
+    promesse:
+      'Tout transport collectif, ponctuel ou récurrent, dimensionné à votre volume.',
+    prestations: [
+      'Groupes de quelques personnes à plusieurs centaines',
+      'Événementiel, associatif, institutionnel',
+      'Ponctuel ou récurrent',
+      'Berlines, vans, autocars selon le besoin',
+    ],
+  },
+];
+---
+
+<section
+  id="offres"
+  data-tone="cream-soft"
+  class="relative bg-cream-soft py-section text-ink scroll-mt-24"
+>
+  <div class="container">
+    <!-- En-tete : cascade eyebrow, H2, sous-titre -->
+    <div class="mx-auto max-w-3xl text-center" data-reveal-stagger="120">
+      <div class="flex justify-center" data-reveal>
+        <Eyebrow tone="light">Nos offres</Eyebrow>
+      </div>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+      <p class="type-body mx-auto mt-6 max-w-[60ch] text-ink-muted" data-reveal>
+        {SOUS_TITRE}
+      </p>
+    </div>
+
+    <!-- Les 3 cartes d'offres, stagger 120ms -->
+    <div
+      class="mt-16 grid gap-6 md:mt-20 md:grid-cols-3 md:gap-7"
+      data-reveal-stagger="120"
+    >
+      {
+        OFFRES.map((offre) => (
+          <article
+            class:list={['offre-carte group', { 'offre-phare': offre.phare }]}
+            data-reveal
+          >
+            {offre.phare && (
+              <span class="offre-badge" aria-hidden="true">
+                Offre phare
+              </span>
+            )}
+
+            <span class="offre-tag text-gold" aria-hidden="true">
+              {offre.tag}
+            </span>
+
+            <h3 class="offre-titre mt-3 text-ink">{offre.titre}</h3>
+
+            <p class="offre-promesse mt-4 text-ink-muted">{offre.promesse}</p>
+
+            <ul class="mt-6 flex flex-col gap-3">
+              {offre.prestations.map((item) => (
+                <li class="flex items-start gap-3">
+                  <svg
+                    class="mt-[0.45rem] h-3 w-3 shrink-0 text-gold"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 6h8M10 6L6.5 2.5M10 6L6.5 9.5"
+                      stroke="currentColor"
+                      stroke-width="1.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span class="type-nav text-ink-muted">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div class="mt-8 pt-2">
+              <ButtonArrow
+                variant="outline"
+                href="#formulaire-devis"
+                label="Demander un devis"
+              />
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Carte d'offre : fond creme plein sur le cream-soft ambiant, fin
+     lisere, coins doux, ombre tres legere. Aeration genereuse. */
+  .offre-carte {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 2.25rem 2rem;
+    background-color: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(22, 36, 28, 0.04);
+    transition:
+      transform 400ms var(--ease),
+      box-shadow 400ms var(--ease),
+      border-color 400ms var(--ease);
+  }
+
+  /* Micro hover : legere elevation, ombre un peu plus marquee, liseré
+     qui tire vers l'or. Subtil, pas d'animation lourde. */
+  .offre-carte:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -22px rgba(22, 36, 28, 0.35);
+    border-color: rgba(201, 162, 75, 0.45);
+  }
+
+  /* Offre phare (seminaire) : accent dore discret. Filet dore en haut
+     de carte et liseré legerement dore au repos pour la faire ressortir
+     sans casser l'alignement de la grille. */
+  .offre-phare {
+    border-color: rgba(201, 162, 75, 0.5);
+    box-shadow: 0 10px 30px -20px rgba(201, 162, 75, 0.4);
+  }
+
+  .offre-phare::before {
+    content: '';
+    position: absolute;
+    inset-inline: 18px;
+    top: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--gold) 25%,
+      var(--gold) 75%,
+      transparent 100%
+    );
+  }
+
+  /* Badge discret de l'offre phare, coin haut droit. */
+  .offre-badge {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+  }
+
+  /* Titre de carte : demande en display (Fraunces) par le prompt Offres.
+     On applique --font-display localement sans toucher au role global
+     .type-h3 (qui reste en Playfair ailleurs). Taille calee sur le H3. */
+  .offre-titre {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 2.4vw, 1.95rem);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+  }
+
+  /* Tag numero de l'offre : Fraunces, discret mais present. */
+  .offre-tag {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 2vw, 1.85rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Promesse : corps un peu plus grand que la liste, pose le benefice. */
+  .offre-promesse {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+</style>

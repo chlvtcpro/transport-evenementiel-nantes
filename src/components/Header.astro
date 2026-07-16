@@ -1,0 +1,190 @@
+---
+/*
+  Header : nav transparente par-dessus le hero, devient sticky
+  avec fond vert profond condense au scroll (gere en JS via un
+  IntersectionObserver sentinelle en haut de page).
+*/
+import ButtonArrow from './ButtonArrow.astro';
+
+const links = [
+  { href: '#comment-ca-marche', label: 'Comment ça marche' },
+  { href: '#offres', label: 'Offres' },
+  { href: '#cas-client', label: 'Réalisations' },
+  { href: '#differenciateurs', label: 'Notre approche' },
+];
+---
+
+<header
+  id="site-header"
+  class="fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-smooth"
+  data-state="top"
+>
+  <div
+    class="container flex items-center justify-between gap-6 py-5 transition-all duration-500 ease-smooth"
+  >
+    <a
+      href="#hero"
+      class="site-logo"
+      aria-label="Transport Événementiel Nantes, accueil"
+    >
+      <img
+        src="/logo-transport-evenementiel-nantes.svg"
+        alt="Transport Événementiel Nantes"
+        class="site-logo-img"
+        width="860"
+        height="240"
+        decoding="async"
+      />
+    </a>
+
+    <nav class="hidden items-center gap-9 lg:flex" aria-label="Navigation principale">
+      {
+        links.map((link) => (
+          <a
+            href={link.href}
+            class="type-nav text-on-dark transition-colors duration-300 hover:text-gold"
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="hidden lg:block">
+      <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+    </div>
+
+    <!-- Declencheur menu mobile -->
+    <button
+      id="menu-toggle"
+      class="flex h-10 w-10 items-center justify-center lg:hidden"
+      aria-label="Ouvrir le menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <span class="relative block h-3 w-6">
+        <span class="absolute left-0 top-0 h-px w-6 bg-on-dark transition-all duration-300"></span>
+        <span class="absolute bottom-0 left-0 h-px w-6 bg-on-dark transition-all duration-300"></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Menu mobile. L'ouverture/fermeture est pilotee par l'attribut
+       data-open et animee en CSS (grid-template-rows 0fr vers 1fr) dans le
+       <style> scope ci-dessous. On n'utilise PAS de classes Tailwind
+       arbitraires (grid-rows-[1fr]) ajoutees en JS : Tailwind ne genere que
+       les classes qu'il voit statiquement dans les sources, donc une classe
+       ajoutee dynamiquement n'a aucune regle CSS et le menu ne s'ouvre pas. -->
+  <div
+    id="mobile-menu"
+    class="mobile-menu overflow-hidden bg-green-900/98 backdrop-blur lg:hidden"
+    data-open="false"
+  >
+    <div class="mobile-menu-inner min-h-0">
+      <nav class="container flex flex-col gap-5 py-8" aria-label="Navigation mobile">
+        {
+          links.map((link) => (
+            <a
+              href={link.href}
+              class="type-nav text-on-dark transition-colors hover:text-gold"
+              data-mobile-link
+            >
+              {link.label}
+            </a>
+          ))
+        }
+        <div class="pt-2">
+          <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById('site-header');
+  const toggle = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+
+  // Etat sticky : on condense le header apres avoir depasse le seuil.
+  if (header) {
+    const onScroll = () => {
+      const scrolled = window.scrollY > 40;
+      header.dataset.state = scrolled ? 'scrolled' : 'top';
+      header.classList.toggle('is-condensed', scrolled);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // Menu mobile : ouverture / fermeture pilotees par data-open (le CSS
+  // scope gere l'animation d'ouverture). Fiable car la regle CSS existe
+  // toujours, independamment du scan JIT de Tailwind.
+  if (toggle && menu) {
+    const setOpen = (open: boolean) => {
+      menu.dataset.open = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+    };
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') === 'true';
+      setOpen(!open);
+    });
+    menu.querySelectorAll('[data-mobile-link]').forEach((link) => {
+      link.addEventListener('click', () => setOpen(false));
+    });
+  }
+</script>
+
+<style>
+  /* Logo SVG : hauteur fixe, largeur auto (le viewBox 860x240 preserve le
+     ratio). Curseur pointer et leger fondu au survol. La version claire du
+     SVG reste lisible sur le fond sombre du header. */
+  .site-logo {
+    display: inline-flex;
+    align-items: center;
+    transition: opacity 300ms var(--ease);
+  }
+  .site-logo:hover {
+    opacity: 0.82;
+  }
+  .site-logo-img {
+    display: block;
+    height: 46px;
+    width: auto;
+  }
+  @media (min-width: 640px) {
+    .site-logo-img {
+      height: 54px;
+    }
+  }
+
+  /* Fond condense au scroll + filet dore fin en bas */
+  #site-header.is-condensed {
+    background-color: var(--green-900);
+    box-shadow: 0 1px 0 var(--line-on-dark);
+  }
+  #site-header.is-condensed .container {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+
+  /* Menu mobile : animation d'ouverture via max-height. On pilote l'etat
+     avec l'attribut data-open et non des classes Tailwind arbitraires ajoutees
+     en JS : Tailwind ne genere que les classes qu'il voit statiquement dans les
+     sources, donc grid-rows-[1fr] ajoutee dynamiquement n'aurait aucune regle
+     CSS et le menu resterait ferme. La regle existe toujours dans ce <style>
+     scope, l'ouverture est fiable.
+
+     On evite grid-template-rows 0fr vers 1fr : sur un conteneur a hauteur
+     indefinie (flux normal, sans hauteur explicite), la fraction 1fr se resout
+     a 0px et le menu ne s'ouvre pas. max-height avec une valeur large (80vh,
+     couvre tout contenu de menu court) est fiable quel que soit le contexte. */
+  .mobile-menu {
+    max-height: 0;
+    transition: max-height 500ms var(--ease);
+  }
+  .mobile-menu[data-open='true'] {
+    max-height: 80vh;
+  }
+</style>

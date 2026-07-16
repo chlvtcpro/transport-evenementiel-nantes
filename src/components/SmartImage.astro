@@ -1,0 +1,99 @@
+---
+/*
+  SmartImage : image responsive recadree vers un ratio cible.
+  Genere AVIF + WebP + fallback via le pipeline d'assets Astro,
+  largeurs responsives, lazy par defaut.
+  Options :
+    ratio    : 'wide' | 'portrait' | 'square' | 'hero' (defaut wide)
+    kenburns : anime un lent zoom (fond de hero)
+    parallax : translateY subtil au scroll (amplitude en px)
+
+  Accepte soit une image importee (ImageMetadata), soit une URL
+  distante (string). Pour une URL distante, width et height sont
+  requis afin d'eviter le layout shift.
+*/
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  ratio?: 'wide' | 'portrait' | 'square' | 'hero';
+  widths?: number[];
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  kenburns?: boolean;
+  /** amplitude parallax en px, active le parallax si defini */
+  parallax?: number;
+  width?: number;
+  height?: number;
+  class?: string;
+  imgClass?: string;
+}
+
+const {
+  src,
+  alt,
+  ratio = 'wide',
+  widths = [640, 960, 1280, 1600, 1920],
+  sizes = '100vw',
+  loading = 'lazy',
+  kenburns = false,
+  parallax,
+  width,
+  height,
+  class: className = '',
+  imgClass = '',
+} = Astro.props;
+
+const ratioMap: Record<string, string> = {
+  wide: '16 / 10',
+  portrait: '3 / 4',
+  square: '1 / 1',
+  hero: '16 / 9',
+};
+
+const isRemote = typeof src === 'string';
+
+const figureStyle = `aspect-ratio:${ratioMap[ratio]}`;
+const parallaxAttr = parallax != null ? String(parallax) : undefined;
+
+const imgClasses = [
+  'h-full w-full object-cover',
+  kenburns ? 'kenburns' : '',
+  imgClass,
+]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<figure
+  class={`relative overflow-hidden ${className}`}
+  style={figureStyle}
+  data-parallax={parallaxAttr}
+>
+  {
+    isRemote ? (
+      <img
+        src={src as string}
+        alt={alt}
+        width={width}
+        height={height}
+        loading={loading}
+        decoding="async"
+        class={imgClasses}
+      />
+    ) : (
+      <Image
+        src={src as ImageMetadata}
+        alt={alt}
+        widths={widths}
+        sizes={sizes}
+        formats={['avif', 'webp']}
+        loading={loading}
+        decoding="async"
+        class={imgClasses}
+      />
+    )
+  }
+</figure>

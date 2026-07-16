@@ -1,0 +1,20 @@
+---
+/*
+  Eyebrow : petit label uppercase, optionnellement precede d'un
+  court trait dore. Couleur adaptable via prop tone.
+*/
+interface Props {
+  /** Affiche le filet dore devant le label (defaut true) */
+  rule?: boolean;
+  /** Sur fond sombre, on passe le texte en clair */
+  tone?: 'dark' | 'light';
+  class?: string;
+}
+const { rule = true, tone = 'light', class: className = '' } = Astro.props;
+const color = tone === 'dark' ? 'text-on-dark/[0.92]' : 'text-ink-muted';
+---
+
+<span class={`type-eyebrow inline-flex items-center gap-3 ${color} ${className}`}>
+  {rule && <span class="rule-gold" aria-hidden="true"></span>}
+  <slot />
+</span>

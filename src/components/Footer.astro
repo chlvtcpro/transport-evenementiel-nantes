@@ -1,0 +1,106 @@
+---
+/*
+  Footer : fond vert profond, logo, liens, mentions, credit.
+  Contenu minimal placeholder, sera enrichi plus tard.
+*/
+const year = new Date().getFullYear();
+
+const columns = [
+  {
+    title: 'Prestations',
+    links: [
+      { href: '#offres', label: 'Mariage' },
+      { href: '#offres', label: 'Séminaire' },
+      { href: '#offres', label: 'Navette de groupe' },
+    ],
+  },
+  {
+    title: 'L\'entreprise',
+    links: [
+      { href: '#comment-ca-marche', label: 'Comment ça marche' },
+      { href: '#cas-client', label: 'Réalisations' },
+      { href: '#differenciateurs', label: 'Notre approche' },
+    ],
+  },
+  {
+    title: 'Contact',
+    links: [
+      { href: '#formulaire-devis', label: 'Demander un devis' },
+      { href: 'mailto:contact@cortege.fr', label: 'contact@cortege.fr' },
+    ],
+  },
+];
+---
+
+<footer class="border-t border-[var(--line-on-dark)] bg-green-900 text-on-dark">
+  <div class="container py-16">
+    <div class="grid gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div>
+        <a
+          href="#hero"
+          class="footer-logo font-display font-medium tracking-tight"
+          aria-label="Transport Événementiel Nantes, accueil"
+        >
+          <span class="footer-logo-main">Transport Événementiel</span>
+          <span class="footer-logo-sub">Nantes</span>
+        </a>
+        <p class="type-body mt-4 max-w-xs text-on-dark/[0.92]">
+          Organisateur de transport événementiel à Nantes et dans le Grand Ouest.
+        </p>
+      </div>
+
+      {
+        columns.map((col) => (
+          <nav aria-label={col.title}>
+            <p class="type-eyebrow text-on-dark/[0.85]">{col.title}</p>
+            <ul class="mt-5 space-y-3">
+              {col.links.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="type-nav text-on-dark/[0.92] transition-colors hover:text-gold"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <div
+      class="mt-14 flex flex-col gap-4 border-t border-[var(--line-on-dark)] pt-8 text-sm text-on-dark/[0.85] sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>&copy; {year} Transport Événementiel Nantes. Tous droits réservés.</p>
+      <div class="flex gap-6">
+        <a href="#" class="transition-colors hover:text-gold">Mentions légales</a>
+        <a href="#" class="transition-colors hover:text-gold">Confidentialité</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  /* Logo pied de page : meme traitement compact deux lignes que le header. */
+  .footer-logo {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .footer-logo-main {
+    font-weight: 500;
+    font-size: 1.35rem;
+    line-height: 1.05;
+  }
+  .footer-logo-sub {
+    font-weight: 500;
+    font-size: 0.9rem;
+    line-height: 1.1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+</style>

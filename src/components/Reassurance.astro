@@ -1,0 +1,152 @@
+---
+/*
+  Section #reassurance de Cortege.
+  Bande de preuve sociale : logos des organisations clientes,
+  affiches en monochrome clair sur fond sombre. Section de
+  transition (padding vertical reduit) qui enchaine avec le bas
+  sombre du hero.
+
+  Sobriete premium : logos gris clair au repos, opacite pleine au
+  survol. Aucun titre, juste un eyebrow centre et une courte ligne.
+
+  Assets servis depuis public en URL absolue (/logos/clients/...).
+  Un logo dont le fichier est absent laisse un espace vide de memes
+  dimensions (le build ne casse pas). La presence est verifiee au
+  build via le systeme de fichiers.
+*/
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import Eyebrow from './Eyebrow.astro';
+
+// Table de donnees : ajouter ou retirer un logo = une ligne.
+// alt = nom de l'organisation. clair = logo deja blanc (pas de filtre).
+const LOGOS = [
+  { src: '/logos/clients/edf.svg', alt: 'EDF', clair: false },
+  { src: '/logos/clients/grdf.svg', alt: 'GRDF', clair: false },
+  { src: '/logos/clients/cci-france.svg', alt: 'CCI France', clair: false },
+  { src: '/logos/clients/havas.webp', alt: 'Havas', clair: false },
+  { src: '/logos/clients/home.svg', alt: 'Veolia', clair: false },
+];
+
+// Ligne discrete optionnelle sous l'eyebrow.
+const SOUS_TITRE =
+  'Des organisations qui comptent sur nous pour orchestrer les déplacements de leurs événements.';
+
+// Verifie au build quels fichiers existent reellement dans public.
+// Un fichier absent : on garde l'entree mais on rend un espace vide
+// de memes dimensions (pas d'image cassee, build intact).
+const clientsDir = fileURLToPath(new URL('../../public/logos/clients', import.meta.url));
+let fichiersPresents = new Set<string>();
+try {
+  fichiersPresents = new Set(readdirSync(clientsDir));
+} catch {
+  // Dossier absent : tous les logos seront des espaces vides.
+  fichiersPresents = new Set();
+}
+
+const logos = LOGOS.map((logo) => {
+  const nomFichier = logo.src.split('/').pop() ?? '';
+  return { ...logo, present: fichiersPresents.has(nomFichier) };
+});
+---
+
+<section
+  id="reassurance"
+  data-tone="cream"
+  class="reassurance relative bg-cream py-14 text-ink lg:py-16"
+>
+  <!-- Filets dores fins en haut et en bas pour cadrer la bande -->
+  <span class="reassurance-line absolute inset-x-0 top-0" aria-hidden="true"></span>
+  <span class="reassurance-line absolute inset-x-0 bottom-0" aria-hidden="true"></span>
+
+  <div class="container">
+    <!-- Eyebrow centre + courte ligne discrete -->
+    <div class="flex flex-col items-center text-center" data-reveal>
+      <Eyebrow tone="light" rule={false}>Ils nous ont fait confiance</Eyebrow>
+      <p class="type-nav mt-4 max-w-xl text-ink-muted">{SOUS_TITRE}</p>
+    </div>
+
+    <!-- Bande de logos : pastilles claires, une ligne desktop, grille 2 colonnes mobile -->
+    <ul
+      class="mt-10 grid grid-cols-2 items-stretch justify-items-center gap-6 sm:mt-12 md:flex md:flex-wrap md:justify-center md:gap-7"
+      data-reveal-stagger="80"
+    >
+      {
+        logos.map((logo) => (
+          <li class="reassurance-pastille" data-reveal aria-label={logo.alt}>
+            {logo.present && (
+              <img
+                src={logo.src}
+                alt={logo.alt}
+                loading="lazy"
+                decoding="async"
+                class="reassurance-logo"
+              />
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* Filet dore fin, faible opacite, pour cadrer la bande. */
+  .reassurance-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(201, 162, 75, 0.25) 20%,
+      rgba(201, 162, 75, 0.25) 80%,
+      transparent 100%
+    );
+  }
+
+  /* Pastille claire : petite carte blanche arrondie qui accueille le
+     logo en couleurs d'origine, posee sur la section creme. Filet fin et
+     ombre douce pour la detacher du fond clair sans lourdeur. */
+  .reassurance-pastille {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 78px;
+    padding: 1rem 1.5rem;
+    background-color: var(--cream-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(22, 36, 28, 0.05);
+    opacity: 0.95;
+    transition:
+      opacity 400ms var(--ease),
+      transform 400ms var(--ease),
+      box-shadow 400ms var(--ease);
+  }
+
+  /* Survol : pastille pleinement lumineuse, micro-elevation discrete. */
+  .reassurance-pastille:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(22, 36, 28, 0.08);
+  }
+
+  /* Logo dans sa pastille : couleurs d'origine, hauteur contenue. */
+  .reassurance-logo {
+    max-height: 42px;
+    max-width: 100%;
+    width: auto;
+    object-fit: contain;
+  }
+
+  /* En desktop, les 5 pastilles se repartissent sur une seule ligne,
+     largeur egale, rythme regulier. */
+  @media (min-width: 768px) {
+    .reassurance-pastille {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      max-width: 220px;
+    }
+  }
+</style>

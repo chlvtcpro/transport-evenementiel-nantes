@@ -1,0 +1,123 @@
+---
+/*
+  Section #faq de Cortege. Tone cream-soft, sobre, avant le CTA final.
+  Questions formulees en vraies questions, reponses directes (la reponse
+  arrive des la premiere phrase) pour la citation par les moteurs IA.
+
+  Les textes viennent de src/data/faq.ts, source unique partagee avec le
+  balisage JSON-LD FAQPage du layout : aucune divergence possible entre le
+  visible et le schema.
+
+  Accordeon natif <details>/<summary> : accessible, sans JS, propre.
+*/
+import Eyebrow from './Eyebrow.astro';
+import { FAQ } from '../data/faq.ts';
+
+const H2 = 'Les questions qu\'on nous pose le plus souvent.';
+---
+
+<section
+  id="faq"
+  data-tone="cream-soft"
+  class="relative bg-cream-soft py-section text-ink scroll-mt-24"
+>
+  <div class="container">
+    <!-- En-tete : cascade eyebrow, H2 -->
+    <div class="max-w-3xl" data-reveal-stagger="120">
+      <div data-reveal>
+        <Eyebrow tone="light">Questions fréquentes</Eyebrow>
+      </div>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+    </div>
+
+    <!-- Liste des questions, stagger doux -->
+    <div class="mt-12 max-w-3xl md:mt-16" data-reveal-stagger="90">
+      {
+        FAQ.map((item) => (
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">
+              <span class="faq-question-texte text-ink">{item.question}</span>
+              <span class="faq-icone text-gold" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M8 3.5v9M3.5 8h9"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </span>
+            </summary>
+            <p class="faq-reponse type-body text-ink-muted">{item.reponse}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Chaque question : ligne pleine largeur, separateur fin en bas. */
+  .faq-item {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .faq-item:first-of-type {
+    border-top: 1px solid var(--line);
+  }
+
+  /* En-tete cliquable : question + icone plus/moins doree. */
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  /* Retire le marqueur natif du <summary>. */
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-question-texte {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.15rem, 1.9vw, 1.4rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  /* Icone dans un rond fin dore, pivote a l'ouverture. */
+  .faq-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(201, 162, 75, 0.4);
+    border-radius: 9999px;
+    transition: transform 300ms var(--ease);
+  }
+
+  .faq-icone svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  /* A l'ouverture, l'icone plus pivote de 45deg (devient une croix). */
+  .faq-item[open] .faq-icone {
+    transform: rotate(45deg);
+  }
+
+  /* Reponse : marge basse, largeur de lecture confortable. */
+  .faq-reponse {
+    margin: 0;
+    padding-bottom: 1.5rem;
+    max-width: 62ch;
+  }
+</style>

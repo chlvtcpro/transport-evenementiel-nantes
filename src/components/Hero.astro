@@ -1,0 +1,543 @@
+---
+/*
+  Section #hero de Cortege.
+  Profondeur visuelle facon Wedlux : photo de fond sombre,
+  degrades verts superposes, plan de transport schematique
+  anime a droite, compteurs d'activite animes. Toutes les
+  primitives (Reveal, Ken Burns, Parallax) viennent du Prompt 1.
+
+  Image de fond : servie depuis public via URL absolue et
+  posee en background-image CSS (pas d'import Astro). La
+  colonne de droite est un visuel SVG anime (aucune photo) :
+  un plan d'orchestration de trajets vers un evenement.
+*/
+import Eyebrow from './Eyebrow.astro';
+import ButtonArrow from './ButtonArrow.astro';
+
+// URL absolue de l'image de fond (servie depuis public).
+const HERO_BG_URL =
+  '/src/assets/hero/seminaire-entreprise-rassemblement-lieu-reception.jpg';
+
+// Compteur d'activite agregee. Editez ces valeurs en un point.
+// - cible   : valeur numerique visee pour l'incrementation animee
+// - prefixe : signe eventuel affiche avant (ex "+")
+// - anime   : false pour afficher directement (ex l'annee 2025)
+// - duree   : duree du comptage en ms (ease-out)
+const HERO_STATS = [
+  { cible: 1700, prefixe: '+', label: 'passagers transportés', anime: true, duree: 1600 },
+  { cible: 35, prefixe: '+', label: 'événements et transferts', anime: true, duree: 1400 },
+  { cible: 2025, prefixe: '', label: 'depuis', anime: false, duree: 0 },
+];
+
+// Noeuds du plan de transport (parcours d'un evenement).
+// Coordonnees dans le repere du viewBox 0 0 440 480, composition
+// asymetrique et aeree. Chaque noeud s'allume en cascade (delai).
+const PLAN_NODES = [
+  { id: 'gare', x: 70, y: 92, label: 'Gare de Nantes', anchor: 'start' },
+  { id: 'hotel', x: 250, y: 60, label: 'Hôtel', anchor: 'start' },
+  { id: 'ceremonie', x: 360, y: 200, label: 'Cérémonie', anchor: 'end' },
+  { id: 'reception', x: 210, y: 300, label: 'Réception', anchor: 'start' },
+  { id: 'retours', x: 96, y: 410, label: 'Retours de nuit', anchor: 'start' },
+];
+
+// Trajets courbes reliant les noeuds (chemin d'orchestration).
+// Chaque trajet porte un point lumineux qui parcourt la courbe en boucle.
+const PLAN_ROUTES = [
+  { id: 'r1', d: 'M 70 92 C 140 60, 190 58, 250 60' },
+  { id: 'r2', d: 'M 250 60 C 330 78, 372 130, 360 200' },
+  { id: 'r3', d: 'M 360 200 C 332 262, 280 286, 210 300' },
+  { id: 'r4', d: 'M 210 300 C 150 316, 118 356, 96 410' },
+];
+---
+
+<section
+  id="hero"
+  data-tone="dark"
+  class="relative flex min-h-[100svh] items-center overflow-hidden bg-green-900 text-on-dark"
+>
+  <!-- ============ COUCHES DE FOND (arriere vers avant) ============ -->
+  <div class="absolute inset-0 z-0" aria-hidden="true">
+    <!-- Couche 1 : image de fond en background-image CSS + Ken Burns -->
+    <div
+      class="hero-bg kenburns absolute inset-0"
+      style={`background-image:url('${HERO_BG_URL}')`}
+    >
+    </div>
+
+    <!-- Couche 2 : teinte verte en multiply -->
+    <div class="absolute inset-0 hero-tint"></div>
+
+    <!-- Couche 3 : degrade vertical -->
+    <div class="absolute inset-0 hero-vgrad"></div>
+
+    <!-- Couche 4 : halo central radial -->
+    <div class="absolute inset-0 hero-halo"></div>
+
+    <!-- Renfort local de lisibilite sous la colonne texte (gauche) -->
+    <div class="absolute inset-0 hero-left-shade"></div>
+
+    <!-- Couche 5 : vignette 4 bords -->
+    <div class="absolute inset-0 hero-vignette"></div>
+
+    <!-- Couche 6 : grain subtil -->
+    <div class="absolute inset-0 hero-grain"></div>
+  </div>
+
+  <!-- ============ CONTENU ============ -->
+  <div class="container relative z-10 grid w-full items-center gap-12 pb-16 pt-32 lg:grid-cols-12 lg:gap-8 lg:pb-16 lg:pt-36">
+    <!-- Colonne gauche : copy + preuve -->
+    <div class="lg:col-span-7" data-reveal-stagger="120">
+      <div data-reveal>
+        <Eyebrow tone="dark">Organisateur de transport événementiel, Nantes et Grand Ouest</Eyebrow>
+      </div>
+
+      <h1 class="hero-title mt-8 max-w-[20ch]">
+        <span class="block" data-reveal>Séminaires, mariages :</span>
+        <span class="block text-gold-soft" data-reveal>on transporte tout le monde.</span>
+      </h1>
+
+      <p class="hero-subtitle type-body mt-10 max-w-xl" data-reveal>
+        Séminaires, mariages, transferts de groupe. Un seul contact coordonne
+        toute la flotte. Vous ne gérez aucun trajet.
+      </p>
+
+      <div class="mt-7 flex flex-wrap items-center gap-6" data-reveal>
+        <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+        <a
+          href="#cas-client"
+          class="type-nav text-on-dark underline decoration-[var(--line-on-dark)] decoration-1 underline-offset-[6px] transition-colors duration-300 hover:text-gold hover:decoration-gold"
+        >
+          Voir nos réalisations
+        </a>
+      </div>
+
+      <!-- Compteur d'activite agregee, incremente au chargement -->
+      <div
+        class="mt-10 max-w-xl border-t border-[var(--line-on-dark)] pt-6"
+        data-reveal
+        data-stats
+      >
+        <dl class="flex flex-wrap items-end gap-x-7 gap-y-4">
+          {
+            HERO_STATS.map((stat, index) => (
+              <>
+                {index > 0 && (
+                  <span
+                    class="hidden h-9 w-px bg-[var(--line-on-dark)] sm:block"
+                    aria-hidden="true"
+                  />
+                )}
+                <div class="flex flex-col">
+                  <dt
+                    class="type-stat leading-none text-gold"
+                    data-count={stat.anime ? String(stat.cible) : undefined}
+                    data-count-prefix={stat.prefixe}
+                    data-count-duration={String(stat.duree)}
+                  >
+                    {stat.anime ? `${stat.prefixe}0` : `${stat.prefixe}${stat.cible}`}
+                  </dt>
+                  <dd class="type-nav mt-1.5 text-on-dark/[0.92]">{stat.label}</dd>
+                </div>
+              </>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+
+    <!-- Colonne droite : plan de transport schematique anime (SVG, sans photo).
+         Illustre l'orchestration de plusieurs trajets vers un evenement.
+         data-parallax : leger deplacement d'ensemble au scroll (branche sur le
+         handler Lenis existant, [data-parallax] dans scroll.ts). -->
+    <div class="relative hidden lg:col-span-5 lg:block">
+      <div class="hero-plan relative mx-auto w-full max-w-md" data-reveal data-parallax="18">
+        <!-- Accent SVG dore discret (petit soleil, reference Wedlux) -->
+        <svg
+          class="absolute -left-4 -top-2 z-20 h-12 w-12 text-gold"
+          viewBox="0 0 48 48"
+          fill="none"
+          aria-hidden="true"
+        >
+          <g stroke="currentColor" stroke-width="1.25" stroke-linecap="round">
+            <line x1="24" y1="4" x2="24" y2="14"></line>
+            <line x1="24" y1="34" x2="24" y2="44"></line>
+            <line x1="4" y1="24" x2="14" y2="24"></line>
+            <line x1="34" y1="24" x2="44" y2="24"></line>
+            <line x1="10" y1="10" x2="17" y2="17"></line>
+            <line x1="31" y1="31" x2="38" y2="38"></line>
+            <line x1="38" y1="10" x2="31" y2="17"></line>
+            <line x1="17" y1="31" x2="10" y2="38"></line>
+          </g>
+          <circle cx="24" cy="24" r="6" fill="currentColor"></circle>
+        </svg>
+
+        <svg
+          class="hero-plan-svg h-auto w-full"
+          viewBox="0 0 440 480"
+          fill="none"
+          role="img"
+          aria-label="Plan d orchestration des trajets d un événement : gare de Nantes, hôtel, cérémonie, réception, retours de nuit"
+          data-plan
+        >
+          <!-- Trajets courbes : traces au chargement (stroke-dashoffset). -->
+          <g
+            stroke="var(--gold)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            fill="none"
+          >
+            {
+              PLAN_ROUTES.map((route, i) => (
+                <path
+                  class="hero-route"
+                  d={route.d}
+                  style={`--i:${i}`}
+                  opacity="0.55"
+                />
+              ))
+            }
+          </g>
+
+          <!-- Points lumineux qui parcourent chaque trajet en boucle. -->
+          {
+            PLAN_ROUTES.map((route, i) => (
+              <circle class="hero-runner" r="3.2" fill="var(--gold-soft)" style={`--i:${i}`}>
+                <animateMotion
+                  dur={`${5.5 + i * 0.9}s`}
+                  begin={`${1 + i * 0.55}s`}
+                  repeatCount="indefinite"
+                  rotate="auto"
+                  keyPoints="0;1"
+                  keyTimes="0;1"
+                  calcMode="spline"
+                  keySplines="0.45 0 0.55 1"
+                  path={route.d}
+                />
+              </circle>
+            ))
+          }
+
+          <!-- Noeuds : anneau + point, allumage en cascade (pulse dore).
+               Le <g> exterieur porte UNIQUEMENT la position (translate).
+               Le <g class="hero-node"> interieur porte l'animation (scale +
+               opacity) : ainsi le scale de l'allumage n'ecrase jamais la
+               position du noeud. -->
+          {
+            PLAN_NODES.map((node, i) => (
+              <g transform={`translate(${node.x} ${node.y})`}>
+                <g class="hero-node" style={`--i:${i}`}>
+                  <circle class="hero-node-halo" r="12" fill="var(--gold)" opacity="0" />
+                  <circle
+                    class="hero-node-ring"
+                    r="7"
+                    fill="var(--green-900)"
+                    stroke="var(--gold)"
+                    stroke-width="1.5"
+                  />
+                  <circle class="hero-node-dot" r="2.6" fill="var(--gold-soft)" />
+                  <text
+                    class="hero-node-label"
+                    x={node.anchor === 'end' ? -14 : 14}
+                    y="4"
+                    text-anchor={node.anchor}
+                    fill="var(--on-dark)"
+                  >
+                    {node.label}
+                  </text>
+                </g>
+              </g>
+            ))
+          }
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indice de scroll discret -->
+  <div
+    class="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 lg:flex"
+    aria-hidden="true"
+  >
+    <span class="type-eyebrow text-on-dark/40">Défiler</span>
+    <span class="h-10 w-px bg-gradient-to-b from-gold/70 to-transparent"></span>
+  </div>
+</section>
+
+<style>
+  /* Titre du hero : style DISPLAY mais borne haute reduite car le
+     texte est long (2 lignes de 3 a 4 mots). Doit tenir dans 100svh
+     avec sous-titre, CTA et preuve. */
+  .hero-title {
+    font-family: var(--font-display);
+    /* H1 : le poids le plus lourd de la page (Clash Display bold 700). */
+    font-weight: 700;
+    text-transform: uppercase;
+    /* Clash Display est plus large et bold que Fraunces. Le titre est long
+       (Seminaires, mariages : on transporte tout le monde.) : borne max
+       abaissee a 3.1rem et vw resserre pour tenir sur 2-3 lignes sans debord.
+       Line-height serre (1.0) pour un bloc compact et imposant. */
+    font-size: clamp(2rem, 4.2vw, 3.1rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Sous-titre du hero : couleur claire creme sur le fond vert sombre.
+     On applique directement var(--on-dark) a opacite 0.92 (contraste AA),
+     sans passer par la syntaxe d'opacite arbitraire de Tailwind
+     (text-on-dark/[0.92]) : celle-ci ne se resout pas correctement quand
+     --on-dark n'est pas un canal RGB, et retombe sur un vert-gris sombre
+     illisible. La taille et la graisse (Inter 400 via type-body) restent
+     inchangees. */
+  .hero-subtitle {
+    color: var(--on-dark);
+    opacity: 0.92;
+  }
+
+  /* Couche 1 : image de fond en cover, recentree sur le sujet.
+     Filtre musle car l'image source est claire. */
+  .hero-bg {
+    background-size: cover;
+    background-position: 58% 45%;
+    background-repeat: no-repeat;
+    filter: saturate(0.6) brightness(0.7);
+  }
+
+  /* Couche 2 : teinte verte multiply */
+  .hero-tint {
+    background-color: var(--green-900);
+    opacity: 0.55;
+    mix-blend-mode: multiply;
+  }
+
+  /* Couche 3 : degrade vertical */
+  .hero-vgrad {
+    background: linear-gradient(
+      180deg,
+      rgba(12, 23, 18, 0.95) 0%,
+      rgba(12, 23, 18, 0.55) 45%,
+      rgba(12, 23, 18, 0.92) 100%
+    );
+  }
+
+  /* Couche 4 : halo central radial */
+  .hero-halo {
+    background: radial-gradient(
+      ellipse at 58% 45%,
+      rgba(30, 58, 43, 0.3) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Renfort local gauche pour la lisibilite du texte */
+  .hero-left-shade {
+    background: linear-gradient(
+      90deg,
+      rgba(12, 23, 18, 0.75) 0%,
+      rgba(12, 23, 18, 0.4) 38%,
+      transparent 62%
+    );
+  }
+
+  /* Couche 5 : vignette 4 bords */
+  .hero-vignette {
+    box-shadow: inset 0 0 200px 40px rgba(12, 23, 18, 0.65);
+  }
+
+  /* Couche 6 : grain subtil en SVG inline */
+  .hero-grain {
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ============ PLAN DE TRANSPORT ANIME (SVG) ============
+     Visuel schematique d'orchestration : noeuds relies par des trajets
+     dores qui se dessinent, points lumineux qui les parcourent en boucle,
+     noeuds qui s'allument en cascade. Palette : traits/points --gold,
+     etiquettes --on-dark. Flottement d'ensemble tres subtil. */
+
+  /* Flottement d'ensemble tres discret du plan (independant du parallax,
+     qui est pilote par transform inline en JS sur le conteneur parent). */
+  .hero-plan-svg {
+    overflow: visible;
+    animation: hero-plan-float 9s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  /* Etiquettes des noeuds : petites, Inter, cremes. */
+  .hero-node-label {
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    opacity: 0;
+    transition: opacity 500ms var(--ease);
+  }
+
+  /* Trajets : le trace progressif est pilote en JS (dash-array/offset
+     calcules a partir de getTotalLength, puis transition de l'offset). */
+  .hero-route {
+    transition: stroke-dashoffset 1100ms var(--ease);
+  }
+
+  /* Noeuds : caches au depart (montee + fondu quand la cascade les allume). */
+  .hero-node {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .hero-node.is-lit {
+    opacity: 1;
+    animation: hero-node-pop 620ms var(--ease) both;
+  }
+  .hero-node.is-lit .hero-node-label {
+    opacity: 0.92;
+  }
+  /* Pulse dore ponctuel quand le noeud s'allume (halo qui se dilate et
+     s'efface une seule fois). */
+  .hero-node.is-lit .hero-node-halo {
+    animation: hero-node-pulse 900ms var(--ease) both;
+  }
+
+  /* Points lumineux : reveles apres le debut du trace pour ne pas
+     apparaitre avant la ligne. */
+  .hero-runner {
+    opacity: 0;
+    transition: opacity 600ms var(--ease);
+  }
+  .hero-plan.is-running .hero-runner {
+    opacity: 0.9;
+  }
+
+  @keyframes hero-plan-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  @keyframes hero-node-pop {
+    0% {
+      transform: scale(0.6);
+    }
+    60% {
+      transform: scale(1.12);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes hero-node-pulse {
+    0% {
+      opacity: 0.5;
+      transform: scale(0.5);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2.2);
+    }
+  }
+
+  /* Reduce-motion : etat final immediat, aucune animation.
+     Le trace et les etiquettes sont rendus visibles par le JS. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-plan-svg {
+      animation: none;
+    }
+    .hero-node.is-lit {
+      animation: none;
+    }
+    .hero-node.is-lit .hero-node-halo {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // ============ ANIMATIONS DU HERO (SVG + compteurs) ============
+  // JS leger, requestAnimationFrame, coherent avec Lenis. Se declenche une
+  // seule fois au chargement. Respecte prefers-reduced-motion (etat final
+  // sans animation).
+
+  function initHero() {
+    const reduce = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    // --- 1. Plan de transport : trace des trajets + cascade des noeuds ---
+    const plan = document.querySelector('[data-plan]');
+    if (plan) {
+      const routes = Array.from(
+        plan.querySelectorAll('.hero-route')
+      ) as SVGPathElement[];
+      const nodes = Array.from(plan.querySelectorAll('.hero-node'));
+      const wrap = plan.closest('.hero-plan');
+
+      // Prepare le trace : dash-array = longueur, offset = longueur (cache).
+      routes.forEach((path) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = String(len);
+        path.style.strokeDashoffset = reduce ? '0' : String(len);
+      });
+
+      if (reduce) {
+        // Etat final immediat.
+        nodes.forEach((n) => n.classList.add('is-lit'));
+        wrap && wrap.classList.add('is-running');
+      } else {
+        // Trace progressif des trajets, decale.
+        requestAnimationFrame(() => {
+          routes.forEach((path, i) => {
+            setTimeout(() => {
+              path.style.strokeDashoffset = '0';
+            }, 220 + i * 260);
+          });
+        });
+        // Allumage des noeuds en cascade.
+        nodes.forEach((node, i) => {
+          setTimeout(() => node.classList.add('is-lit'), 180 + i * 240);
+        });
+        // Reveal des points lumineux une fois le premier trace amorce.
+        setTimeout(() => wrap && wrap.classList.add('is-running'), 900);
+      }
+    }
+
+    // --- 2. Compteurs de stats : incrementation de 0 vers la cible ---
+    const counters = Array.from(
+      document.querySelectorAll('[data-count]')
+    ) as HTMLElement[];
+
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    counters.forEach((el) => {
+      const target = Number(el.getAttribute('data-count'));
+      const prefix = el.getAttribute('data-count-prefix') || '';
+      const duration = Number(el.getAttribute('data-count-duration')) || 1500;
+      if (!Number.isFinite(target)) return;
+
+      if (reduce) {
+        el.textContent = prefix + target.toLocaleString('fr-FR');
+        return;
+      }
+
+      const start = performance.now();
+      const step = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const value = Math.round(easeOut(p) * target);
+        el.textContent = prefix + value.toLocaleString('fr-FR');
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // Declenchement une seule fois. Gere aussi les navigations Astro (View
+  // Transitions) si presentes.
+  if (document.readyState !== 'loading') {
+    initHero();
+  } else {
+    document.addEventListener('DOMContentLoaded', initHero, { once: true });
+  }
+  document.addEventListener('astro:page-load', initHero);
+</script>

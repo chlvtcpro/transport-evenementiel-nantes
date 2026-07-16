@@ -1,0 +1,43 @@
+---
+/*
+  Page d'accueil Cortege.
+  Landing complete : hero, reassurance, process, offres, cas client,
+  differenciateurs, FAQ, puis CTA final devis. Chaque section est un
+  composant dedie, ancre par un id pour la navigation.
+*/
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Reassurance from '../components/Reassurance.astro';
+import CommentCaMarche from '../components/CommentCaMarche.astro';
+import Offres from '../components/Offres.astro';
+import CasClient from '../components/CasClient.astro';
+import Differenciateurs from '../components/Differenciateurs.astro';
+import Faq from '../components/Faq.astro';
+import Devis from '../components/Devis.astro';
+---
+
+<Base>
+  <!-- 1. HERO -->
+  <Hero />
+
+  <!-- 2. REASSURANCE : bande logos clients, transition sombre depuis le hero -->
+  <Reassurance />
+
+  <!-- 3. COMMENT CA MARCHE : message de scalabilite + process 3 etapes -->
+  <CommentCaMarche />
+
+  <!-- 4. OFFRES : Seminaire (phare) / Mariage / Navette de groupe -->
+  <Offres />
+
+  <!-- 5. CAS CLIENT : cas phare nomme et chiffre + temoignages -->
+  <CasClient />
+
+  <!-- 6. DIFFERENCIATEURS : local et humain / bas-carbone / cle en main -->
+  <Differenciateurs />
+
+  <!-- 7. FAQ : vraies questions, reponses directes, balisees FAQPage -->
+  <Faq />
+
+  <!-- 8. DEVIS : CTA final de conversion -->
+  <Devis />
+</Base>
