@@ -36,35 +36,35 @@ const TEMOIGNAGES = [
   },
   {
     type: 'Séminaire d\'entreprise',
-    accroche: 'Nos collaborateurs déplacés sans le moindre retard, sur deux jours.',
+    accroche: 'Une navette séminaire d\'entreprise coordonnée sans le moindre retard sur deux jours.',
     auteur: 'Camille R.',
     role: 'Séminaire, secteur tertiaire',
     detail:
-      'Nous avions un séminaire sur deux jours avec des navettes entre l\'hôtel, le lieu de réunion et un restaurant le soir. Un seul interlocuteur a tout coordonné, nous n\'avons eu à gérer aucun trajet. Ponctuel, carré, on a pu rester concentrés sur le contenu du séminaire.',
+      'Pour notre séminaire d\'entreprise à Nantes, nous avions besoin de navettes entre l\'hôtel, le lieu de réunion et un restaurant. Le transport des participants a été entièrement coordonné par un seul interlocuteur, avec les transferts gare et les rotations. Aucun trajet à gérer de notre côté.',
   },
   {
     type: 'Transfert corporate',
-    accroche: 'Une flotte de berlines cadrée à la minute près.',
+    accroche: 'Un transfert de dirigeants à Nantes avec une flotte de berlines cadrée à la minute.',
     auteur: 'Julien M.',
     role: 'Transfert dirigeants, Nantes',
     detail:
-      'Transfert de plusieurs dirigeants entre la gare, le siège et un dîner d\'affaires. Véhicules impeccables, chauffeurs ponctuels, coordination sans faille. Exactement le niveau de sérieux qu\'on attend pour ce type de déplacement.',
+      'Nous cherchions un transport de dirigeants fiable entre la gare de Nantes, le siège et un dîner d\'affaires. Véhicules impeccables, chauffeurs ponctuels, coordination sans faille. Le niveau attendu pour un transfert corporate en Loire-Atlantique.',
   },
   {
     type: 'Navette de groupe',
-    accroche: 'Plusieurs centaines de personnes déplacées, une seule équipe.',
+    accroche: 'Une navette de groupe de plusieurs centaines de personnes, orchestrée par une seule équipe.',
     auteur: 'Sophie L.',
     role: 'Rassemblement, Grand Ouest',
     detail:
-      'Pour notre rassemblement, il fallait acheminer plusieurs centaines de participants depuis différents points. Tout a été dimensionné et orchestré en amont, les rotations se sont enchaînées sans attente. Un vrai chef d\'orchestre du transport.',
+      'Pour notre rassemblement dans le Grand Ouest, il fallait un transport de groupe de grande capacité depuis plusieurs points. Berlines, vans et autocars dimensionnés selon le volume, rotations enchaînées sans attente. Une navette événementielle clé en main.',
   },
   {
     type: 'Mariage',
-    accroche: 'Des navettes de nuit gérées sans qu\'on y pense une seconde.',
+    accroche: 'Des navettes de mariage et retours de nuit gérés sans qu\'on y pense.',
     auteur: 'Marie et Thomas D.',
     role: 'Mariage, Vendée',
     detail:
-      'Ce qui nous a marqués, c\'est la gestion des retours de nuit : plusieurs rotations tard le soir, tout le monde raccompagné en sécurité, sans qu\'on ait à s\'en occuper. On a profité de notre soirée jusqu\'au bout l\'esprit tranquille.',
+      'Pour notre mariage en Vendée, le transport des invités et les navettes de nuit étaient notre inquiétude. Tout a été orchestré : transferts, rotations, retours de fin de soirée en sécurité. Un transport de mariage dans le Grand Ouest géré de bout en bout.',
   },
 ];
 
@@ -77,61 +77,74 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
   class="relative bg-green-900 py-section text-on-dark scroll-mt-24"
 >
   <!-- ============================================================
-       SECTION temoignages "Ils nous ont fait confiance" en MINI-CARTES.
-       Rangee de mini-cartes compactes en defilement horizontal
-       (scroll-snap, swipe tactile mobile, coherent avec Lenis car
-       c'est un scroll natif independant du scroll vertical). Au clic
-       sur une carte : une modale s'ouvre avec le detail complet du
-       temoignage. Fermeture au clic sur le fond, sur la croix, ou via
-       Echap. Transitions douces (--ease). Fallback JS off : les cartes
-       restent lisibles (accroche visible) et le detail est present en
-       DOM dans la modale (accessible au clavier via le lien natif).
-       Carte 1 = temoignage reel (Titouan N.) ; cartes 2 a 5 = exemples
-       representatifs a remplacer par de vrais verbatims (voir table).
+       SECTION temoignages "Ils nous ont fait confiance" en MUR / MOSAIQUE.
+       Tous les temoignages sont visibles d'un coup, sans defilement
+       lateral. Le vrai avis (Titouan N., index 0) est mis en VEDETTE :
+       grande carte a gauche, 5 etoiles dorees, grand guillemet dore, son
+       detail complet affiche directement. Les 4 exemples (Camille R.,
+       Julien M., Sophie L., Marie et Thomas D.) sont disposes autour en
+       cartes plus petites, cliquables : au clic, une modale devoile le
+       detail complet. Mobile : empilement une colonne, Titouan en tete.
+       Fallback JS off : cartes lisibles (accroche visible), detail present
+       en DOM dans la modale (accessible au clavier).
        ============================================================ -->
   <div class="container">
     <div class="temoignages-head" data-reveal>
       <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
       <p class="type-nav mt-3 text-on-dark/[0.92]">
-        Cliquez sur une carte pour lire le détail de la prestation.
+        Le récit d'un client, et des prestations menées sans accroc.
       </p>
     </div>
-  </div>
 
-  <div
-    class="temoignages-track"
-    role="list"
-    aria-label="Témoignages clients"
-    data-temoignages-track
-  >
-    {
-      TEMOIGNAGES.map((t, i) => (
-        <button
-          type="button"
-          class="temoignage-mini"
-          role="listitem"
-          data-temoignage
-          data-index={i}
-          aria-haspopup="dialog"
-        >
-          <span class="temoignage-mini-type type-eyebrow text-gold">
-            {t.type}
-          </span>
-          <span class="temoignage-mini-accroche type-body">
-            {t.accroche}
-          </span>
-          <span class="temoignage-mini-pied mt-auto">
-            <span class="temoignage-mini-auteur block text-on-dark">
-              {t.auteur}
-            </span>
-            <span class="type-nav block text-on-dark/[0.85]">{t.role}</span>
-          </span>
-          <span class="temoignage-mini-lire type-nav text-gold" aria-hidden="true">
-            Lire le détail
-          </span>
-        </button>
-      ))
-    }
+    <div class="temoignages-mur" role="list" aria-label="Témoignages clients" data-reveal>
+      {
+        TEMOIGNAGES.map((t, i) =>
+          i === 0 ? (
+            <article class="temoignage-vedette" role="listitem">
+              <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
+                <span aria-hidden="true">★★★★★</span>
+              </span>
+              <span class="temoignage-vedette-guillemet text-gold" aria-hidden="true">
+                &ldquo;
+              </span>
+              <span class="temoignage-vedette-type type-eyebrow text-gold">
+                {t.type}
+              </span>
+              <blockquote class="temoignage-vedette-detail">{t.detail}</blockquote>
+              <footer class="temoignage-vedette-pied">
+                <span class="temoignage-vedette-auteur block text-on-dark">
+                  {t.auteur}
+                </span>
+                <span class="type-nav block text-on-dark/[0.85]">{t.role}</span>
+              </footer>
+            </article>
+          ) : (
+            <button
+              type="button"
+              class="temoignage-mini"
+              role="listitem"
+              data-temoignage
+              data-index={i}
+              aria-haspopup="dialog"
+            >
+              <span class="temoignage-mini-type type-eyebrow text-gold">
+                {t.type}
+              </span>
+              <span class="temoignage-mini-accroche">{t.accroche}</span>
+              <span class="temoignage-mini-pied mt-auto">
+                <span class="temoignage-mini-auteur block text-on-dark">
+                  {t.auteur}
+                </span>
+                <span class="type-nav block text-on-dark/[0.85]">{t.role}</span>
+              </span>
+              <span class="temoignage-mini-lire type-nav text-gold" aria-hidden="true">
+                Lire le détail
+              </span>
+            </button>
+          )
+        )
+      }
+    </div>
   </div>
 
   <!-- Donnees des temoignages serialisees pour la modale (lues en JS).
@@ -198,44 +211,119 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 
 <style>
   /* ============================================================
-     TEMOIGNAGES : mini-cartes en defilement horizontal, detail au clic.
-     Rangee de mini-cartes compactes (scroll-snap, swipe tactile). Au
-     clic : ouverture d'une modale avec le detail complet.
+     TEMOIGNAGES : MUR / MOSAIQUE. Tout visible, aucun scroll lateral.
+     Grille asymetrique : carte vedette (Titouan) a gauche sur 2 rangees,
+     4 mini-cartes (exemples cliquables) reparties a droite. Mobile :
+     une colonne, vedette en tete.
      ============================================================ */
 
-  /* Piste horizontale : scroll natif avec snap, padding lateral aligne
-     sur le container via clamp. Barre de defilement masquee. Fallback
-     JS off : les mini-cartes restent visibles et scrollables. */
-  .temoignages-track {
-    display: flex;
+  /* Grille du mur : colonne vedette large (1.5fr) + deux colonnes de
+     mini-cartes (1fr chacune). La vedette occupe les deux rangees de la
+     premiere colonne ; les 4 mini-cartes remplissent la grille 2x2 a
+     droite. align-items: stretch pour des cartes de meme hauteur par
+     rangee. */
+  .temoignages-mur {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-auto-rows: 1fr;
     gap: 1.25rem;
-    padding: 0.5rem clamp(1.25rem, 5vw, 2rem) 1.5rem;
-    margin-top: 2rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .temoignages-track::-webkit-scrollbar {
-    display: none;
+    margin-top: 2.5rem;
   }
 
-  /* Mini-carte compacte : bouton pleine surface, cliquable. Fond
-     --green-800, coins doux, fin liseré doré, texte contraste. */
+  /* ---- Carte vedette (vrai avis, piece maitresse) ---- */
+  .temoignage-vedette {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1.75rem, 3vw, 2.5rem);
+    background-color: var(--green-800);
+    border: 1px solid rgba(201, 162, 75, 0.4);
+    border-radius: 22px;
+    box-shadow: 0 30px 70px -45px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
+  /* Voile dore tres subtil dans le coin haut, pour distinguer la vedette. */
+  .temoignage-vedette::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -30%;
+    width: 70%;
+    height: 80%;
+    background: radial-gradient(
+      circle,
+      rgba(201, 162, 75, 0.16) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .temoignage-etoiles {
+    position: relative;
+    font-size: 1.05rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .temoignage-vedette-guillemet {
+    position: relative;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 5rem;
+    line-height: 0.5;
+    height: 2rem;
+    margin-top: 1rem;
+    opacity: 0.85;
+  }
+
+  .temoignage-vedette-type {
+    position: relative;
+    display: inline-block;
+    margin-top: 1.5rem;
+  }
+
+  .temoignage-vedette-detail {
+    position: relative;
+    margin: 1rem 0 0;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(1.35rem, 1.9vw, 1.7rem);
+    line-height: 1.32;
+    letter-spacing: -0.01em;
+    color: var(--on-dark);
+    text-wrap: pretty;
+  }
+
+  .temoignage-vedette-pied {
+    position: relative;
+    margin-top: auto;
+    padding-top: 1.75rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+  }
+  .temoignage-vedette-auteur {
+    font-weight: 600;
+  }
+
+  /* Mini-carte (exemple) : bouton pleine surface, cliquable, dans la
+     grille (plus de largeur fixe ni de scroll-snap). Fond --green-800,
+     coins doux, fin liseré doré, texte contraste. */
   .temoignage-mini {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    flex: 0 0 auto;
-    width: min(80vw, 18.5rem);
-    min-height: 15rem;
-    padding: 1.75rem;
+    width: 100%;
+    min-height: 13rem;
+    padding: 1.6rem;
     text-align: left;
     background-color: var(--green-800);
     border: 1px solid rgba(201, 162, 75, 0.2);
     border-radius: 18px;
-    scroll-snap-align: start;
     cursor: pointer;
     transition:
       transform 400ms var(--ease),
@@ -265,8 +353,8 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
     font-family: var(--font-display);
     font-optical-sizing: auto;
     font-weight: 600;
-    font-size: 1.35rem;
-    line-height: 1.2;
+    font-size: 1.2rem;
+    line-height: 1.24;
     letter-spacing: -0.01em;
     color: var(--on-dark);
     opacity: 0.92;
@@ -423,6 +511,35 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
     transform: rotate(-45deg);
   }
 
+  /* ---- Responsive du mur ---- */
+
+  /* Tablette : la vedette passe pleine largeur en tete, les 4 exemples
+     se rangent en dessous sur deux colonnes. Plus de span de rangees. */
+  @media (max-width: 1023px) {
+    .temoignages-mur {
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: auto;
+    }
+    .temoignage-vedette {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+  }
+
+  /* Mobile : une seule colonne, empilement propre. La vedette (vrai avis)
+     reste en tete, les exemples suivent. Aucun scroll horizontal. */
+  @media (max-width: 639px) {
+    .temoignages-mur {
+      grid-template-columns: 1fr;
+    }
+    .temoignage-vedette {
+      grid-column: 1;
+    }
+    .temoignage-mini {
+      min-height: 0;
+    }
+  }
+
   /* Reduced motion : on coupe les transitions d'ouverture. */
   @media (prefers-reduced-motion: reduce) {
     .temoignage-modale-fond,
@@ -444,9 +561,9 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
      sur la croix, ou via la touche Echap. Le focus revient sur la
      carte d'origine a la fermeture (accessibilite).
 
-     Le defilement horizontal des mini-cartes est un scroll natif
-     (CSS overflow-x + scroll-snap), independant du scroll vertical :
-     aucune interference avec Lenis.
+     La carte vedette (Titouan, index 0) affiche son detail directement
+     et n'est pas cliquable : seules les mini-cartes exemples ouvrent la
+     modale. Le mur est une grille statique, aucun scroll lateral.
      ============================================================ */
   type Temoignage = {
     type: string;

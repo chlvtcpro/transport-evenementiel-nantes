@@ -24,27 +24,34 @@
   Logos charges dynamiquement : tout fichier image depose dans
   public/logos/clients/ apparait automatiquement sur le globe.
 */
-import { readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Eyebrow from './Eyebrow.astro';
 
-// Extensions image acceptees pour un logo.
-const EXTENSIONS = new Set([
-  '.svg',
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.webp',
-  '.avif',
-]);
-
-// Lit dynamiquement tous les logos presents dans public/logos/clients.
-// Nom de fichier -> alt lisible (sans extension, tirets/underscores en
-// espaces, capitalise). Ordre stable (tri alphabetique) pour un rendu
-// deterministe entre les builds.
-const clientsDir = fileURLToPath(
-  new URL('../../public/logos/clients', import.meta.url)
+// Logos clients : importes depuis src/assets pour passer par le PIPELINE
+// D'IMAGES d'Astro. Les sources brutes (jusqu'a 500 Ko en JPG) etaient
+// servies telles quelles depuis public/ : sur mobile, 43 fichiers lourds
+// en lazy load = affichage un par un sur 20 a 40 s. Ici on genere une
+// version WebP legere et redimensionnee (les tuiles font ~90 px de large,
+// inutile de servir de la haute resolution), et on charge tout en eager :
+// tous les logos apparaissent quasi instantanement.
+//
+// Deposer un logo = ajouter un fichier dans src/assets/logos/clients/ :
+// le glob le prend automatiquement au prochain build.
+const modules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/logos/clients/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true }
 );
+// Les SVG sont vectoriels et deja tres legers : on les importe en URL brute
+// (pas de rasterisation, ils restent nets a toute taille).
+const svgModules = import.meta.glob<string>(
+  '../assets/logos/clients/*.svg',
+  { eager: true, import: 'default', query: '?url' }
+);
+
+function nomDepuisChemin(chemin: string): string {
+  return chemin.split('/').pop() ?? chemin;
+}
 
 function altDepuisFichier(nom: string): string {
   const base = nom.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
@@ -55,18 +62,30 @@ function altDepuisFichier(nom: string): string {
     .join(' ');
 }
 
-let fichiers: string[] = [];
-try {
-  fichiers = readdirSync(clientsDir)
-    .filter((nom) => {
-      const point = nom.lastIndexOf('.');
-      if (point < 0) return false;
-      return EXTENSIONS.has(nom.slice(point).toLowerCase());
-    })
-    .sort((a, b) => a.localeCompare(b, 'fr'));
-} catch {
-  fichiers = [];
-}
+// Largeur cible d'un logo optimise. La plus grande tuile (desktop) fait
+// ~5.4rem = ~86 px ; en x2 pour les ecrans retina on vise ~200 px. WebP
+// pour un poids minimal avec transparence.
+const LOGO_WIDTH = 200;
+
+// Construit la liste unifiee { nom, src } : rasters optimises + SVG bruts.
+type LogoSource = { nom: string; src: string };
+const sourcesRaster: LogoSource[] = await Promise.all(
+  Object.entries(modules).map(async ([chemin, mod]) => {
+    const optimise = await getImage({
+      src: mod.default,
+      width: LOGO_WIDTH,
+      format: 'webp',
+    });
+    return { nom: nomDepuisChemin(chemin), src: optimise.src };
+  })
+);
+const sourcesSvg: LogoSource[] = Object.entries(svgModules).map(
+  ([chemin, url]) => ({ nom: nomDepuisChemin(chemin), src: url })
+);
+
+const fichiers = [...sourcesRaster, ...sourcesSvg].sort((a, b) =>
+  a.nom.localeCompare(b.nom, 'fr')
+);
 
 // Positions sur la sphere : spirale de Fibonacci. Pour chaque logo i, on
 // calcule un point uniformement reparti sur la sphere unite, converti en
@@ -75,7 +94,7 @@ try {
 // billboarding s'en sert pour recomposer la position et contre-orienter.
 const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // angle d'or
 
-const logos = fichiers.map((nom, i) => {
+const logos = fichiers.map((fichier, i) => {
   const n = fichiers.length;
   // y de 1 a -1 (haut vers bas), rayon du cercle a cette latitude.
   const y = n > 1 ? 1 - (i / (n - 1)) * 2 : 0;
@@ -88,8 +107,8 @@ const logos = fichiers.map((nom, i) => {
   const phi = Math.atan2(x, z) * (180 / Math.PI); // deg
   const lat = Math.asin(y) * (180 / Math.PI); // deg
   return {
-    src: `/logos/clients/${nom}`,
-    alt: altDepuisFichier(nom),
+    src: fichier.src,
+    alt: altDepuisFichier(fichier.nom),
     phi: Number(phi.toFixed(2)),
     lat: Number(lat.toFixed(2)),
   };
@@ -137,7 +156,9 @@ const SOUS_TITRE =
                 <img
                   src={logo.src}
                   alt={logo.alt}
-                  loading="lazy"
+                  width="200"
+                  height="200"
+                  loading="eager"
                   decoding="async"
                   class="globe-logo"
                 />
