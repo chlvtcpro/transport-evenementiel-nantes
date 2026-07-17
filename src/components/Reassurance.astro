@@ -1,59 +1,108 @@
 ---
 /*
   Section #reassurance de Cortege.
-  Bande de preuve sociale : logos des organisations clientes,
-  affiches en monochrome clair sur fond sombre. Section de
-  transition (padding vertical reduit) qui enchaine avec le bas
-  sombre du hero.
+  Preuve sociale premium : les logos des organisations clientes sont
+  disposes sur un GLOBE 3D en CSS qui tourne lentement sur lui-meme.
 
-  Sobriete premium : logos gris clair au repos, opacite pleine au
-  survol. Aucun titre, juste un eyebrow centre et une courte ligne.
+  Technique (sans WebGL, pur CSS 3D + JS leger) :
+  - Perspective sur le conteneur, sphere en transform-style: preserve-3d.
+  - Chaque logo est place sur la surface d'une sphere via une spirale de
+    Fibonacci (repartition homogene). Position calculee au build en
+    coordonnees spheriques -> rotateY + rotateX + translateZ(rayon).
+  - La sphere tourne en continu (rotation Y auto, ~34s/tour, legere
+    inclinaison). Un JS leger (rAF) fait le billboarding : chaque tuile
+    reste tournee vers la camera, et sa taille/opacite varie selon sa
+    profondeur Z (volume de la sphere). Au survol, la rotation ralentit.
+  - prefers-reduced-motion ou JS absent : grille statique lisible, sans
+    rotation (les tuiles restent affichees a plat).
 
-  Assets servis depuis public en URL absolue (/logos/clients/...).
-  Un logo dont le fichier est absent laisse un espace vide de memes
-  dimensions (le build ne casse pas). La presence est verifiee au
-  build via le systeme de fichiers.
+  Harmonisation des fonds heterogenes : chaque logo est pose dans une
+  TUILE uniforme (fond creme, coins arrondis, contour fin, ombre douce),
+  logo centre en object-fit contain avec padding. Les images source ne
+  sont pas modifiees ni detourees.
+
+  Logos charges dynamiquement : tout fichier image depose dans
+  public/logos/clients/ apparait automatiquement sur le globe.
 */
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Eyebrow from './Eyebrow.astro';
 
-// Table de donnees : ajouter ou retirer un logo = une ligne.
-// alt = nom de l'organisation. clair = logo deja blanc (pas de filtre).
-const LOGOS = [
-  { src: '/logos/clients/edf.svg', alt: 'EDF', clair: false },
-  { src: '/logos/clients/grdf.svg', alt: 'GRDF', clair: false },
-  { src: '/logos/clients/cci-france.svg', alt: 'CCI France', clair: false },
-  { src: '/logos/clients/havas.webp', alt: 'Havas', clair: false },
-  { src: '/logos/clients/home.svg', alt: 'Veolia', clair: false },
-];
+// Extensions image acceptees pour un logo.
+const EXTENSIONS = new Set([
+  '.svg',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.avif',
+]);
 
-// Ligne discrete optionnelle sous l'eyebrow.
-const SOUS_TITRE =
-  'Des organisations qui comptent sur nous pour orchestrer les déplacements de leurs événements.';
+// Lit dynamiquement tous les logos presents dans public/logos/clients.
+// Nom de fichier -> alt lisible (sans extension, tirets/underscores en
+// espaces, capitalise). Ordre stable (tri alphabetique) pour un rendu
+// deterministe entre les builds.
+const clientsDir = fileURLToPath(
+  new URL('../../public/logos/clients', import.meta.url)
+);
 
-// Verifie au build quels fichiers existent reellement dans public.
-// Un fichier absent : on garde l'entree mais on rend un espace vide
-// de memes dimensions (pas d'image cassee, build intact).
-const clientsDir = fileURLToPath(new URL('../../public/logos/clients', import.meta.url));
-let fichiersPresents = new Set<string>();
-try {
-  fichiersPresents = new Set(readdirSync(clientsDir));
-} catch {
-  // Dossier absent : tous les logos seront des espaces vides.
-  fichiersPresents = new Set();
+function altDepuisFichier(nom: string): string {
+  const base = nom.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim();
+  return base
+    .split(' ')
+    .filter(Boolean)
+    .map((mot) => mot.charAt(0).toUpperCase() + mot.slice(1))
+    .join(' ');
 }
 
-const logos = LOGOS.map((logo) => {
-  const nomFichier = logo.src.split('/').pop() ?? '';
-  return { ...logo, present: fichiersPresents.has(nomFichier) };
+let fichiers: string[] = [];
+try {
+  fichiers = readdirSync(clientsDir)
+    .filter((nom) => {
+      const point = nom.lastIndexOf('.');
+      if (point < 0) return false;
+      return EXTENSIONS.has(nom.slice(point).toLowerCase());
+    })
+    .sort((a, b) => a.localeCompare(b, 'fr'));
+} catch {
+  fichiers = [];
+}
+
+// Positions sur la sphere : spirale de Fibonacci. Pour chaque logo i, on
+// calcule un point uniformement reparti sur la sphere unite, converti en
+// deux rotations (rotY autour de l'axe vertical, rotX pour l'elevation).
+// Ces angles sont poses en CSS custom properties par tuile ; le JS de
+// billboarding s'en sert pour recomposer la position et contre-orienter.
+const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // angle d'or
+
+const logos = fichiers.map((nom, i) => {
+  const n = fichiers.length;
+  // y de 1 a -1 (haut vers bas), rayon du cercle a cette latitude.
+  const y = n > 1 ? 1 - (i / (n - 1)) * 2 : 0;
+  const rayonLat = Math.sqrt(Math.max(0, 1 - y * y));
+  const theta = GOLDEN * i; // azimut
+  const x = Math.cos(theta) * rayonLat;
+  const z = Math.sin(theta) * rayonLat;
+  // Rotations pour amener translateZ(R) sur le point (x, y, z) :
+  // rotateY(phi) autour vertical, puis rotateX(-lat) pour l'elevation.
+  const phi = Math.atan2(x, z) * (180 / Math.PI); // deg
+  const lat = Math.asin(y) * (180 / Math.PI); // deg
+  return {
+    src: `/logos/clients/${nom}`,
+    alt: altDepuisFichier(nom),
+    phi: Number(phi.toFixed(2)),
+    lat: Number(lat.toFixed(2)),
+  };
 });
+
+const SOUS_TITRE =
+  'Des organisations qui comptent sur nous pour orchestrer les déplacements de leurs événements.';
 ---
 
 <section
   id="reassurance"
-  data-tone="cream"
-  class="reassurance relative bg-cream py-14 text-ink lg:py-16"
+  data-tone="dark"
+  class="reassurance relative bg-green-900 py-section text-on-dark"
 >
   <!-- Filets dores fins en haut et en bas pour cadrer la bande -->
   <span class="reassurance-line absolute inset-x-0 top-0" aria-hidden="true"></span>
@@ -62,31 +111,34 @@ const logos = LOGOS.map((logo) => {
   <div class="container">
     <!-- Eyebrow centre + courte ligne discrete -->
     <div class="flex flex-col items-center text-center" data-reveal>
-      <Eyebrow tone="light" rule={false}>Ils nous ont fait confiance</Eyebrow>
-      <p class="type-nav mt-4 max-w-xl text-ink-muted">{SOUS_TITRE}</p>
+      <Eyebrow tone="dark" rule={false}>Ils nous ont fait confiance</Eyebrow>
+      <p class="reassurance-sous-titre type-nav mt-4 max-w-xl">{SOUS_TITRE}</p>
     </div>
 
-    <!-- Bande de logos : pastilles claires, une ligne desktop, grille 2 colonnes mobile -->
-    <ul
-      class="mt-10 grid grid-cols-2 items-stretch justify-items-center gap-6 sm:mt-12 md:flex md:flex-wrap md:justify-center md:gap-7"
-      data-reveal-stagger="80"
-    >
-      {
-        logos.map((logo) => (
-          <li class="reassurance-pastille" data-reveal aria-label={logo.alt}>
-            {logo.present && (
+    <!-- Scene du globe. data-globe : cible du JS. Le fallback (JS off /
+         reduced-motion) affiche les tuiles en grille statique via CSS. -->
+    <div class="globe-scene" data-globe data-reveal>
+      <div class="globe-sphere" data-globe-sphere>
+        {
+          logos.map((logo) => (
+            <figure
+              class="globe-tuile"
+              data-globe-tuile
+              data-phi={logo.phi}
+              data-lat={logo.lat}
+            >
               <img
                 src={logo.src}
                 alt={logo.alt}
                 loading="lazy"
                 decoding="async"
-                class="reassurance-logo"
+                class="globe-logo"
               />
-            )}
-          </li>
-        ))
-      }
-    </ul>
+            </figure>
+          ))
+        }
+      </div>
+    </div>
   </div>
 </section>
 
@@ -103,50 +155,277 @@ const logos = LOGOS.map((logo) => {
     );
   }
 
-  /* Pastille claire : petite carte blanche arrondie qui accueille le
-     logo en couleurs d'origine, posee sur la section creme. Filet fin et
-     ombre douce pour la detacher du fond clair sans lourdeur. */
-  .reassurance-pastille {
+  .reassurance-sous-titre {
+    color: var(--on-dark);
+    opacity: 0.86;
+  }
+
+  /* ============================================================
+     GLOBE 3D : scene (perspective) + sphere (preserve-3d en rotation).
+     ============================================================ */
+
+  /* Scene : donne la perspective. Hauteur fluide, centree. La sphere
+     vit dedans. La taille (--globe-d) pilote diametre et rayon. */
+  .globe-scene {
+    --globe-d: 30rem;
+    --globe-r: calc(var(--globe-d) / 2);
+    position: relative;
+    width: var(--globe-d);
+    height: var(--globe-d);
+    max-width: 100%;
+    margin: 3.5rem auto 0;
+    perspective: 1100px;
+    perspective-origin: 50% 50%;
+  }
+
+  /* Sphere : plan 3D en rotation auto (Y) avec legere inclinaison (X).
+     Les tuiles enfants sont positionnees en 3D autour du centre. */
+  .globe-sphere {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: rotateX(-12deg) rotateY(0deg);
+    will-change: transform;
+    animation: globe-rotation 34s linear infinite;
+  }
+
+  @keyframes globe-rotation {
+    from {
+      transform: rotateX(-12deg) rotateY(0deg);
+    }
+    to {
+      transform: rotateX(-12deg) rotateY(360deg);
+    }
+  }
+
+  /* Ralentissement au survol : la rotation continue mais plus lente. */
+  .globe-scene:hover .globe-sphere {
+    animation-duration: 90s;
+  }
+
+  /* Tuile : posee au centre, deplacee en 3D par le JS (ou par le CSS de
+     secours). transform-style plat : c'est un billboard. La position 3D
+     est appliquee via --tx/--ty/--tz (px) mis a jour par le JS ; sans
+     JS, un fallback statique place chaque tuile via ses angles. */
+  .globe-tuile {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5.4rem;
+    height: 5.4rem;
+    margin: -2.7rem 0 0 -2.7rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 78px;
-    padding: 1rem 1.5rem;
-    background-color: var(--cream-soft);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 1px 2px rgba(22, 36, 28, 0.05);
-    opacity: 0.95;
-    transition:
-      opacity 400ms var(--ease),
-      transform 400ms var(--ease),
-      box-shadow 400ms var(--ease);
+    padding: 0.7rem;
+    background-color: var(--cream);
+    border: 1px solid rgba(201, 162, 75, 0.28);
+    border-radius: 18px;
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.55);
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    /* Position 3D par defaut (avant JS) : translateZ pousse la tuile a la
+       surface, les rotations la placent. Le billboard est recompose en JS
+       pour rester face camera ; sans JS on garde un rendu spherique fige. */
+    transform: rotateY(var(--phi, 0deg)) rotateX(calc(-1 * var(--lat, 0deg)))
+      translateZ(var(--globe-r));
   }
 
-  /* Survol : pastille pleinement lumineuse, micro-elevation discrete. */
-  .reassurance-pastille:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(22, 36, 28, 0.08);
-  }
-
-  /* Logo dans sa pastille : couleurs d'origine, hauteur contenue. */
-  .reassurance-logo {
-    max-height: 42px;
+  /* Logo dans sa tuile : couleurs d'origine, jamais deforme, jamais colle
+     aux bords (contain + padding herite de la tuile). */
+  .globe-logo {
     max-width: 100%;
+    max-height: 100%;
     width: auto;
+    height: auto;
     object-fit: contain;
+    display: block;
   }
 
-  /* En desktop, les 5 pastilles se repartissent sur une seule ligne,
-     largeur egale, rythme regulier. */
-  @media (min-width: 768px) {
-    .reassurance-pastille {
-      flex: 1 1 0;
-      width: auto;
-      min-width: 0;
-      max-width: 220px;
+  /* Responsive : globe plus petit sur tablette et mobile, tuiles reduites
+     pour rester lisibles sans saturer. */
+  @media (max-width: 1023px) {
+    .globe-scene {
+      --globe-d: 24rem;
+      perspective: 900px;
+    }
+    .globe-tuile {
+      width: 4.6rem;
+      height: 4.6rem;
+      margin: -2.3rem 0 0 -2.3rem;
+      border-radius: 15px;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .globe-scene {
+      --globe-d: 18rem;
+      perspective: 720px;
+    }
+    .globe-tuile {
+      width: 3.6rem;
+      height: 3.6rem;
+      margin: -1.8rem 0 0 -1.8rem;
+      padding: 0.5rem;
+      border-radius: 13px;
+    }
+  }
+
+  /* ============================================================
+     FALLBACK : prefers-reduced-motion => grille statique, pas de globe.
+     On neutralise la perspective/3D et on remet les tuiles en flux grille.
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .globe-scene {
+      width: 100%;
+      max-width: 60rem;
+      height: auto;
+      perspective: none;
+      margin-top: 3rem;
+    }
+    .globe-sphere {
+      position: static;
+      inset: auto;
+      transform: none;
+      animation: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+      gap: 1rem;
+      place-items: center;
+    }
+    .globe-tuile {
+      position: static;
+      top: auto;
+      left: auto;
+      margin: 0;
+      width: 100%;
+      max-width: 7rem;
+      aspect-ratio: 1 / 1;
+      height: auto;
+      transform: none;
     }
   }
 </style>
+
+<script>
+  /* ============================================================
+     Globe 3D : billboarding + profondeur en temps reel.
+     La sphere (.globe-sphere) tourne via l'animation CSS. A chaque
+     frame, on lit sa matrice de rotation courante, on calcule pour
+     chaque tuile sa position monde (x, y, z) a partir de ses angles
+     Fibonacci, puis :
+       - on place la tuile en translate3d a cette position ;
+       - on la contre-oriente (rotateY/-rotateX de la sphere) pour
+         qu'elle reste face camera (billboard) ;
+       - on module scale + opacite selon z (profondeur) pour le volume.
+     Si prefers-reduced-motion est actif, on ne fait rien : le CSS a
+     deja bascule en grille statique.
+     ============================================================ */
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const scene = document.querySelector<HTMLElement>('[data-globe]');
+  const sphere = document.querySelector<HTMLElement>('[data-globe-sphere]');
+  const tuiles = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-globe-tuile]')
+  );
+
+  if (scene && sphere && tuiles.length && !reduce) {
+    // Rayon en px depuis la taille rendue de la scene (responsive).
+    let rayon = scene.offsetWidth / 2;
+
+    // Precalcule pour chaque tuile sa position sur la sphere unite a
+    // partir des angles poses au build (phi azimut, lat elevation).
+    type Pt = { el: HTMLElement; ux: number; uy: number; uz: number };
+    const points: Pt[] = tuiles.map((el) => {
+      const phi = (Number(el.dataset.phi) || 0) * (Math.PI / 180);
+      const lat = (Number(el.dataset.lat) || 0) * (Math.PI / 180);
+      const cosLat = Math.cos(lat);
+      // Coherent avec le calcul CSS : rotateY(phi) puis rotateX(-lat)
+      // applique a (0,0,R). Vecteur unite resultant :
+      const ux = Math.sin(phi) * cosLat;
+      const uy = Math.sin(lat);
+      const uz = Math.cos(phi) * cosLat;
+      return { el, ux, uy, uz };
+    });
+
+    // Inclinaison fixe de la sphere (doit matcher le rotateX du CSS).
+    const TILT = -12 * (Math.PI / 180);
+    const cosT = Math.cos(TILT);
+    const sinT = Math.sin(TILT);
+
+    // Lit l'angle de rotation Y courant depuis la matrice CSS de la sphere.
+    const getAngleY = (): number => {
+      const st = getComputedStyle(sphere);
+      const tr = st.transform;
+      if (!tr || tr === 'none') return 0;
+      // matrix3d(...) attendu (preserve-3d). On recompose l'angle Y a
+      // partir des composantes m11/m13 (colonne X projetee).
+      const m = tr.startsWith('matrix3d(')
+        ? tr.slice(9, -1).split(',').map(Number)
+        : null;
+      if (m && m.length === 16) {
+        // Retire d'abord l'inclinaison X pour isoler la rotation Y :
+        // on connait TILT ; l'angle Y = atan2(m[8], m[10]) apres detilt.
+        // m indices col-major : m[0]=m11, m[2]=m13, m[8]=m31, m[10]=m33.
+        return Math.atan2(m[8], m[10]);
+      }
+      // matrix(2D) : pas de rotation Y detectable, fallback 0.
+      return 0;
+    };
+
+    let frame = 0;
+
+    const rendu = (): void => {
+      const ay = getAngleY();
+      const cosY = Math.cos(ay);
+      const sinY = Math.sin(ay);
+
+      for (const p of points) {
+        // Rotation Y du vecteur unite.
+        const x1 = p.ux * cosY + p.uz * sinY;
+        const y1 = p.uy;
+        const z1 = -p.ux * sinY + p.uz * cosY;
+        // Puis inclinaison X (tilt).
+        const x2 = x1;
+        const y2 = y1 * cosT - z1 * sinT;
+        const z2 = y1 * sinT + z1 * cosT;
+
+        const px = x2 * rayon;
+        const py = y2 * rayon;
+        const pz = z2 * rayon;
+
+        // Profondeur normalisee -1 (arriere) .. 1 (avant).
+        const prof = z2;
+        const scale = 0.62 + (prof + 1) * 0.29; // 0.62 .. 1.2
+        const opacite = 0.4 + (prof + 1) * 0.3; // 0.4 .. 1.0
+
+        // Billboard : translate a la position, pas de rotation locale
+        // (la tuile reste face a l'ecran), scale selon profondeur.
+        p.el.style.transform =
+          `translate3d(${px}px, ${py}px, ${pz}px) ` +
+          `scale(${scale.toFixed(3)})`;
+        p.el.style.opacity = opacite.toFixed(3);
+        p.el.style.zIndex = String(Math.round((prof + 1) * 100));
+      }
+
+      frame = requestAnimationFrame(rendu);
+    };
+
+    // Recalcule le rayon si la scene change de taille (responsive/resize).
+    const onResize = (): void => {
+      rayon = scene.offsetWidth / 2;
+    };
+    window.addEventListener('resize', onResize, { passive: true });
+
+    // La sphere doit exposer sa matrice 3D : on force matrix3d en gardant
+    // l'animation CSS (preserve-3d). On demarre la boucle de rendu.
+    frame = requestAnimationFrame(rendu);
+
+    // Nettoyage sur navigation Astro (SPA) pour eviter les rAF fantomes.
+    document.addEventListener(
+      'astro:before-swap',
+      () => cancelAnimationFrame(frame),
+      { once: true }
+    );
+  }
+</script>

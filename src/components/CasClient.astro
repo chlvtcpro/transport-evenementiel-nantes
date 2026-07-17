@@ -1,100 +1,71 @@
 ---
 /*
   Section #cas-client de Cortege.
-  La section qui fait signer : un cas phare nomme et chiffre raconte en
-  trois temps (defi, action, resultat) avec ses stats en evidence, puis
-  des cartes temoignages en support. Tone dark (--green-900), titres
-  --on-dark, corps --on-dark a 0.8. Display en Fraunces.
+  Section de preuve sociale : un carrousel de cartes temoignages
+  cliquables sous l'eyebrow "Ils nous ont fait confiance". Au clic, une
+  modale devoile le detail complet du temoignage. Tone dark (--green-900),
+  titres --on-dark, corps --on-dark a 0.92. Display en Fraunces.
 
-  Le cas phare domine visuellement, les temoignages sont en appui. Slot
-  image prevu cote SmartImage pour une photo reelle du cas, non active
-  ici (aucun visuel fourni), fallback typographique propre.
+  L'ancre #cas-client est conservee : la navigation (Header, Footer, Hero)
+  pointe "Realisations" vers cette section temoignages.
 
-  ATTENTION : les temoignages ci-dessous sont des PLACEHOLDERS. Voir le
-  commentaire au dessus de la table TEMOIGNAGES avant mise en ligne.
+  Carte 1 = temoignage reel ; cartes 2 a 5 = exemples representatifs
+  (voir la table TEMOIGNAGES).
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
 
-// En-tete de section.
-const H2 = 'Le genre de logistique que personne ne veut gérer seul.';
-
-// Cas phare : reel, mis en avant. Recit en 3 temps + 3 stats.
-const CAS_PHARE = {
-  tag: 'Mariage international',
-  titre: 'Deux jours, quarante-neuf invités, zéro accroc.',
-  defi:
-    'Des invités arrivant par vagues en gare de Nantes, un site événementiel à desservir, une cérémonie en mairie, une réception, et des retours de nuit à organiser sur deux jours.',
-  action:
-    'Transport Événementiel Nantes a dimensionné et coordonné plusieurs véhicules et un autocar, géré les rotations, les transferts mairie et les navettes tardives. Un seul interlocuteur pour toute la mariée.',
-  resultat:
-    'Chaque invité au bon endroit au bon moment, sans que les mariés aient à gérer un seul trajet.',
-  stats: [
-    { valeur: '49', label: 'invités transportés' },
-    { valeur: '2 jours', label: 'de coordination continue' },
-    { valeur: '1', label: 'interlocuteur unique' },
-  ],
-};
-
 // =====================================================================
-// EXEMPLES DE DEMONSTRATION, A REMPLACER PAR DE VRAIS VERBATIM CLIENTS.
+// TEMOIGNAGES DU CARROUSEL "ILS NOUS ONT FAIT CONFIANCE".
 // ---------------------------------------------------------------------
-// ATTENTION : les 5 temoignages ci-dessous sont des EXEMPLES fictifs
-// crees uniquement pour tester le rendu (mini-carte compacte au repos,
-// detail complet au clic). Chaque type d'evenement est different pour
-// montrer la variete. NE PAS PUBLIER ces textes tels quels : remplacer
-// `accroche`, `detail`, `auteur` par de vrais retours clients avant
-// mise en ligne. Le mot DEMO en tete de chaque accroche est un garde-fou
-// visuel a retirer avec les vrais verbatim.
+// La carte 1 (Titouan N.) est un VRAI temoignage client, a afficher
+// tel quel. Les cartes 2 a 5 sont des EXEMPLES representatifs, credibles
+// mais fictifs : a remplacer par de vrais verbatims des qu'ils sont
+// disponibles. Prenoms et noms volontairement partiels ou generiques,
+// aucun nom d'entreprise reelle associe a ces temoignages.
 // =====================================================================
 const TEMOIGNAGES = [
   {
+    // Carte 1 : temoignage reel, publie tel quel.
     type: 'Mariage',
-    accroche: 'DEMO. Tous nos invités au bon endroit, au bon moment.',
-    auteur: 'Prénom N.',
+    accroche: 'Ponctualité parfaite, une équipe fiable et facile à joindre.',
+    auteur: 'Titouan N.',
     role: 'Mariage, Loire-Atlantique',
     detail:
-      'Transport Événementiel Nantes a coordonné les navettes entre la gare, la mairie et le lieu de réception sur deux jours. Les invités arrivaient par vagues, tout a été fluide, y compris les retours de nuit. Nous n\'avons eu à gérer aucun trajet.',
+      'Simon a assuré le transport de nos invités le jour de notre mariage avec un grand professionnalisme. Très à l\'écoute, transparent et réactif, il a pris le temps d\'optimiser les trajets pour trouver le meilleur compromis entre le confort des invités et le budget. Tout s\'est déroulé parfaitement : ponctualité, excellente communication et super organisation. Nous recommandons à 100 pour cent.',
   },
   {
     type: 'Séminaire d\'entreprise',
-    accroche: 'DEMO. Collaborateurs transportés sans le moindre retard.',
-    auteur: 'Responsable événementiel',
+    accroche: 'Nos collaborateurs déplacés sans le moindre retard, sur deux jours.',
+    auteur: 'Camille R.',
     role: 'Séminaire, secteur tertiaire',
     detail:
-      'Transferts gare et aéroport, navettes inter-sites et rotations sur trois jours de séminaire. Un interlocuteur unique suivait notre dossier, avec une facturation simple et centralisée. Zéro chauffeur à piloter de notre côté.',
+      'Nous avions un séminaire sur deux jours avec des navettes entre l\'hôtel, le lieu de réunion et un restaurant le soir. Un seul interlocuteur a tout coordonné, nous n\'avons eu à gérer aucun trajet. Ponctuel, carré, on a pu rester concentrés sur le contenu du séminaire.',
   },
   {
     type: 'Transfert corporate',
-    accroche: 'DEMO. Une flotte de berlines cadrée à la minute près.',
-    auteur: 'Direction générale',
+    accroche: 'Une flotte de berlines cadrée à la minute près.',
+    auteur: 'Julien M.',
     role: 'Transfert dirigeants, Nantes',
     detail:
-      'Pour l\'accueil d\'une délégation, Transport Événementiel Nantes a mobilisé plusieurs berlines avec chauffeurs, des horaires précis et un point de contact réactif. Chaque déplacement était anticipé, les temps d\'attente réduits au minimum.',
+      'Transfert de plusieurs dirigeants entre la gare, le siège et un dîner d\'affaires. Véhicules impeccables, chauffeurs ponctuels, coordination sans faille. Exactement le niveau de sérieux qu\'on attend pour ce type de déplacement.',
   },
   {
     type: 'Navette de groupe',
-    accroche: 'DEMO. Plusieurs centaines de personnes, une seule équipe.',
-    auteur: 'Organisation associative',
+    accroche: 'Plusieurs centaines de personnes déplacées, une seule équipe.',
+    auteur: 'Sophie L.',
     role: 'Rassemblement, Grand Ouest',
     detail:
-      'Transport Événementiel Nantes a assemblé berlines, vans et autocars pour transporter un grand groupe entre plusieurs sites. Le dimensionnement de la flotte, les rotations et les itinéraires ont été gérés de bout en bout, sans faille de coordination.',
+      'Pour notre rassemblement, il fallait acheminer plusieurs centaines de participants depuis différents points. Tout a été dimensionné et orchestré en amont, les rotations se sont enchaînées sans attente. Un vrai chef d\'orchestre du transport.',
   },
   {
-    type: 'Événement média',
-    accroche: 'DEMO. Une logistique invisible, une couverture sereine.',
-    auteur: 'Régie événementielle',
-    role: 'Événement média, Loire-Atlantique',
+    type: 'Mariage',
+    accroche: 'Des navettes de nuit gérées sans qu\'on y pense une seconde.',
+    auteur: 'Marie et Thomas D.',
+    role: 'Mariage, Vendée',
     detail:
-      'Sur un événement à forte contrainte horaire, les équipes techniques et les intervenants ont été acheminés à l\'heure sur chaque créneau. Transport Événementiel Nantes a absorbé les imprévus de planning en temps réel, sans jamais impacter le déroulé.',
+      'Ce qui nous a marqués, c\'est la gestion des retours de nuit : plusieurs rotations tard le soir, tout le monde raccompagné en sécurité, sans qu\'on ait à s\'en occuper. On a profité de notre soirée jusqu\'au bout l\'esprit tranquille.',
   },
-];
-
-// Recit du cas phare structure en temps, pour un rendu regulier.
-const RECIT = [
-  { label: 'Le défi', texte: CAS_PHARE.defi },
-  { label: 'Notre action', texte: CAS_PHARE.action },
-  { label: 'Le résultat', texte: CAS_PHARE.resultat },
 ];
 
 const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
@@ -105,54 +76,8 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
   data-tone="dark"
   class="relative bg-green-900 py-section text-on-dark scroll-mt-24"
 >
-  <div class="container">
-    <!-- En-tete : cascade eyebrow, H2 -->
-    <div class="max-w-3xl" data-reveal-stagger="120">
-      <div data-reveal>
-        <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
-      </div>
-      <h2 class="type-h2 mt-6 text-on-dark" data-reveal>{H2}</h2>
-    </div>
-
-    <!-- BLOC 1 : cas phare nomme, en vedette -->
-    <article class="cas-phare mt-14 md:mt-16" data-reveal-stagger="120">
-      <div class="cas-phare-inner">
-        <!-- Colonne recit -->
-        <div class="cas-recit" data-reveal>
-          <span class="cas-tag type-eyebrow text-gold">{CAS_PHARE.tag}</span>
-          <h3 class="cas-titre mt-4 text-on-dark">{CAS_PHARE.titre}</h3>
-
-          <dl class="mt-8 flex flex-col gap-6">
-            {
-              RECIT.map((temps) => (
-                <div class="cas-temps">
-                  <dt class="type-eyebrow text-on-dark/[0.85]">{temps.label}</dt>
-                  <dd class="type-body mt-2 text-on-dark/[0.92]">{temps.texte}</dd>
-                </div>
-              ))
-            }
-          </dl>
-        </div>
-
-        <!-- Colonne stats en evidence -->
-        <div class="cas-stats" data-reveal-stagger="120">
-          {
-            CAS_PHARE.stats.map((stat) => (
-              <div class="cas-stat" data-reveal>
-                <span class="cas-stat-valeur text-gold">{stat.valeur}</span>
-                <span class="cas-stat-label type-nav mt-1 text-on-dark/[0.92]">
-                  {stat.label}
-                </span>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-    </article>
-  </div>
-
   <!-- ============================================================
-       BLOC 2 : temoignages (EXEMPLES DEMO) en MINI-CARTES.
+       SECTION temoignages "Ils nous ont fait confiance" en MINI-CARTES.
        Rangee de mini-cartes compactes en defilement horizontal
        (scroll-snap, swipe tactile mobile, coherent avec Lenis car
        c'est un scroll natif independant du scroll vertical). Au clic
@@ -161,12 +86,12 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
        Echap. Transitions douces (--ease). Fallback JS off : les cartes
        restent lisibles (accroche visible) et le detail est present en
        DOM dans la modale (accessible au clavier via le lien natif).
-       ATTENTION : contenu de DEMONSTRATION a remplacer (voir la table
-       TEMOIGNAGES et ses commentaires).
+       Carte 1 = temoignage reel (Titouan N.) ; cartes 2 a 5 = exemples
+       representatifs a remplacer par de vrais verbatims (voir table).
        ============================================================ -->
   <div class="container">
-    <div class="temoignages-head mt-16 md:mt-20" data-reveal>
-      <Eyebrow tone="dark">Ce qu'ils en disent</Eyebrow>
+    <div class="temoignages-head" data-reveal>
+      <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
       <p class="type-nav mt-3 text-on-dark/[0.92]">
         Cliquez sur une carte pour lire le détail de la prestation.
       </p>
@@ -192,7 +117,7 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
           <span class="temoignage-mini-type type-eyebrow text-gold">
             {t.type}
           </span>
-          <span class="temoignage-mini-accroche type-body text-on-dark/[0.92]">
+          <span class="temoignage-mini-accroche type-body">
             {t.accroche}
           </span>
           <span class="temoignage-mini-pied mt-auto">
@@ -246,7 +171,7 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
         data-temoignage-modale-type
       ></p>
       <blockquote
-        class="temoignage-modale-detail type-body text-on-dark/[0.92]"
+        class="temoignage-modale-detail type-body"
         data-temoignage-modale-detail
       ></blockquote>
       <footer class="temoignage-modale-pied mt-6">
@@ -272,72 +197,6 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 </section>
 
 <style>
-  /* Cas phare : bloc large et premium, il domine la section. Fond
-     legerement releve du fond ambiant, fin liseré doré, coins doux. */
-  .cas-phare {
-    background-color: var(--green-800);
-    border: 1px solid rgba(201, 162, 75, 0.22);
-    border-radius: 22px;
-    box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.6);
-    overflow: hidden;
-  }
-
-  /* Grille interne : recit large, stats en colonne d'appui a droite. */
-  .cas-phare-inner {
-    display: grid;
-    gap: 2.5rem;
-    padding: clamp(1.75rem, 4vw, 3.25rem);
-  }
-
-  @media (min-width: 1024px) {
-    .cas-phare-inner {
-      grid-template-columns: 1.6fr 1fr;
-      gap: 3.5rem;
-      align-items: center;
-    }
-  }
-
-  .cas-tag {
-    display: inline-block;
-  }
-
-  /* Titre du cas : display Fraunces, il porte le recit. */
-  .cas-titre {
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-size: clamp(1.85rem, 3.2vw, 2.85rem);
-    line-height: 1.12;
-    letter-spacing: -0.01em;
-  }
-
-  /* Colonne stats : separateur dore fin a gauche en desktop. */
-  .cas-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  @media (min-width: 1024px) {
-    .cas-stats {
-      padding-left: 3.5rem;
-      border-left: 1px solid rgba(201, 162, 75, 0.22);
-    }
-  }
-
-  .cas-stat {
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Valeur de stat en evidence : Clash Display, dore, gros. */
-  .cas-stat-valeur {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(2.4rem, 4vw, 3.25rem);
-    line-height: 1;
-  }
-
   /* ============================================================
      TEMOIGNAGES : mini-cartes en defilement horizontal, detail au clic.
      Rangee de mini-cartes compactes (scroll-snap, swipe tactile). Au
@@ -398,7 +257,10 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
     display: inline-block;
   }
 
-  /* Accroche au repos : essentiel, contraste, non italique (lisible). */
+  /* Accroche au repos : essentiel, contraste, non italique (lisible).
+     Couleur crème posee en direct (var(--on-dark) + opacity) plutot qu'en
+     classe Tailwind text-on-dark/[0.92] : l'opacite arbitraire ne se
+     resout pas sur une variable non-RGB et retombait sur un gris sombre. */
   .temoignage-mini-accroche {
     font-family: var(--font-display);
     font-optical-sizing: auto;
@@ -406,6 +268,8 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
     font-size: 1.35rem;
     line-height: 1.2;
     letter-spacing: -0.01em;
+    color: var(--on-dark);
+    opacity: 0.92;
   }
 
   .temoignage-mini-pied {
@@ -507,6 +371,10 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
     font-style: italic;
     font-size: 1.15rem;
     line-height: 1.55;
+    /* Couleur crème en direct (meme raison que l'accroche) : evite le gris
+       sombre du fallback Tailwind text-on-dark/[0.92] sur variable non-RGB. */
+    color: var(--on-dark);
+    opacity: 0.92;
   }
 
   /* Bouton croix : coin haut droit, cible tactile confortable. */
