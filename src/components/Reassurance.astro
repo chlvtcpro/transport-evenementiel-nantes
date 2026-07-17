@@ -117,7 +117,7 @@ const SOUS_TITRE =
       <!-- Colonne editoriale : eyebrow, titre fort, texte premium.
            Centree verticalement en regard du globe. -->
       <div class="reassurance-edito" data-reveal>
-        <Eyebrow tone="dark" rule={false}>Ils nous ont fait confiance</Eyebrow>
+        <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
         <h2 class="reassurance-titre">{TITRE}</h2>
         <p class="reassurance-sous-titre type-body">{SOUS_TITRE}</p>
       </div>
@@ -218,29 +218,20 @@ const SOUS_TITRE =
     perspective-origin: 50% 50%;
   }
 
-  /* Sphere : plan 3D en rotation auto (Y) avec legere inclinaison (X).
-     Les tuiles enfants sont positionnees en 3D autour du centre. */
+  /* Sphere : conteneur 3D statique, legerement incline (X). La rotation
+     n'est PAS pilotee par le CSS mais par le JS (billboarding fiable sur
+     tout appareil). Chaque tuile enfant recoit sa transform complete par
+     frame ; le conteneur reste fixe pour ne pas doubler la rotation. */
   .globe-sphere {
     position: absolute;
     inset: 0;
     transform-style: preserve-3d;
-    transform: rotateX(-12deg) rotateY(0deg);
-    will-change: transform;
-    animation: globe-rotation 34s linear infinite;
+    will-change: contents;
   }
 
-  @keyframes globe-rotation {
-    from {
-      transform: rotateX(-12deg) rotateY(0deg);
-    }
-    to {
-      transform: rotateX(-12deg) rotateY(360deg);
-    }
-  }
-
-  /* Rotation 100% automatique et continue : aucune interaction souris.
-     Le survol ne modifie ni la vitesse ni l'etat de l'animation, pour
-     eviter tout saut ou disparition du globe au passage du curseur. */
+  /* Rotation 100% automatique et continue, pilotee en JS par une horloge
+     (34s le tour). Aucune interaction souris : le survol ne change rien,
+     pas de saut ni de disparition du globe. */
 
   /* Tuile : posee au centre, deplacee en 3D par le JS (ou par le CSS de
      secours). transform-style plat : c'est un billboard. La position 3D
@@ -429,30 +420,20 @@ const SOUS_TITRE =
     const cosT = Math.cos(TILT);
     const sinT = Math.sin(TILT);
 
-    // Lit l'angle de rotation Y courant depuis la matrice CSS de la sphere.
-    const getAngleY = (): number => {
-      const st = getComputedStyle(sphere);
-      const tr = st.transform;
-      if (!tr || tr === 'none') return 0;
-      // matrix3d(...) attendu (preserve-3d). On recompose l'angle Y a
-      // partir des composantes m11/m13 (colonne X projetee).
-      const m = tr.startsWith('matrix3d(')
-        ? tr.slice(9, -1).split(',').map(Number)
-        : null;
-      if (m && m.length === 16) {
-        // Retire d'abord l'inclinaison X pour isoler la rotation Y :
-        // on connait TILT ; l'angle Y = atan2(m[8], m[10]) apres detilt.
-        // m indices col-major : m[0]=m11, m[2]=m13, m[8]=m31, m[10]=m33.
-        return Math.atan2(m[8], m[10]);
-      }
-      // matrix(2D) : pas de rotation Y detectable, fallback 0.
-      return 0;
-    };
+    // Rotation Y pilotee par le temps (et non par lecture de la matrice CSS).
+    // Lire getComputedStyle(sphere) etait fragile sur mobile : certains
+    // navigateurs renvoient une matrice 2D (pas matrix3d), l'angle retombait
+    // a 0 et toutes les tuiles se figeaient l'une sur l'autre (logos
+    // invisibles). On calcule l'angle nous-memes, tour complet en 34s, sens
+    // identique au keyframe CSS. Deterministe, fonctionne sur tout appareil.
+    const DUREE = 34000; // 34s pour un tour, comme l'animation CSS.
+    const getAngleY = (now: number): number =>
+      ((now % DUREE) / DUREE) * Math.PI * 2;
 
     let frame = 0;
 
-    const rendu = (): void => {
-      const ay = getAngleY();
+    const rendu = (now: number): void => {
+      const ay = getAngleY(now);
       const cosY = Math.cos(ay);
       const sinY = Math.sin(ay);
 
@@ -479,17 +460,13 @@ const SOUS_TITRE =
         const scale = 0.9 + prof01 * 0.22; // 0.90 .. 1.12 (variation douce)
         const opacite = 0.82 + prof01 * 0.18; // 0.82 .. 1.0 (jamais efface)
 
-        // Billboard : la tuile est enfant de la sphere en preserve-3d, donc
-        // elle herite de sa rotation (rotateX(TILT) rotateY(ay)). On la
-        // contre-tourne (rotateY(-ay) rotateX(-TILT)) apres l'avoir placee,
-        // pour qu'elle reste toujours a plat, face camera, nette et lisible.
-        const ayDeg = (ay * 180) / Math.PI;
-        const tiltDeg = TILT * (180 / Math.PI);
+        // Billboard : la sphere parente n'a AUCUNE rotation (conteneur fixe),
+        // donc l'espace local de la tuile = l'espace monde. La position
+        // (px, py, pz) integre deja rotation Y et inclinaison X. On applique
+        // uniquement une translation + scale : la tuile reste naturellement
+        // a plat, face camera, nette et lisible, sans contre-rotation.
         p.el.style.transform =
-          `translate3d(${px}px, ${py}px, ${pz}px) ` +
-          `rotateY(${(-ayDeg).toFixed(3)}deg) ` +
-          `rotateX(${(-tiltDeg).toFixed(3)}deg) ` +
-          `scale(${scale.toFixed(3)})`;
+          `translate3d(${px}px, ${py}px, ${pz}px) scale(${scale.toFixed(3)})`;
         p.el.style.opacity = opacite.toFixed(3);
         p.el.style.zIndex = String(Math.round((prof + 1) * 100));
       }
@@ -498,20 +475,58 @@ const SOUS_TITRE =
     };
 
     // Recalcule le rayon si la scene change de taille (responsive/resize).
+    // On refait aussi un rendu immediat pour repositionner les tuiles a la
+    // nouvelle taille meme si la boucle est en pause (globe hors ecran).
     const onResize = (): void => {
       rayon = scene.offsetWidth / 2;
+      rendu(performance.now());
     };
     window.addEventListener('resize', onResize, { passive: true });
 
-    // La sphere doit exposer sa matrice 3D : on force matrix3d en gardant
-    // l'animation CSS (preserve-3d). On demarre la boucle de rendu.
-    frame = requestAnimationFrame(rendu);
+    // Demarrage / arret de la boucle. On garde une seule boucle active.
+    let actif = false;
+    const demarrer = (): void => {
+      if (actif) return;
+      actif = true;
+      frame = requestAnimationFrame(rendu);
+    };
+    const arreter = (): void => {
+      actif = false;
+      cancelAnimationFrame(frame);
+    };
+
+    // Premier rendu synchrone immediat : les tuiles sont placees en billboard
+    // des le chargement. Sans ca, tant que la boucle n'a pas tourne, elles
+    // restaient sur le fallback CSS (de profil, superposees) = logos
+    // invisibles sur mobile ou la section arrive sous la ligne de flottaison.
+    rendu(performance.now());
+
+    // La boucle ne tourne que quand le globe est visible (economie mobile).
+    // IntersectionObserver : demarre en entree de vue, met en pause en sortie.
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) demarrer();
+            else arreter();
+          }
+        },
+        { threshold: 0.01 }
+      );
+      io.observe(scene);
+    } else {
+      // Pas d'IO : on lance simplement la boucle.
+      demarrer();
+    }
+
+    // Onglet cache : on met en pause, on relance au retour (evite de perdre
+    // du temps et de figer un etat sur certains navigateurs mobiles).
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) arreter();
+      else demarrer();
+    });
 
     // Nettoyage sur navigation Astro (SPA) pour eviter les rAF fantomes.
-    document.addEventListener(
-      'astro:before-swap',
-      () => cancelAnimationFrame(frame),
-      { once: true }
-    );
+    document.addEventListener('astro:before-swap', arreter, { once: true });
   }
 </script>
