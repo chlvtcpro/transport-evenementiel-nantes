@@ -198,10 +198,9 @@ const SOUS_TITRE =
     }
   }
 
-  /* Ralentissement au survol : la rotation continue mais plus lente. */
-  .globe-scene:hover .globe-sphere {
-    animation-duration: 90s;
-  }
+  /* Rotation 100% automatique et continue : aucune interaction souris.
+     Le survol ne modifie ni la vitesse ni l'etat de l'animation, pour
+     eviter tout saut ou disparition du globe au passage du curseur. */
 
   /* Tuile : posee au centre, deplacee en 3D par le JS (ou par le CSS de
      secours). transform-style plat : c'est un billboard. La position 3D
@@ -222,7 +221,9 @@ const SOUS_TITRE =
     border: 1px solid rgba(201, 162, 75, 0.28);
     border-radius: 18px;
     box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.55);
-    backface-visibility: hidden;
+    /* backface visible : le billboard JS garde toujours la tuile face
+       camera, donc aucune tuile ne doit etre masquee par un dos cache. */
+    backface-visibility: visible;
     will-change: transform, opacity;
     /* Position 3D par defaut (avant JS) : translateZ pousse la tuile a la
        surface, les rotations la placent. Le billboard est recompose en JS
@@ -394,15 +395,25 @@ const SOUS_TITRE =
         const py = y2 * rayon;
         const pz = z2 * rayon;
 
-        // Profondeur normalisee -1 (arriere) .. 1 (avant).
+        // Profondeur normalisee -1 (arriere) .. 1 (avant). On garde juste
+        // un TRES leger volume : les logos du fond restent nets et bien
+        // visibles, ils ne s'effacent jamais. prof01 va de 0 (arriere) a
+        // 1 (avant).
         const prof = z2;
-        const scale = 0.62 + (prof + 1) * 0.29; // 0.62 .. 1.2
-        const opacite = 0.4 + (prof + 1) * 0.3; // 0.4 .. 1.0
+        const prof01 = (prof + 1) / 2;
+        const scale = 0.9 + prof01 * 0.22; // 0.90 .. 1.12 (variation douce)
+        const opacite = 0.82 + prof01 * 0.18; // 0.82 .. 1.0 (jamais efface)
 
-        // Billboard : translate a la position, pas de rotation locale
-        // (la tuile reste face a l'ecran), scale selon profondeur.
+        // Billboard : la tuile est enfant de la sphere en preserve-3d, donc
+        // elle herite de sa rotation (rotateX(TILT) rotateY(ay)). On la
+        // contre-tourne (rotateY(-ay) rotateX(-TILT)) apres l'avoir placee,
+        // pour qu'elle reste toujours a plat, face camera, nette et lisible.
+        const ayDeg = (ay * 180) / Math.PI;
+        const tiltDeg = TILT * (180 / Math.PI);
         p.el.style.transform =
           `translate3d(${px}px, ${py}px, ${pz}px) ` +
+          `rotateY(${(-ayDeg).toFixed(3)}deg) ` +
+          `rotateX(${(-tiltDeg).toFixed(3)}deg) ` +
           `scale(${scale.toFixed(3)})`;
         p.el.style.opacity = opacite.toFixed(3);
         p.el.style.zIndex = String(Math.round((prof + 1) * 100));
