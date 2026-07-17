@@ -95,8 +95,10 @@ const logos = fichiers.map((nom, i) => {
   };
 });
 
+const TITRE = 'Des marques exigeantes nous confient leurs déplacements.';
+
 const SOUS_TITRE =
-  'Des organisations qui comptent sur nous pour orchestrer les déplacements de leurs événements.';
+  "Entreprises, institutions et organisateurs d'événements s'appuient sur nous pour orchestrer le transport de leurs invités et de leurs collaborateurs. Chaque logo est une prestation menée sans accroc.";
 ---
 
 <section
@@ -109,34 +111,40 @@ const SOUS_TITRE =
   <span class="reassurance-line absolute inset-x-0 bottom-0" aria-hidden="true"></span>
 
   <div class="container">
-    <!-- Eyebrow centre + courte ligne discrete -->
-    <div class="flex flex-col items-center text-center" data-reveal>
-      <Eyebrow tone="dark" rule={false}>Ils nous ont fait confiance</Eyebrow>
-      <p class="reassurance-sous-titre type-nav mt-4 max-w-xl">{SOUS_TITRE}</p>
-    </div>
+    <!-- Deux colonnes sur desktop : editorial a gauche (~40%), globe a
+         droite (~60%). Empilees sur mobile (editorial puis globe). -->
+    <div class="reassurance-grid">
+      <!-- Colonne editoriale : eyebrow, titre fort, texte premium.
+           Centree verticalement en regard du globe. -->
+      <div class="reassurance-edito" data-reveal>
+        <Eyebrow tone="dark" rule={false}>Ils nous ont fait confiance</Eyebrow>
+        <h2 class="reassurance-titre">{TITRE}</h2>
+        <p class="reassurance-sous-titre type-body">{SOUS_TITRE}</p>
+      </div>
 
-    <!-- Scene du globe. data-globe : cible du JS. Le fallback (JS off /
-         reduced-motion) affiche les tuiles en grille statique via CSS. -->
-    <div class="globe-scene" data-globe data-reveal>
-      <div class="globe-sphere" data-globe-sphere>
-        {
-          logos.map((logo) => (
-            <figure
-              class="globe-tuile"
-              data-globe-tuile
-              data-phi={logo.phi}
-              data-lat={logo.lat}
-            >
-              <img
-                src={logo.src}
-                alt={logo.alt}
-                loading="lazy"
-                decoding="async"
-                class="globe-logo"
-              />
-            </figure>
-          ))
-        }
+      <!-- Scene du globe. data-globe : cible du JS. Le fallback (JS off /
+           reduced-motion) affiche les tuiles en grille statique via CSS. -->
+      <div class="globe-scene" data-globe data-reveal>
+        <div class="globe-sphere" data-globe-sphere>
+          {
+            logos.map((logo) => (
+              <figure
+                class="globe-tuile"
+                data-globe-tuile
+                data-phi={logo.phi}
+                data-lat={logo.lat}
+              >
+                <img
+                  src={logo.src}
+                  alt={logo.alt}
+                  loading="lazy"
+                  decoding="async"
+                  class="globe-logo"
+                />
+              </figure>
+            ))
+          }
+        </div>
       </div>
     </div>
   </div>
@@ -155,9 +163,41 @@ const SOUS_TITRE =
     );
   }
 
-  .reassurance-sous-titre {
+  /* Grille deux colonnes : editorial (~40%) + globe (~60%). Les colonnes
+     sont centrees verticalement l'une par rapport a l'autre pour equilibrer
+     la bande et supprimer le vide lateral autour du globe. */
+  .reassurance-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+    align-items: center;
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  /* Colonne editoriale : hierarchie eyebrow (500) > titre (700) > texte
+     (400). Textes crème bien contrastes sur le fond sombre. */
+  .reassurance-edito {
+    max-width: 34rem;
+  }
+
+  .reassurance-titre {
+    margin-top: 1.1rem;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: clamp(2rem, 3.4vw, 3rem);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
     color: var(--on-dark);
-    opacity: 0.86;
+    text-wrap: balance;
+  }
+
+  .reassurance-sous-titre {
+    margin-top: 1.4rem;
+    font-weight: 400;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--on-dark);
+    opacity: 0.9;
   }
 
   /* ============================================================
@@ -167,14 +207,14 @@ const SOUS_TITRE =
   /* Scene : donne la perspective. Hauteur fluide, centree. La sphere
      vit dedans. La taille (--globe-d) pilote diametre et rayon. */
   .globe-scene {
-    --globe-d: 30rem;
+    --globe-d: 38rem;
     --globe-r: calc(var(--globe-d) / 2);
     position: relative;
     width: var(--globe-d);
     height: var(--globe-d);
     max-width: 100%;
-    margin: 3.5rem auto 0;
-    perspective: 1100px;
+    margin: 0 auto;
+    perspective: 1250px;
     perspective-origin: 50% 50%;
   }
 
@@ -246,9 +286,21 @@ const SOUS_TITRE =
   /* Responsive : globe plus petit sur tablette et mobile, tuiles reduites
      pour rester lisibles sans saturer. */
   @media (max-width: 1023px) {
+    /* Sous 1024px : empilement propre. Editorial centre en haut, globe
+       dessous, chacun sur toute la largeur. */
+    .reassurance-grid {
+      grid-template-columns: 1fr;
+      gap: 0;
+      justify-items: center;
+      text-align: center;
+    }
+    .reassurance-edito {
+      max-width: 40rem;
+    }
     .globe-scene {
-      --globe-d: 24rem;
-      perspective: 900px;
+      --globe-d: 26rem;
+      perspective: 950px;
+      margin-top: 3rem;
     }
     .globe-tuile {
       width: 4.6rem;
@@ -277,6 +329,14 @@ const SOUS_TITRE =
      On neutralise la perspective/3D et on remet les tuiles en flux grille.
      ============================================================ */
   @media (prefers-reduced-motion: reduce) {
+    /* Empilement : editorial en haut, grille de logos statique en dessous
+       sur toute la largeur. */
+    .reassurance-grid {
+      grid-template-columns: 1fr;
+      gap: 0;
+      justify-items: center;
+      text-align: center;
+    }
     .globe-scene {
       width: 100%;
       max-width: 60rem;
