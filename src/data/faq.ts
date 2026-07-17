@@ -14,14 +14,19 @@ export interface FaqItem {
 
 export const FAQ: FaqItem[] = [
   {
-    question: 'Combien coûte le transport d\'invités pour un mariage à Nantes ?',
+    question: 'Combien coûte le transport des participants d\'un séminaire à Nantes ?',
     reponse:
-      'Le tarif dépend du nombre d\'invités, des véhicules mobilisés et de la durée. Un mariage se chiffre au devis, après un point sur vos trajets, rotations et retours de nuit. Transport Événementiel Nantes dimensionne la flotte, de la berline à l\'autocar, et vous remet un prix clair et unique, sans surprise.',
+      'Le transport participants séminaire se chiffre au devis, selon le nombre de collaborateurs, les véhicules mobilisés et la durée. Après un point sur vos transferts gare, navettes inter-sites et rotations, Transport Événementiel Nantes dimensionne la flotte et remet un prix clair et unique pour tout votre événement d\'entreprise.',
   },
   {
     question: 'Qui coordonne les navettes d\'un séminaire d\'entreprise ?',
     reponse:
-      'Transport Événementiel Nantes coordonne tout, avec un interlocuteur unique. Nous gérons les transferts gare et aéroport, les navettes inter-sites et les rotations sur toute la durée du séminaire. Vous ne pilotez aucun chauffeur ni horaire : un seul contact suit votre dossier, du dimensionnement au jour J, et une seule facture.',
+      'Transport Événementiel Nantes coordonne tout, avec un interlocuteur unique. Nous gérons les transferts gare et aéroport, les navettes entreprise inter-sites et les rotations sur toute la durée du séminaire. Vous ne pilotez aucun chauffeur ni horaire : un seul contact suit votre dossier, du dimensionnement au jour J, et une seule facture.',
+  },
+  {
+    question: 'Combien coûte le transport d\'invités pour un mariage à Nantes ?',
+    reponse:
+      'Le tarif dépend du nombre d\'invités, des véhicules mobilisés et de la durée. Une navette mariage se chiffre au devis, après un point sur vos trajets, rotations et retours de nuit. Transport Événementiel Nantes dimensionne la flotte, de la berline à l\'autocar, et vous remet un prix clair et unique, sans surprise.',
   },
   {
     question: 'Transport Événementiel Nantes gère-t-il les transferts de groupe de grande capacité ?',

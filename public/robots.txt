@@ -1,10 +1,16 @@
-# robots.txt de Cortege.
+# robots.txt de Transport Evenementiel Nantes.
 # Site entierement ouvert a l'indexation, moteurs classiques ET moteurs IA.
 # Aucun crawler d'IA n'est bloque : on veut etre cite par ChatGPT, Perplexity,
 # Gemini, Claude et les AI Overviews.
 
 # Moteurs de recherche classiques
 User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
 Allow: /
 
 # Crawlers IA explicitement autorises
@@ -53,5 +59,5 @@ Allow: /
 User-agent: Meta-ExternalAgent
 Allow: /
 
-# Sitemap. A CONFIRMER : l'URL suit le domaine reel defini dans astro.config.
-Sitemap: https://cortege.fr/sitemap-index.xml
+# Sitemap. L'URL suit le domaine defini dans astro.config.
+Sitemap: https://transport-evenementiel-nantes.fr/sitemap-index.xml

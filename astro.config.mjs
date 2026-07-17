@@ -2,9 +2,9 @@ import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
 
-// A REMPLIR : domaine de production reel. Sert de base au sitemap et aux URL
-// canoniques / Open Graph. Remplacer par le vrai domaine avant mise en ligne.
-const SITE_URL = 'https://cortege.fr';
+// Domaine de production. Sert de base au sitemap et aux URL canoniques /
+// Open Graph.
+const SITE_URL = 'https://transport-evenementiel-nantes.fr';
 
 // https://astro.build/config
 export default defineConfig({

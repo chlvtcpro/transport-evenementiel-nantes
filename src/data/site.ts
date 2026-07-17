@@ -10,11 +10,11 @@
 export const SITE_DATA = {
   // Identite
   name: 'Transport Événementiel Nantes',
-  // A REMPLIR : domaine de production reel (doit correspondre a `site` dans
-  // astro.config.mjs). Sans slash final.
-  url: 'https://cortege.fr',
+  // Domaine de production (doit correspondre a `site` dans astro.config.mjs).
+  // Sans slash final.
+  url: 'https://transport-evenementiel-nantes.fr',
   description:
-    'Transport Événementiel Nantes orchestre le transport de vos événements à Nantes et dans le Grand Ouest : mariages, séminaires et navettes de groupe. Un interlocuteur unique, un devis clair.',
+    'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et dans le Grand Ouest. Un seul interlocuteur, flotte bas-carbone. Devis rapide.',
   foundingDate: '2023',
   priceRange: '€€',
 
@@ -25,7 +25,14 @@ export const SITE_DATA = {
 
   // Zone desservie (service-area business, pas de vitrine physique : on
   // n'expose aucune adresse personnelle).
-  areaServed: ['Nantes', 'Loire-Atlantique', 'Grand Ouest'],
+  areaServed: [
+    'Nantes',
+    'Loire-Atlantique',
+    'Saint-Nazaire',
+    'La Baule',
+    'Angers',
+    'Grand Ouest',
+  ],
 
   // Geo de Nantes, signal de zone. Coordonnees du centre-ville de Nantes.
   geo: { latitude: 47.2184, longitude: -1.5536 },
