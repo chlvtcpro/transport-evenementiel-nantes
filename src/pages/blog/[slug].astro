@@ -292,29 +292,39 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     font-weight: 600;
   }
 
-  /* Tableau stylise : bordures fines, en-tete sur fond creme, coins doux. */
+  /* Tableau tarifaire : en-tete vert profond, lignes alternees, coins doux.
+     Sur mobile, le tableau devient scrollable horizontalement (display block
+     + overflow-x auto) pour ne jamais casser la mise en page. */
   .prose-article table {
+    display: block;
     width: 100%;
     max-width: 720px;
     margin: 1.75rem 0;
-    border-collapse: separate;
-    border-spacing: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: collapse;
     border: 1px solid var(--line);
     border-radius: 12px;
-    overflow: hidden;
     font-family: var(--font-body);
     font-size: 0.975rem;
   }
+  /* Le contenu interne reste en table pour la structure des colonnes. */
+  .prose-article table thead,
+  .prose-article table tbody {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
   .prose-article thead {
-    background: var(--cream-soft);
+    background: var(--green-800);
   }
   .prose-article th {
     text-align: left;
+    white-space: nowrap;
     font-family: var(--font-display);
     font-weight: 600;
-    color: var(--ink);
+    color: var(--on-dark);
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--line);
   }
   .prose-article td {
     padding: 0.8rem 1rem;
@@ -322,8 +332,16 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     color: var(--ink-muted);
     line-height: 1.5;
   }
+  /* Alternance de lignes subtile pour la lisibilite. */
+  .prose-article tbody tr:nth-child(even) {
+    background: var(--cream-soft);
+  }
   .prose-article tbody tr:last-child td {
     border-bottom: none;
+  }
+  /* Chiffres et montants en gras plus lisibles dans les cellules. */
+  .prose-article td strong {
+    color: var(--ink);
   }
 
   /* Citation / callout chiffres cles : encadre borde or, fond creme doux. */
@@ -350,6 +368,45 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     height: auto;
     border-radius: 12px;
     margin: 1.75rem 0;
+  }
+
+  /* Callout "En bref" : le tout premier paragraphe de l'article est la
+     reponse directe reprise par les moteurs. Encadre discret, fond legerement
+     contraste, lisere dore a gauche. */
+  .prose-article > p:first-child {
+    margin-top: 0;
+    padding: 1.25rem 1.5rem;
+    border-left: 3px solid var(--gold);
+    background: var(--cream-soft);
+    border-radius: 0 12px 12px 0;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .prose-article > p:first-child strong {
+    color: var(--ink);
+  }
+
+  /* Filet de separation avant le bloc sources. */
+  .prose-article hr {
+    max-width: 720px;
+    margin: 2.5rem 0 1.5rem;
+    border: none;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Bloc sources : italique, plus petit et discret, mais lisible. */
+  .prose-article hr + p,
+  .prose-article > p > em {
+    color: var(--ink-muted);
+  }
+  .prose-article hr + p {
+    max-width: 720px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    font-style: italic;
+    color: var(--ink-muted);
+    opacity: 0.85;
   }
 </style>
 
