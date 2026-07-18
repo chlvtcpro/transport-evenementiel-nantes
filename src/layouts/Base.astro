@@ -31,6 +31,12 @@ interface Props {
    * rester lisibles.
    */
   headerTheme?: 'light' | 'dark';
+  /**
+   * Retire la page de l'index des moteurs (robots: noindex,follow) tout en
+   * laissant suivre les liens. Utilise pour les pages legales (mentions,
+   * confidentialite) qui n'ont pas vocation a etre indexees.
+   */
+  noindex?: boolean;
 }
 const {
   title = 'Transport séminaire et événement à Nantes | Navettes clé en main, Grand Ouest',
@@ -39,6 +45,7 @@ const {
   jsonLd: jsonLdOverride = null,
   article,
   headerTheme = 'dark',
+  noindex = false,
 } = Astro.props;
 
 // URL canonique de la page courante, calculee sur Astro.site (defini dans
@@ -139,8 +146,9 @@ const jsonLd = jsonLdOverride ?? {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="mask-icon" href="/favicon.svg" color="#14261C" />
 
-    <!-- Indexation : ouvert aux moteurs classiques et IA. Canonical. -->
-    <meta name="robots" content="index,follow" />
+    <!-- Indexation : ouvert aux moteurs classiques et IA. Canonical.
+         Les pages legales passent en noindex,follow via la prop noindex. -->
+    <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow'} />
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Open Graph -->

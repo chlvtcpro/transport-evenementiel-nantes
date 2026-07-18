@@ -1,0 +1,239 @@
+---
+/*
+  /confidentialite : politique de confidentialite, fond clair, lecture 720px.
+  Reutilise le design system via Base (header variante claire, footer).
+  robots noindex,follow. Les informations inconnues restent en PLACEHOLDER
+  visible et doivent etre remplacees avant mise en ligne definitive.
+*/
+import Base from '../layouts/Base.astro';
+import Eyebrow from '../components/Eyebrow.astro';
+import { SITE_DATA } from '../data/site.ts';
+
+const TITRE_META = `Politique de confidentialité | ${SITE_DATA.name}`;
+const DESCRIPTION_META =
+  'Politique de confidentialité de Transport Événementiel Nantes : données collectées via le formulaire de devis, finalités, conservation et droits.';
+
+const dateMaj = new Date().toLocaleDateString('fr-FR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Base
+  title={TITRE_META}
+  description={DESCRIPTION_META}
+  headerTheme="light"
+  noindex={true}
+>
+  <section
+    data-tone="cream"
+    class="relative bg-cream py-section text-ink scroll-mt-24"
+  >
+    <div class="container">
+      <div class="mx-auto max-w-[760px]">
+        <!-- Fil d'ariane : Accueil > Confidentialité -->
+        <nav class="fil-ariane" aria-label="Fil d'ariane" data-reveal>
+          <ol>
+            <li><a href="/">Accueil</a></li>
+            <li aria-hidden="true" class="fil-sep">/</li>
+            <li aria-current="page">Confidentialité</li>
+          </ol>
+        </nav>
+
+        <header class="mt-8" data-reveal-stagger="120">
+          <div data-reveal>
+            <Eyebrow tone="light">Vos données</Eyebrow>
+          </div>
+          <h1 class="type-h2 mt-5 text-ink" data-reveal>
+            Politique de confidentialité
+          </h1>
+          <p class="type-body mt-6 text-ink-muted" data-reveal>
+            Dernière mise à jour le {dateMaj}.
+          </p>
+        </header>
+
+        <div class="prose-legal mt-12" data-reveal>
+          <h2>Responsable du traitement</h2>
+          <p>
+            Le responsable du traitement des données collectées sur ce site est
+            <strong>CHL VTC</strong>, éditeur du site Transport Événementiel
+            Nantes. Pour toute question relative à vos données, vous pouvez écrire
+            à
+            <a href="mailto:contact@transport-evenementiel-nantes.fr">
+              contact@transport-evenementiel-nantes.fr
+            </a>.
+          </p>
+
+          <h2>Données collectées</h2>
+          <p>
+            Les données personnelles sont collectées uniquement lorsque vous
+            remplissez le formulaire de demande de devis. Il s'agit des
+            informations que vous renseignez volontairement :
+          </p>
+          <ul>
+            <li>Nom et prénom</li>
+            <li>Adresse électronique</li>
+            <li>Numéro de téléphone</li>
+            <li>Nom de l'organisation, le cas échéant</li>
+            <li>
+              Détails de votre demande (type d'événement, dates, lieux, nombre de
+              participants)
+            </li>
+          </ul>
+          <p>
+            Aucune donnée n'est collectée à votre insu et le site n'utilise aucun
+            cookie publicitaire ni de traçage tiers.
+          </p>
+
+          <h2>Finalité du traitement</h2>
+          <p>
+            Les données transmises servent exclusivement à traiter votre demande
+            de devis, à vous recontacter et à organiser la prestation de transport.
+            Elles ne font l'objet d'aucune revente ni d'aucune prospection non
+            sollicitée.
+          </p>
+
+          <h2>Base légale</h2>
+          <p>
+            Le traitement repose sur votre consentement, exprimé lors de l'envoi du
+            formulaire, ainsi que sur l'exécution de mesures précontractuelles
+            prises à votre demande.
+          </p>
+
+          <h2>Sous-traitants</h2>
+          <p>
+            Le formulaire de contact s'appuie sur le service
+            <strong>Web3Forms</strong> pour l'acheminement des messages, et le site
+            est hébergé par <strong>Vercel Inc.</strong> Ces prestataires
+            n'utilisent vos données que pour fournir ce service technique.
+          </p>
+
+          <h2>Durée de conservation</h2>
+          <p>
+            Vos données sont conservées le temps nécessaire au traitement de votre
+            demande et à la relation commerciale, puis archivées ou supprimées
+            conformément aux obligations légales applicables. Durée de conservation
+            indicative : [DURÉE DE CONSERVATION À REMPLIR].
+          </p>
+
+          <h2>Vos droits</h2>
+          <p>
+            Conformément au Règlement général sur la protection des données (RGPD)
+            et à la loi Informatique et Libertés, vous disposez d'un droit d'accès,
+            de rectification, d'effacement, de limitation, d'opposition et de
+            portabilité de vos données. Vous pouvez exercer ces droits en écrivant à
+            <a href="mailto:contact@transport-evenementiel-nantes.fr">
+              contact@transport-evenementiel-nantes.fr
+            </a>. Vous avez également le droit d'introduire une réclamation auprès
+            de la CNIL (www.cnil.fr).
+          </p>
+
+          <h2>Cookies</h2>
+          <p>
+            Le site n'utilise que les cookies strictement nécessaires à son
+            fonctionnement. Aucun cookie de mesure d'audience ou publicitaire n'est
+            déposé sans votre accord.
+          </p>
+        </div>
+
+        <div class="mt-12 text-center" data-reveal>
+          <a
+            href="/"
+            class="type-nav text-ink-muted transition-colors hover:text-gold"
+          >
+            Retour à l'accueil
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style is:global>
+  /* Styles de lecture des pages legales. Largeur 720px, hierarchie Clash
+     Display, palette ink / gold / line. Cibles sur .prose-legal. */
+  .prose-legal {
+    color: var(--ink-muted);
+  }
+  .prose-legal p {
+    max-width: 720px;
+    margin: 1.25rem 0;
+    font-family: var(--font-body);
+    font-size: 1.075rem;
+    line-height: 1.75;
+  }
+  .prose-legal h2 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: clamp(1.35rem, 2.4vw, 1.6rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose-legal h2:first-child {
+    margin-top: 0;
+  }
+  .prose-legal ul {
+    max-width: 720px;
+    margin: 1.25rem 0;
+    padding-left: 1.4rem;
+  }
+  .prose-legal li {
+    margin: 0.5rem 0;
+    font-family: var(--font-body);
+    font-size: 1.075rem;
+    line-height: 1.7;
+  }
+  .prose-legal ul li::marker {
+    color: var(--gold);
+  }
+  .prose-legal strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .prose-legal a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: rgba(201, 162, 75, 0.5);
+    text-underline-offset: 3px;
+    transition: color 200ms var(--ease);
+    word-break: break-word;
+  }
+  .prose-legal a:hover {
+    color: var(--gold);
+  }
+</style>
+
+<style>
+  /* Fil d'ariane : liens discrets, separateurs dores. */
+  .fil-ariane ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+  }
+  .fil-ariane a {
+    color: var(--ink-muted);
+    transition: color 200ms var(--ease);
+  }
+  .fil-ariane a:hover {
+    color: var(--gold);
+  }
+  .fil-ariane [aria-current='page'] {
+    color: var(--ink);
+  }
+  .fil-sep {
+    color: var(--gold);
+    opacity: 0.7;
+  }
+</style>

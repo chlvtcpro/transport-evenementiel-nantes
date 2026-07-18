@@ -171,6 +171,37 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
 
       <!-- ---------- ZONE HAUTE : le temoignage (centre, 900px) ---------- -->
       <div class="temoignages-scene">
+        <!-- Parcours VERTICAL (mobile uniquement, < 1024px). Overlay a gauche
+             de la liste : deux brins paralleles tres rapproches (convoi), un
+             brin de remplissage dont la hauteur suit le scroll, cinq points
+             d'etape alignes par le JS sur le centre de chaque temoignage, et
+             une silhouette de vehicule qui descend le long de la ligne au fil
+             du scroll. Masque en desktop (le parcours horizontal prend le
+             relais). aria-hidden : purement decoratif, le texte reste lu. -->
+        <div class="temoignages-rail-vertical" data-rail-vertical aria-hidden="true">
+          <div class="rv-brins">
+            <span class="rv-brin"></span>
+            <span class="rv-brin"></span>
+            <span class="rv-brin rv-brin-fill" data-rv-fill></span>
+          </div>
+          {
+            ETAPES.map((_, i) => (
+              <span class="rv-jalon" data-rv-jalon data-index={i} />
+            ))
+          }
+          <span class="rv-vehicule" data-rv-vehicule>
+            <svg width="26" height="15" viewBox="0 0 36 16" fill="none" aria-hidden="true">
+              <rect x="1" y="2" width="32" height="12" rx="3" fill="var(--gold)" />
+              <rect x="4" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+              <rect x="11.5" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+              <rect x="19" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+              <rect x="26.5" y="4.5" width="4" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+              <circle cx="9" cy="15" r="1.7" fill="var(--gold-soft)" />
+              <circle cx="25" cy="15" r="1.7" fill="var(--gold-soft)" />
+            </svg>
+          </span>
+        </div>
+
         <ol class="temoignages-liste" data-liste>
           {
             ETAPES.map((t, i) => (
@@ -693,43 +724,154 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
   }
 
   /* ============================================================
-     MOBILE / FALLBACK (< 1024px) : parcours vertical simple. Le SVG
-     horizontal est masque (gere par :not(.is-enhanced)) ; on trace une
-     ligne verticale a gauche qui traverse tous les points.
+     PARCOURS VERTICAL MOBILE (< 1024px), SCROLL-DRIVEN.
+     Overlay .temoignages-rail-vertical pose a gauche de la liste : deux
+     brins de base tres rapproches (convoi) + un brin de remplissage dont
+     la hauteur suit le scroll, cinq jalons alignes par le JS sur le centre
+     de chaque temoignage, une silhouette de vehicule qui descend. Scroll
+     naturel (jamais sticky). Masque en desktop.
+     Sur desktop (>= 1024px) l'overlay est masque : le parcours horizontal
+     prend le relais.
      ============================================================ */
+  .temoignages-rail-vertical {
+    display: none;
+  }
+
   @media (max-width: 1023px) {
+    /* La scene devient le repere du rail vertical : on degage une gouttiere
+       a gauche pour la ligne + les jalons, le texte reste a droite. */
     .temoignages-scene {
       position: relative;
-      padding-left: 1.75rem;
+      padding-left: 2.25rem;
     }
-    .temoignages-scene::before {
-      content: '';
+
+    /* Overlay du rail : colonne fine calee dans la gouttiere gauche,
+       hauteur = toute la liste. Purement decoratif (aria-hidden). */
+    .temoignages-rail-vertical {
+      display: block;
       position: absolute;
-      left: 3px;
-      top: 0.5rem;
-      bottom: 0.5rem;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2.25rem;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Les brins : conteneur vertical centre dans la gouttiere. */
+    .rv-brins {
+      position: absolute;
+      left: 9px;
+      top: 0.25rem;
+      bottom: 0.25rem;
+      width: 8px;
+    }
+    /* Chaque brin de base : trait vertical fin, dore a 0.35. Les deux brins
+       de base sont decales lateralement de ~2.5px l'un de l'autre pour
+       evoquer un convoi (deux voies) plutot qu'un trait unique. */
+    .rv-brin {
+      position: absolute;
+      top: 0;
+      bottom: 0;
       width: 1.5px;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        var(--gold) 8%,
-        var(--gold) 92%,
-        transparent
-      );
-      opacity: 0.5;
+      border-radius: 1px;
+      background: var(--gold);
+      opacity: 0.35;
     }
-    .temoignage::before {
-      content: '';
+    .rv-brin:nth-child(1) {
+      left: 0;
+    }
+    .rv-brin:nth-child(2) {
+      left: 2.5px;
+    }
+    /* Brin de remplissage : superpose au premier brin, dore plein a 0.9,
+       hauteur pilotee par le JS (--rv-progress, 0 a 100%) depuis le haut. */
+    .rv-brin-fill {
+      left: 1.25px;
+      top: 0;
+      bottom: auto;
+      height: var(--rv-progress, 0%);
+      width: 1.5px;
+      opacity: 0.9;
+      transition: height 120ms linear;
+    }
+
+    /* Jalons : vrais cercles poses SUR la ligne, top pilote par le JS
+       (--rv-top, centre de chaque temoignage). Anneau dore au repos ;
+       plein + halo quand l'etape est atteinte/active. */
+    .rv-jalon {
       position: absolute;
-      left: -1.75rem;
-      top: 0.4rem;
-      width: 9px;
-      height: 9px;
-      margin-left: -0.5px;
+      left: 10px;
+      top: var(--rv-top, 0px);
+      width: 11px;
+      height: 11px;
+      margin-left: -4px;
       border-radius: 50%;
-      background-color: var(--gold);
-      box-shadow: 0 0 0 4px var(--green-900);
+      border: 1.5px solid var(--gold);
+      background: var(--green-900);
+      transform: translateY(-50%);
+      opacity: 0.5;
+      transition:
+        opacity 400ms var(--ease),
+        background-color 400ms var(--ease),
+        box-shadow 400ms var(--ease);
     }
+    .rv-jalon.is-passed {
+      background: var(--gold);
+      opacity: 0.75;
+    }
+    .rv-jalon.is-active {
+      background: var(--gold);
+      opacity: 1;
+      box-shadow: 0 0 0 0 rgba(201, 162, 75, 0.45);
+      animation: temoignages-halo 1900ms var(--ease) infinite;
+    }
+
+    /* Vehicule : silhouette doree qui descend le long de la ligne. top
+       pilote par le JS (--rv-vehicule-top) selon la progression du scroll. */
+    .rv-vehicule {
+      position: absolute;
+      left: 10px;
+      top: var(--rv-vehicule-top, 0px);
+      transform: translate(-50%, -50%);
+      line-height: 0;
+      opacity: 0;
+      transition: opacity 500ms var(--ease);
+    }
+    .rv-vehicule.is-visible {
+      opacity: 0.95;
+    }
+    .rv-vehicule svg {
+      display: block;
+    }
+
+    /* Chaque temoignage : dans le flux vertical, fondu doux a l'entree dans
+       le viewport (classe is-inview posee par le JS). */
+    .temoignage {
+      position: relative;
+      padding-bottom: clamp(2.5rem, 6vw, 3.5rem);
+      margin-bottom: clamp(2.5rem, 6vw, 3.5rem);
+      border-bottom: 1px solid var(--line-on-dark);
+      opacity: 0;
+      transform: translateY(18px);
+      transition:
+        opacity 650ms var(--ease),
+        transform 650ms var(--ease);
+    }
+    .temoignage:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .temoignage.is-inview {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Citation adaptee au mobile : lisible, ni ecrasee ni geante. */
+    .temoignage-accroche {
+      font-size: clamp(1.35rem, 5.6vw, 1.8rem);
+      line-height: 1.2;
+    }
+
     /* Sur mobile on n'active jamais le mode horizontal (gere aussi en JS). */
     .temoignages.is-enhanced .temoignages-piste {
       height: auto;
@@ -749,11 +891,9 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
     .temoignages.is-enhanced .temoignage {
       grid-area: auto;
       text-align: left;
-      opacity: 1;
-      transform: none;
       pointer-events: auto;
-      padding-bottom: clamp(2.5rem, 5vw, 4rem);
-      margin-bottom: clamp(2.5rem, 5vw, 4rem);
+      padding-bottom: clamp(2.5rem, 6vw, 3.5rem);
+      margin-bottom: clamp(2.5rem, 6vw, 3.5rem);
       border-bottom: 1px solid var(--line-on-dark);
     }
     .temoignages.is-enhanced .temoignage:last-child {
@@ -821,6 +961,36 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
     .temoignages-jalon.is-active {
       animation: none;
     }
+    /* Mobile scroll-driven : sans mouvement, les temoignages restent
+       visibles (pas de fondu a piloter) et le halo du vehicule/jalon est
+       fige. */
+    .temoignage {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .rv-brin-fill,
+    .rv-jalon,
+    .rv-vehicule {
+      transition: none;
+    }
+    .rv-jalon.is-active {
+      animation: none;
+    }
+  }
+
+  /* Securite sans JS : si le script mobile ne tourne pas, l'attribut
+     data-rv-ready n'est jamais pose ; on garde les temoignages visibles
+     (pas de dependance JS pour lire le texte). Une fois le JS pret, il pose
+     data-rv-ready sur la section et prend la main sur les fondus. */
+  @media (max-width: 1023px) {
+    .temoignages:not([data-rv-ready]) .temoignage {
+      opacity: 1;
+      transform: none;
+    }
+    /* Sans JS, l'overlay decoratif reste affiche mais le remplissage et le
+       vehicule sont sur leur etat initial (0%) : la ligne de base a 0.35
+       suffit comme fil conducteur. */
   }
 </style>
 
@@ -859,6 +1029,17 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
     const vehicules = Array.from(
       section.querySelectorAll<HTMLElement>('[data-vehicule]')
     );
+
+    // Elements du parcours VERTICAL mobile.
+    const scene = section.querySelector<HTMLElement>('.temoignages-scene');
+    const railVertical = section.querySelector<HTMLElement>(
+      '[data-rail-vertical]'
+    );
+    const rvFill = section.querySelector<HTMLElement>('[data-rv-fill]');
+    const rvJalons = Array.from(
+      section.querySelectorAll<HTMLElement>('[data-rv-jalon]')
+    );
+    const rvVehicule = section.querySelector<HTMLElement>('[data-rv-vehicule]');
 
     if (!piste || items.length === 0) return;
 
@@ -968,23 +1149,162 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
       });
     };
 
+    // =====================================================================
+    // PARCOURS VERTICAL MOBILE (< 1024px), SCROLL-DRIVEN.
+    // Le vehicule descend le long de la ligne au fil du scroll, le brin de
+    // remplissage grandit de haut en bas, les jalons s'allument quand le
+    // vehicule les depasse, et chaque temoignage apparait en fondu quand il
+    // entre dans le viewport. Scroll naturel : aucune position sticky, aucun
+    // blocage. Tous les textes sont deja dans le DOM.
+    // =====================================================================
+    const mqMobile = window.matchMedia(
+      '(max-width: 1023px) and (prefers-reduced-motion: no-preference)'
+    );
+    let mobileOn = false;
+    let mobileRaf = 0;
+    // Centres verticaux (px, relatifs a .temoignages-scene) de chaque jalon,
+    // cales sur le centre du bloc etape de chaque temoignage.
+    let jalonCenters: number[] = [];
+
+    // Mesure la position verticale de chaque point (centre du repere d'etape
+    // du temoignage) et positionne les jalons dessus. Recalcule au resize.
+    const measureMobile = () => {
+      if (!scene) return;
+      const sceneTop = scene.getBoundingClientRect().top;
+      jalonCenters = items.map((el) => {
+        const anchor =
+          el.querySelector<HTMLElement>('.temoignage-etape') ?? el;
+        const r = anchor.getBoundingClientRect();
+        // Centre vertical de l'ancre, relatif au haut de la scene.
+        return r.top - sceneTop + r.height / 2;
+      });
+      rvJalons.forEach((j, i) => {
+        if (jalonCenters[i] != null) {
+          j.style.setProperty('--rv-top', `${jalonCenters[i]}px`);
+        }
+      });
+    };
+
+    // Applique la progression du scroll mobile : vehicule, remplissage,
+    // jalons. progress 0..1 = du premier au dernier point.
+    const applyMobile = () => {
+      if (!scene || jalonCenters.length === 0) return;
+      const first = jalonCenters[0];
+      const last = jalonCenters[jalonCenters.length - 1];
+      const span = Math.max(last - first, 1);
+
+      // Le vehicule vise le centre du viewport : on mesure ou tombe cette
+      // ligne dans le repere de la scene, bornee entre premier et dernier
+      // point.
+      const sceneTop = scene.getBoundingClientRect().top;
+      const focusLine = window.innerHeight * 0.5 - sceneTop;
+      const vy = Math.min(Math.max(focusLine, first), last);
+      const progress = (vy - first) / span;
+
+      // Position du vehicule (px depuis le haut de la scene).
+      if (rvVehicule) {
+        rvVehicule.style.setProperty('--rv-vehicule-top', `${vy}px`);
+        rvVehicule.classList.toggle('is-visible', progress > 0.001);
+      }
+      // Remplissage : hauteur du brin plein depuis le haut, en px absolus
+      // (le conteneur .rv-brins commence a 0.25rem du haut ; on remplit
+      // jusqu'a la ligne du vehicule, mesuree depuis ce meme haut).
+      if (rvFill) {
+        // rv-brins a top:0.25rem ; hauteur remplie = vy - 0.25rem (min 0).
+        const filled = Math.max(vy - 4, 0);
+        rvFill.style.height = `${filled}px`;
+      }
+      // Jalons : actif = le plus proche atteint ; passes = au-dessus du
+      // vehicule.
+      let activeIdx = 0;
+      for (let i = 0; i < jalonCenters.length; i += 1) {
+        if (vy >= jalonCenters[i] - 4) activeIdx = i;
+      }
+      rvJalons.forEach((j, i) => {
+        j.classList.toggle('is-passed', i < activeIdx);
+        j.classList.toggle('is-active', i === activeIdx && progress > 0.001);
+      });
+    };
+
+    const mobileLoop = () => {
+      applyMobile();
+      mobileRaf = window.requestAnimationFrame(mobileLoop);
+    };
+
+    // Fondu d'entree des temoignages (IntersectionObserver) : classe
+    // is-inview posee quand le bloc entre dans le viewport.
+    let io: IntersectionObserver | null = null;
+    const enableMobile = () => {
+      if (mobileOn) return;
+      mobileOn = true;
+      section.setAttribute('data-rv-ready', '');
+      // rv-fill pilote en px (on neutralise le fallback % CSS).
+      if (rvFill) rvFill.style.setProperty('bottom', 'auto');
+      measureMobile();
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-inview');
+            }
+          });
+        },
+        { rootMargin: '0px 0px -12% 0px', threshold: 0.15 }
+      );
+      items.forEach((el) => io?.observe(el));
+      applyMobile();
+      mobileRaf = window.requestAnimationFrame(mobileLoop);
+    };
+
+    const disableMobile = () => {
+      if (!mobileOn) return;
+      mobileOn = false;
+      section.removeAttribute('data-rv-ready');
+      window.cancelAnimationFrame(mobileRaf);
+      if (io) {
+        io.disconnect();
+        io = null;
+      }
+      items.forEach((el) => el.classList.remove('is-inview'));
+      rvJalons.forEach((j) => {
+        j.classList.remove('is-active');
+        j.classList.remove('is-passed');
+      });
+      if (rvFill) rvFill.style.height = '0px';
+      if (rvVehicule) rvVehicule.classList.remove('is-visible');
+    };
+
     const sync = () => {
       if (reduce) {
         disable();
+        disableMobile();
+        // Reduced-motion : on rend quand meme les temoignages visibles.
+        section.setAttribute('data-rv-ready', '');
         return;
       }
-      if (mqEnhance.matches) enable();
-      else disable();
+      if (mqEnhance.matches) {
+        disableMobile();
+        enable();
+      } else if (mqMobile.matches) {
+        disable();
+        enableMobile();
+      } else {
+        disable();
+        disableMobile();
+      }
     };
 
     sync();
     if (mqEnhance.addEventListener) {
       mqEnhance.addEventListener('change', sync);
+      mqMobile.addEventListener('change', sync);
     } else if ((mqEnhance as any).addListener) {
       (mqEnhance as any).addListener(sync);
+      (mqMobile as any).addListener(sync);
     }
     window.addEventListener('resize', () => {
       measureRail();
+      if (mobileOn) measureMobile();
     });
   }
 

@@ -135,7 +135,9 @@ const PLAN_ROUTES = [
                     data-count-prefix={stat.prefixe}
                     data-count-duration={String(stat.duree)}
                   >
-                    {stat.anime ? `${stat.prefixe}0` : `${stat.prefixe}${stat.cible}`}
+                    {stat.anime
+                      ? `${stat.prefixe}${stat.cible.toLocaleString('fr-FR')}`
+                      : `${stat.prefixe}${stat.cible}`}
                   </dt>
                   <dd class="type-nav mt-1.5 text-on-dark/[0.92]">{stat.label}</dd>
                 </div>
@@ -522,6 +524,10 @@ const PLAN_ROUTES = [
         return;
       }
 
+      // La valeur finale est ecrite en dur dans le HTML (lisible par les
+      // moteurs / IA). On la remet a 0 avant d'animer : l'animation visible
+      // reste strictement identique, seul le HTML source change.
+      el.textContent = prefix + '0';
       const start = performance.now();
       const step = (now: number) => {
         const p = Math.min((now - start) / duration, 1);
