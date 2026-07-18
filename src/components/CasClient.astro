@@ -1,32 +1,56 @@
 ---
 /*
-  Section #cas-client de Cortege.
-  Section de preuve sociale : un carrousel de cartes temoignages
-  cliquables sous l'eyebrow "Ils nous ont fait confiance". Au clic, une
-  modale devoile le detail complet du temoignage. Tone dark (--green-900),
-  titres --on-dark, corps --on-dark a 0.92. Display en Fraunces.
+  Section #cas-client de Cortege : PARCOURS DE GROUPE EN SCROLL FIXE.
+
+  Principe. La section se fixe a l'ecran (sticky) a l'arrivee. Le scroll
+  n'avance plus la page : il fait progresser un convoi de groupe le long d'un
+  trace dore multi-brins (plusieurs vehicules ensemble). A chaque etape
+  atteinte, le temoignage correspondant apparait en grande typographie
+  editoriale (Clash Display), un seul visible a la fois, en fondu doux. Apres
+  la derniere etape, la page reprend son defilement normal.
+
+  Technique. Un conteneur haut (500vh) contient un bloc sticky de 100vh. La
+  progression du scroll DANS le conteneur (getBoundingClientRect, synchronise
+  avec Lenis via requestAnimationFrame) pilote quelle etape est active. Aucun
+  blocage brutal du scroll : le visiteur garde le controle.
+
+  SEO / GEO. TOUS les temoignages sont presents en HTML au chargement (texte
+  reel, jamais injecte en JS), en <blockquote>/<cite>. Si le JS echoue ou est
+  desactive, la version empilee (fallback) reste lisible : le sticky et les
+  fondus ne sont actives qu'apres la classe .is-enhanced posee par le JS.
+
+  Accessibilite. prefers-reduced-motion : pas de sticky ni d'animation, les 5
+  etapes sont empilees et lisibles. Contraste AA : creme sur vert profond via
+  color: var(--on-dark) + opacity (jamais l'opacite arbitraire Tailwind qui
+  retombe sur un gris delave sur variable non-RGB).
+
+  Mobile. Pas de sticky (trop lourd) : ligne verticale a gauche, 5 etapes
+  empilees (volume, citation en grand, attribution), reveal en fondu a
+  l'entree dans le viewport, defilement naturel.
 
   L'ancre #cas-client est conservee : la navigation (Header, Footer, Hero)
-  pointe "Realisations" vers cette section temoignages.
+  pointe "Realisations" vers cette section.
 
-  Carte 1 = temoignage reel ; cartes 2 a 5 = exemples representatifs
-  (voir la table TEMOIGNAGES).
+  Carte 1 (Titouan N.) = temoignage reel, 5 etoiles. Etapes 2 a 5 = exemples
+  representatifs (voir la table ETAPES).
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
 
 // =====================================================================
-// TEMOIGNAGES DU CARROUSEL "ILS NOUS ONT FAIT CONFIANCE".
-// ---------------------------------------------------------------------
-// La carte 1 (Titouan N.) est un VRAI temoignage client, a afficher
-// tel quel. Les cartes 2 a 5 sont des EXEMPLES representatifs, credibles
-// mais fictifs : a remplacer par de vrais verbatims des qu'ils sont
-// disponibles. Prenoms et noms volontairement partiels ou generiques,
-// aucun nom d'entreprise reelle associe a ces temoignages.
+// LES 5 ETAPES DU PARCOURS DE GROUPE.
+// Chaque etape porte un compteur de volume (ancre l'echelle du groupe)
+// et un temoignage. Le temoignage 1 (Titouan N.) est un VRAI avis,
+// affiche tel quel avec 5 etoiles. Les temoignages 2 a 5 sont des
+// exemples representatifs credibles, a remplacer par de vrais verbatims
+// des qu'ils seront disponibles.
 // =====================================================================
-const TEMOIGNAGES = [
+const ETAPES = [
   {
-    // Carte 1 : temoignage reel, publie tel quel.
+    etape: 'Arrivée des invités',
+    volume: '49 invités transportés',
+    vehicule: 'van',
+    vedette: true,
     type: 'Mariage',
     accroche: 'Ponctualité parfaite, une équipe fiable et facile à joindre.',
     auteur: 'Titouan N.',
@@ -35,6 +59,10 @@ const TEMOIGNAGES = [
       'Simon a assuré le transport de nos invités le jour de notre mariage avec un grand professionnalisme. Très à l\'écoute, transparent et réactif, il a pris le temps d\'optimiser les trajets pour trouver le meilleur compromis entre le confort des invités et le budget. Tout s\'est déroulé parfaitement : ponctualité, excellente communication et super organisation. Nous recommandons à 100 pour cent.',
   },
   {
+    etape: 'Navettes inter-sites',
+    volume: '2 jours de rotations',
+    vehicule: 'autocar',
+    vedette: false,
     type: 'Séminaire d\'entreprise',
     accroche: 'Une navette séminaire d\'entreprise coordonnée sans le moindre retard sur deux jours.',
     auteur: 'Camille R.',
@@ -43,6 +71,10 @@ const TEMOIGNAGES = [
       'Pour notre séminaire d\'entreprise à Nantes, nous avions besoin de navettes entre l\'hôtel, le lieu de réunion et un restaurant. Le transport des participants a été entièrement coordonné par un seul interlocuteur, avec les transferts gare et les rotations. Aucun trajet à gérer de notre côté.',
   },
   {
+    etape: 'Transfert dirigeants',
+    volume: 'Flotte de berlines coordonnée',
+    vehicule: 'van',
+    vedette: false,
     type: 'Transfert corporate',
     accroche: 'Un transfert de dirigeants à Nantes avec une flotte de berlines cadrée à la minute.',
     auteur: 'Julien M.',
@@ -51,6 +83,10 @@ const TEMOIGNAGES = [
       'Nous cherchions un transport de dirigeants fiable entre la gare de Nantes, le siège et un dîner d\'affaires. Véhicules impeccables, chauffeurs ponctuels, coordination sans faille. Le niveau attendu pour un transfert corporate en Loire-Atlantique.',
   },
   {
+    etape: 'Grand rassemblement',
+    volume: 'Plusieurs centaines de personnes',
+    vehicule: 'autocar',
+    vedette: false,
     type: 'Navette de groupe',
     accroche: 'Une navette de groupe de plusieurs centaines de personnes, orchestrée par une seule équipe.',
     auteur: 'Sophie L.',
@@ -59,6 +95,10 @@ const TEMOIGNAGES = [
       'Pour notre rassemblement dans le Grand Ouest, il fallait un transport de groupe de grande capacité depuis plusieurs points. Berlines, vans et autocars dimensionnés selon le volume, rotations enchaînées sans attente. Une navette événementielle clé en main.',
   },
   {
+    etape: 'Retours de nuit',
+    volume: 'Rotations jusqu\'à la fin de soirée',
+    vehicule: 'autocar',
+    vedette: false,
     type: 'Mariage',
     accroche: 'Des navettes de mariage et retours de nuit gérés sans qu\'on y pense.',
     auteur: 'Marie et Thomas D.',
@@ -69,141 +109,159 @@ const TEMOIGNAGES = [
 ];
 
 const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
+
+// Trois brins paralleles legerement decales : suggerent plusieurs
+// vehicules qui avancent ensemble (un groupe, pas un trajet isole).
+// Coordonnees dans le repere du viewBox 0 0 120 460, vertical.
+const BRINS = [
+  'M 60 20 C 40 130, 80 230, 56 330 S 44 420, 60 448',
+  'M 52 20 C 32 130, 72 230, 48 330 S 36 420, 52 448',
+  'M 68 20 C 48 130, 88 230, 64 330 S 52 420, 68 448',
+];
 ---
 
 <section
   id="cas-client"
   data-tone="dark"
-  class="relative bg-green-900 py-section text-on-dark scroll-mt-24"
+  class="temoignages relative bg-green-900 text-on-dark"
+  data-temoignages
 >
   <!-- ============================================================
-       SECTION temoignages "Ils nous ont fait confiance" en MUR / MOSAIQUE.
-       Tous les temoignages sont visibles d'un coup, sans defilement
-       lateral. Le vrai avis (Titouan N., index 0) est mis en VEDETTE :
-       grande carte a gauche, 5 etoiles dorees, grand guillemet dore, son
-       detail complet affiche directement. Les 4 exemples (Camille R.,
-       Julien M., Sophie L., Marie et Thomas D.) sont disposes autour en
-       cartes plus petites, cliquables : au clic, une modale devoile le
-       detail complet. Mobile : empilement une colonne, Titouan en tete.
-       Fallback JS off : cartes lisibles (accroche visible), detail present
-       en DOM dans la modale (accessible au clavier).
+       CONTENEUR HAUT (500vh) : sa hauteur cree la course de scroll.
+       Le bloc interieur est sticky (100vh) et reste fixe pendant que
+       la progression avance le convoi et bascule les temoignages.
+       Le fallback (JS off / reduced-motion) rend ce conteneur en flux
+       normal : les 5 etapes s'empilent et restent lisibles.
        ============================================================ -->
-  <div class="container">
-    <div class="temoignages-head" data-reveal>
-      <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
-      <p class="type-nav mt-3 text-on-dark/[0.92]">
-        Le récit d'un client, et des prestations menées sans accroc.
-      </p>
-    </div>
+  <div class="temoignages-piste" data-piste>
+    <div class="temoignages-sticky">
+      <div class="container temoignages-grille">
+        <!-- ---------- Colonne parcours (gauche) : trace + jalons ---------- -->
+        <div class="temoignages-parcours" aria-hidden="true">
+          <div class="temoignages-parcours-tete">
+            <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
+          </div>
 
-    <div class="temoignages-mur" role="list" aria-label="Témoignages clients" data-reveal>
-      {
-        TEMOIGNAGES.map((t, i) =>
-          i === 0 ? (
-            <article class="temoignage-vedette" role="listitem">
-              <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
-                <span aria-hidden="true">★★★★★</span>
-              </span>
-              <span class="temoignage-vedette-guillemet text-gold" aria-hidden="true">
-                &ldquo;
-              </span>
-              <span class="temoignage-vedette-type type-eyebrow text-gold">
-                {t.type}
-              </span>
-              <blockquote class="temoignage-vedette-detail">{t.detail}</blockquote>
-              <footer class="temoignage-vedette-pied">
-                <span class="temoignage-vedette-auteur block text-on-dark">
-                  {t.auteur}
-                </span>
-                <span class="type-nav block text-on-dark/[0.85]">{t.role}</span>
-              </footer>
-            </article>
-          ) : (
-            <button
-              type="button"
-              class="temoignage-mini"
-              role="listitem"
-              data-temoignage
-              data-index={i}
-              aria-haspopup="dialog"
+          <div class="temoignages-plan">
+            <svg
+              class="temoignages-svg"
+              viewBox="0 0 120 460"
+              fill="none"
+              preserveAspectRatio="xMidYMid meet"
+              data-plan
             >
-              <span class="temoignage-mini-type type-eyebrow text-gold">
-                {t.type}
-              </span>
-              <span class="temoignage-mini-accroche">{t.accroche}</span>
-              <span class="temoignage-mini-pied mt-auto">
-                <span class="temoignage-mini-auteur block text-on-dark">
-                  {t.auteur}
-                </span>
-                <span class="type-nav block text-on-dark/[0.85]">{t.role}</span>
-              </span>
-              <span class="temoignage-mini-lire type-nav text-gold" aria-hidden="true">
-                Lire le détail
-              </span>
-            </button>
-          )
-        )
-      }
-    </div>
-  </div>
+              <!-- Trois brins paralleles dores : plusieurs vehicules
+                   ensemble. Traces progressivement selon la progression. -->
+              <g stroke="var(--gold)" stroke-linecap="round" fill="none">
+                {
+                  BRINS.map((d, i) => (
+                    <path
+                      class="temoignages-brin"
+                      d={d}
+                      style={`--i:${i}`}
+                      stroke-width={i === 0 ? 1.6 : 1}
+                      opacity={i === 0 ? 0.6 : 0.28}
+                    />
+                  ))
+                }
+              </g>
 
-  <!-- Donnees des temoignages serialisees pour la modale (lues en JS).
-       Format JSON inerte, non execute. -->
-  <script
-    type="application/json"
-    data-temoignages-data
-    set:html={JSON.stringify(TEMOIGNAGES)}
-  />
+              <!-- Jalons d'etape : un anneau + point par etape, allume
+                   quand la progression l'atteint. Positions le long du
+                   rail (echelonnees verticalement). -->
+              {
+                ETAPES.map((_, i) => {
+                  const y = 40 + (i * 384) / (ETAPES.length - 1);
+                  return (
+                    <g
+                      class="temoignages-jalon"
+                      data-jalon
+                      data-index={i}
+                      transform={`translate(60 ${y})`}
+                    >
+                      <circle class="temoignages-jalon-halo" r="11" fill="var(--gold)" opacity="0" />
+                      <circle
+                        class="temoignages-jalon-anneau"
+                        r="6.5"
+                        fill="var(--green-900)"
+                        stroke="var(--gold)"
+                        stroke-width="1.4"
+                      />
+                      <circle class="temoignages-jalon-point" r="2.4" fill="var(--gold-soft)" />
+                    </g>
+                  );
+                })
+              }
 
-  <!-- Modale de detail : un seul noeud, alimente en JS au clic.
-       hidden par defaut ; ouverte via [data-open]. -->
-  <div
-    class="temoignage-modale"
-    data-temoignage-modale
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="temoignage-modale-type"
-    hidden
-  >
-    <div class="temoignage-modale-fond" data-temoignage-close></div>
-    <div class="temoignage-modale-carte" role="document">
-      <button
-        type="button"
-        class="temoignage-modale-fermer"
-        data-temoignage-close
-        aria-label="Fermer le témoignage"
-      >
-        <span aria-hidden="true"></span>
-      </button>
-      <span class="temoignage-guillemet text-gold" aria-hidden="true">
-        &ldquo;
-      </span>
-      <p
-        id="temoignage-modale-type"
-        class="temoignage-modale-type type-eyebrow text-gold"
-        data-temoignage-modale-type
-      ></p>
-      <blockquote
-        class="temoignage-modale-detail type-body"
-        data-temoignage-modale-detail
-      ></blockquote>
-      <footer class="temoignage-modale-pied mt-6">
-        <span
-          class="temoignage-modale-auteur block text-on-dark"
-          data-temoignage-modale-auteur
-        ></span>
-        <span
-          class="type-nav mt-0.5 block text-on-dark/[0.85]"
-          data-temoignage-modale-role
-        ></span>
-      </footer>
+              <!-- Convoi : deux vehicules (van + autocar) qui avancent
+                   ensemble le long du rail selon la progression (pilote
+                   par offsetDistance en JS). Silhouettes minimalistes. -->
+              <g class="temoignages-vehicule temoignages-vehicule--van" data-vehicule="0" aria-hidden="true">
+                <rect x="-7" y="-4" width="14" height="8" rx="2" fill="var(--gold-soft)" />
+                <rect x="-4.5" y="-2.4" width="4.5" height="3" rx="0.8" fill="var(--green-900)" opacity="0.65" />
+              </g>
+              <g class="temoignages-vehicule temoignages-vehicule--autocar" data-vehicule="1" aria-hidden="true">
+                <rect x="-10" y="-3.4" width="20" height="6.8" rx="2" fill="var(--gold)" />
+                <rect x="-7.5" y="-1.8" width="13" height="2.4" rx="0.6" fill="var(--green-900)" opacity="0.6" />
+              </g>
+            </svg>
+
+            <!-- Indicateur de progression discret : 5 points, l'actif
+                 plus lumineux. Reflete l'etape courante. -->
+            <ol class="temoignages-dots" data-dots aria-hidden="true">
+              {ETAPES.map((_, i) => <li class="temoignages-dot" data-dot data-index={i} />)}
+            </ol>
+          </div>
+        </div>
+
+        <!-- ---------- Colonne temoignages (droite) : le contenu reel ---------- -->
+        <div class="temoignages-scene">
+          <ol class="temoignages-liste" data-liste>
+            {
+              ETAPES.map((t, i) => (
+                <li
+                  class:list={['temoignage', { 'is-vedette': t.vedette }]}
+                  data-temoignage
+                  data-index={i}
+                >
+                  <div class="temoignage-etape">
+                    <span class="temoignage-volume type-eyebrow text-gold">
+                      {t.volume}
+                    </span>
+                    <span class="temoignage-etape-nom">{t.etape}</span>
+                  </div>
+
+                  {t.vedette && (
+                    <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
+                      <span aria-hidden="true">★★★★★</span>
+                    </span>
+                  )}
+
+                  <span class="temoignage-guillemet text-gold" aria-hidden="true">
+                    &ldquo;
+                  </span>
+
+                  <blockquote class="temoignage-citation">
+                    <p class="temoignage-accroche">{t.accroche}</p>
+                    <p class="temoignage-detail">{t.detail}</p>
+                    <footer class="temoignage-attribution">
+                      <cite class="temoignage-auteur">{t.auteur}</cite>
+                      <span class="temoignage-role type-nav">{t.role}</span>
+                    </footer>
+                  </blockquote>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="container">
     <!-- CTA de fin de section, centre -->
-    <div class="mt-16 flex flex-col items-center text-center md:mt-20" data-reveal>
-      <p class="type-body mb-6 max-w-md text-on-dark/[0.92]">{CTA_PHRASE}</p>
+    <div class="temoignages-cta" data-reveal>
+      <p class="type-body temoignages-cta-phrase">{CTA_PHRASE}</p>
       <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
     </div>
   </div>
@@ -211,342 +269,372 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 
 <style>
   /* ============================================================
-     TEMOIGNAGES : MUR / MOSAIQUE. Tout visible, aucun scroll lateral.
-     Grille asymetrique : carte vedette (Titouan) a gauche sur 2 rangees,
-     4 mini-cartes (exemples cliquables) reparties a droite. Mobile :
-     une colonne, vedette en tete.
+     PARCOURS DE GROUPE EN SCROLL FIXE.
+     Deux etats :
+       - PAR DEFAUT (fallback, JS off / reduced-motion) : conteneur en
+         flux normal, 5 etapes empilees, toutes visibles et lisibles.
+       - AMELIORE (.is-enhanced pose par le JS) : conteneur haut + bloc
+         sticky, un temoignage visible a la fois, fondus pilotes par la
+         progression du scroll.
      ============================================================ */
 
-  /* Grille du mur : colonne vedette large (1.5fr) + deux colonnes de
-     mini-cartes (1fr chacune). La vedette occupe les deux rangees de la
-     premiere colonne ; les 4 mini-cartes remplissent la grille 2x2 a
-     droite. align-items: stretch pour des cartes de meme hauteur par
-     rangee. */
-  .temoignages-mur {
+  .temoignages {
+    scroll-margin-top: 6rem;
+  }
+
+  /* -- Conteneur de piste. Par defaut : hauteur auto (fallback empile). -- */
+  .temoignages-piste {
+    position: relative;
+  }
+
+  .temoignages-sticky {
+    padding-top: clamp(4rem, 8vw, 7rem);
+    padding-bottom: clamp(4rem, 8vw, 7rem);
+  }
+
+  /* Grille : parcours (gauche, etroit) + scene temoignages (droite, large).
+     Asymetrique et aeree. Fallback : les deux colonnes empilees. */
+  .temoignages-grille {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    grid-auto-rows: 1fr;
-    gap: 1.25rem;
-    margin-top: 2.5rem;
+    gap: clamp(2rem, 5vw, 4.5rem);
   }
 
-  /* ---- Carte vedette (vrai avis, piece maitresse) ---- */
-  .temoignage-vedette {
-    position: relative;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    display: flex;
-    flex-direction: column;
-    padding: clamp(1.75rem, 3vw, 2.5rem);
-    background-color: var(--green-800);
-    border: 1px solid rgba(201, 162, 75, 0.4);
-    border-radius: 22px;
-    box-shadow: 0 30px 70px -45px rgba(0, 0, 0, 0.8);
-    overflow: hidden;
-  }
-  /* Voile dore tres subtil dans le coin haut, pour distinguer la vedette. */
-  .temoignage-vedette::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    right: -30%;
-    width: 70%;
-    height: 80%;
-    background: radial-gradient(
-      circle,
-      rgba(201, 162, 75, 0.16) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
+  /* ---- Colonne parcours ---- */
+  .temoignages-parcours-tete {
+    margin-bottom: 1.75rem;
   }
 
-  .temoignage-etoiles {
+  .temoignages-plan {
     position: relative;
-    font-size: 1.05rem;
-    letter-spacing: 0.15em;
-    color: var(--gold);
-    line-height: 1;
   }
 
-  .temoignage-vedette-guillemet {
-    position: relative;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 5rem;
-    line-height: 0.5;
-    height: 2rem;
-    margin-top: 1rem;
-    opacity: 0.85;
+  .temoignages-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
   }
 
-  .temoignage-vedette-type {
-    position: relative;
-    display: inline-block;
+  /* Brins : traces progressivement. dash-array/offset poses en JS a partir
+     de getTotalLength ; la progression globale pilote l'offset. */
+  .temoignages-brin {
+    transition: stroke-dashoffset 120ms linear;
+  }
+
+  /* Jalons : eteints au repos, s'allument quand la progression les atteint. */
+  .temoignages-jalon-anneau,
+  .temoignages-jalon-point {
+    transition:
+      fill 400ms var(--ease),
+      stroke 400ms var(--ease);
+  }
+  .temoignages-jalon.is-active .temoignages-jalon-point {
+    fill: var(--gold);
+  }
+  .temoignages-jalon.is-active .temoignages-jalon-halo {
+    animation: temoignages-pulse 900ms var(--ease) both;
+  }
+
+  /* Vehicules du convoi : masques tant que le JS n'a pas pris la main
+     (fallback : inutiles). Reveles en mode ameliore. */
+  .temoignages-vehicule {
+    opacity: 0;
+    transition: opacity 500ms var(--ease);
+  }
+
+  /* Indicateur a points : discret, l'actif plus lumineux et plus grand. */
+  .temoignages-dots {
+    display: none;
+    gap: 0.6rem;
     margin-top: 1.5rem;
   }
-
-  .temoignage-vedette-detail {
-    position: relative;
-    margin: 1rem 0 0;
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 500;
-    font-size: clamp(1.35rem, 1.9vw, 1.7rem);
-    line-height: 1.32;
-    letter-spacing: -0.01em;
-    color: var(--on-dark);
-    text-wrap: pretty;
-  }
-
-  .temoignage-vedette-pied {
-    position: relative;
-    margin-top: auto;
-    padding-top: 1.75rem;
-    font-family: var(--font-body);
-    font-size: 1rem;
-  }
-  .temoignage-vedette-auteur {
-    font-weight: 600;
-  }
-
-  /* Mini-carte (exemple) : bouton pleine surface, cliquable, dans la
-     grille (plus de largeur fixe ni de scroll-snap). Fond --green-800,
-     coins doux, fin liseré doré, texte contraste. */
-  .temoignage-mini {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    width: 100%;
-    min-height: 13rem;
-    padding: 1.6rem;
-    text-align: left;
-    background-color: var(--green-800);
-    border: 1px solid rgba(201, 162, 75, 0.2);
-    border-radius: 18px;
-    cursor: pointer;
-    transition:
-      transform 400ms var(--ease),
-      border-color 400ms var(--ease),
-      background-color 400ms var(--ease);
-  }
-  .temoignage-mini:hover,
-  .temoignage-mini:focus-visible {
-    outline: none;
-    transform: translateY(-4px);
-    border-color: rgba(201, 162, 75, 0.5);
-    background-color: var(--green-700);
-  }
-  .temoignage-mini:focus-visible {
-    box-shadow: 0 0 0 2px rgba(201, 162, 75, 0.5);
-  }
-
-  .temoignage-mini-type {
-    display: inline-block;
-  }
-
-  /* Accroche au repos : essentiel, contraste, non italique (lisible).
-     Couleur crème posee en direct (var(--on-dark) + opacity) plutot qu'en
-     classe Tailwind text-on-dark/[0.92] : l'opacite arbitraire ne se
-     resout pas sur une variable non-RGB et retombait sur un gris sombre. */
-  .temoignage-mini-accroche {
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-size: 1.2rem;
-    line-height: 1.24;
-    letter-spacing: -0.01em;
-    color: var(--on-dark);
-    opacity: 0.92;
-  }
-
-  .temoignage-mini-pied {
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-  }
-  .temoignage-mini-auteur {
-    font-weight: 500;
-  }
-
-  /* Indice "Lire le detail" dore, discret, souligne l'affordance clic. */
-  .temoignage-mini-lire {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.25rem;
-    opacity: 0.9;
-  }
-  .temoignage-mini-lire::after {
-    content: '';
-    width: 0.9rem;
-    height: 1px;
-    background-color: currentColor;
-    transition: width 300ms var(--ease);
-  }
-  .temoignage-mini:hover .temoignage-mini-lire::after,
-  .temoignage-mini:focus-visible .temoignage-mini-lire::after {
-    width: 1.6rem;
-  }
-
-  /* Guillemet stylise en accent Fraunces (reutilise dans la modale). */
-  .temoignage-guillemet {
-    font-family: var(--font-display);
-    font-size: 3.5rem;
-    line-height: 0.6;
-    height: 1.4rem;
-    opacity: 0.8;
-  }
-
-  /* ---- Modale de detail ---- */
-  .temoignage-modale {
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-  }
-  .temoignage-modale[hidden] {
-    display: none;
-  }
-
-  /* Fond assombri, ferme au clic. Transitionne l'opacite. */
-  .temoignage-modale-fond {
-    position: absolute;
-    inset: 0;
-    background-color: rgba(6, 12, 9, 0.7);
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    transition: opacity 350ms var(--ease);
-  }
-
-  /* Carte modale : fond --green-800, liseré doré, coins doux, animation
-     douce d'apparition (translation + opacite). */
-  .temoignage-modale-carte {
-    position: relative;
-    width: min(34rem, 100%);
-    max-height: 85vh;
-    overflow-y: auto;
-    padding: clamp(1.75rem, 4vw, 2.75rem);
-    background-color: var(--green-800);
-    border: 1px solid rgba(201, 162, 75, 0.28);
-    border-radius: 22px;
-    box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.75);
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
+  .temoignages-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--gold);
+    opacity: 0.28;
     transition:
       opacity 350ms var(--ease),
       transform 350ms var(--ease);
   }
-
-  /* Etat ouvert : fond visible + carte posee. Pilote par [data-open]. */
-  .temoignage-modale[data-open] .temoignage-modale-fond {
+  .temoignages-dot.is-active {
     opacity: 1;
-  }
-  .temoignage-modale[data-open] .temoignage-modale-carte {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1.35);
   }
 
-  .temoignage-modale-type {
+  /* ---- Colonne scene / temoignages ---- */
+
+  /* Etiquette d'etape : volume dore (echelle du groupe) + nom d'etape. */
+  .temoignage-etape {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.25rem;
+  }
+  .temoignage-etape-nom {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: var(--on-dark);
+    opacity: 0.7;
+  }
+
+  .temoignage-etoiles {
     display: block;
-    margin-top: 0.5rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.75rem;
   }
 
-  .temoignage-modale-detail {
-    margin: 0.75rem 0 0;
-    font-style: italic;
-    font-size: 1.15rem;
-    line-height: 1.55;
-    /* Couleur crème en direct (meme raison que l'accroche) : evite le gris
-       sombre du fallback Tailwind text-on-dark/[0.92] sur variable non-RGB. */
+  /* Grand guillemet dore, accent editorial. */
+  .temoignage-guillemet {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    line-height: 0.4;
+    height: clamp(1.5rem, 3vw, 2.4rem);
+    opacity: 0.85;
+  }
+
+  .temoignage-citation {
+    margin: 1.25rem 0 0;
+  }
+
+  /* Accroche : la phrase forte, en tres grande typographie Clash Display,
+     sans carte ni cadre. Style magazine. Creme AA sur vert profond. */
+  .temoignage-accroche {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    line-height: 1.16;
+    letter-spacing: -0.015em;
+    color: var(--on-dark);
+    text-wrap: pretty;
+    margin: 0;
+  }
+
+  /* Detail complet : texte courant plus petit, discret mais lisible (AA). */
+  .temoignage-detail {
+    margin: 1.5rem 0 0;
+    max-width: 46ch;
+    font-family: var(--font-body);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: var(--on-dark);
+    opacity: 0.86;
+  }
+
+  .temoignage-attribution {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .temoignage-auteur {
+    font-family: var(--font-body);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--on-dark);
+  }
+  .temoignage-role {
+    color: var(--on-dark);
+    opacity: 0.7;
+  }
+
+  /* ---- CTA de fin ---- */
+  .temoignages-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: clamp(4rem, 8vw, 7rem);
+    margin-top: clamp(2rem, 5vw, 3.5rem);
+  }
+  .temoignages-cta-phrase {
+    max-width: 28rem;
+    margin-bottom: 1.5rem;
     color: var(--on-dark);
     opacity: 0.92;
   }
 
-  /* Bouton croix : coin haut droit, cible tactile confortable. */
-  .temoignage-modale-fermer {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 2.5rem;
-    height: 2.5rem;
+  @keyframes temoignages-pulse {
+    0% {
+      opacity: 0.5;
+      transform: scale(0.5);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2.1);
+    }
+  }
+
+  /* ============================================================
+     FALLBACK EMPILE (etat par defaut, avant .is-enhanced).
+     Les 5 etapes sont visibles, empilees, separees. Ligne verticale
+     de parcours a gauche. Aucune dependance JS pour la lisibilite.
+     ============================================================ */
+  .temoignage {
+    position: relative;
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: clamp(2.5rem, 5vw, 4rem);
+    border-bottom: 1px solid var(--line-on-dark);
+  }
+  .temoignage:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  .temoignages-liste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ============================================================
+     MODE AMELIORE : pilote par .is-enhanced (pose par le JS une fois
+     l'amelioration active). Sticky + un temoignage a la fois + fondus.
+     ============================================================ */
+  .temoignages.is-enhanced .temoignages-piste {
+    /* Course de scroll : 5 etapes -> ~500vh. */
+    height: 500vh;
+  }
+  .temoignages.is-enhanced .temoignages-sticky {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 1px solid var(--line-on-dark);
-    background-color: transparent;
-    cursor: pointer;
+  }
+  .temoignages.is-enhanced .temoignages-dots {
+    display: flex;
+  }
+  .temoignages.is-enhanced .temoignages-vehicule {
+    opacity: 0.95;
+  }
+
+  /* En mode ameliore, la scene devient une pile empilee (grid stack) :
+     tous les temoignages superposes, un seul opaque a la fois. */
+  .temoignages.is-enhanced .temoignages-liste {
+    display: grid;
+    min-height: 60vh;
+    align-items: center;
+  }
+  .temoignages.is-enhanced .temoignage {
+    grid-area: 1 / 1;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    opacity: 0;
+    transform: translateY(18px);
     transition:
-      border-color 250ms var(--ease),
-      background-color 250ms var(--ease);
+      opacity 600ms var(--ease),
+      transform 600ms var(--ease);
+    pointer-events: none;
   }
-  .temoignage-modale-fermer:hover,
-  .temoignage-modale-fermer:focus-visible {
-    outline: none;
-    border-color: var(--gold);
-    background-color: rgba(201, 162, 75, 0.12);
-  }
-  .temoignage-modale-fermer span {
-    position: relative;
-    width: 1rem;
-    height: 1rem;
-  }
-  .temoignage-modale-fermer span::before,
-  .temoignage-modale-fermer span::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 1.5px;
-    background-color: var(--on-dark);
-  }
-  .temoignage-modale-fermer span::before {
-    transform: rotate(45deg);
-  }
-  .temoignage-modale-fermer span::after {
-    transform: rotate(-45deg);
+  .temoignages.is-enhanced .temoignage.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
-  /* ---- Responsive du mur ---- */
+  /* ============================================================
+     DESKTOP (>= 1024px) : grille asymetrique parcours | scene.
+     Uniquement en mode ameliore ; le fallback reste empile.
+     ============================================================ */
+  @media (min-width: 1024px) {
+    .temoignages.is-enhanced .temoignages-grille {
+      grid-template-columns: minmax(220px, 0.9fr) 1.6fr;
+      align-items: center;
+    }
+    .temoignages.is-enhanced .temoignages-svg {
+      max-height: 62vh;
+    }
+  }
 
-  /* Tablette : la vedette passe pleine largeur en tete, les 4 exemples
-     se rangent en dessous sur deux colonnes. Plus de span de rangees. */
+  /* Sous le point de bascule desktop, le parcours SVG reste discret :
+     en fallback empile on masque le grand SVG (une simple ligne verticale
+     via bordure suffit) pour ne pas alourdir. En mode ameliore mobile, on
+     conserve la ligne verticale a gauche geree ci-dessous. */
   @media (max-width: 1023px) {
-    .temoignages-mur {
-      grid-template-columns: 1fr 1fr;
-      grid-auto-rows: auto;
+    .temoignages-parcours {
+      display: none;
     }
-    .temoignage-vedette {
-      grid-column: 1 / -1;
-      grid-row: auto;
+    /* Ligne verticale de parcours a gauche de chaque etape (mobile). */
+    .temoignages-scene {
+      position: relative;
+      padding-left: 1.75rem;
+    }
+    .temoignages-scene::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      width: 1.5px;
+      background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--gold) 8%,
+        var(--gold) 92%,
+        transparent
+      );
+      opacity: 0.5;
+    }
+    .temoignage::before {
+      content: '';
+      position: absolute;
+      left: -1.75rem;
+      top: 0.4rem;
+      width: 9px;
+      height: 9px;
+      margin-left: -0.5px;
+      border-radius: 50%;
+      background-color: var(--gold);
+      box-shadow: 0 0 0 4px var(--green-900);
     }
   }
 
-  /* Mobile : une seule colonne, empilement propre. La vedette (vrai avis)
-     reste en tete, les exemples suivent. Aucun scroll horizontal. */
-  @media (max-width: 639px) {
-    .temoignages-mur {
-      grid-template-columns: 1fr;
+  /* ============================================================
+     REDUCED MOTION : jamais de sticky ni d'animation. Meme si le JS
+     ajoutait .is-enhanced, on neutralise tout ici : les etapes restent
+     empilees, toutes visibles, aucune transition.
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .temoignages.is-enhanced .temoignages-piste {
+      height: auto;
     }
-    .temoignage-vedette {
-      grid-column: 1;
+    .temoignages.is-enhanced .temoignages-sticky {
+      position: static;
+      min-height: 0;
+      display: block;
     }
-    .temoignage-mini {
+    .temoignages.is-enhanced .temoignages-liste {
+      display: block;
       min-height: 0;
     }
-  }
-
-  /* Reduced motion : on coupe les transitions d'ouverture. */
-  @media (prefers-reduced-motion: reduce) {
-    .temoignage-modale-fond,
-    .temoignage-modale-carte {
+    .temoignages.is-enhanced .temoignage {
+      grid-area: auto;
+      opacity: 1;
+      transform: none;
       transition: none;
+      pointer-events: auto;
+      padding-bottom: clamp(2.5rem, 5vw, 4rem);
+      margin-bottom: clamp(2.5rem, 5vw, 4rem);
+      border-bottom: 1px solid var(--line-on-dark);
     }
-    .temoignage-mini {
+    .temoignages.is-enhanced .temoignage:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .temoignages-brin,
+    .temoignages-jalon-anneau,
+    .temoignages-jalon-point,
+    .temoignages-dot,
+    .temoignages-vehicule {
       transition: none;
     }
   }
@@ -554,120 +642,191 @@ const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 
 <script>
   /* ============================================================
-     Temoignages : mini-cartes -> detail en modale.
-     Au clic sur une mini-carte, on lit son index, on recupere le
-     temoignage correspondant dans les donnees JSON serialisees, on
-     remplit la modale et on l'ouvre. Fermeture au clic sur le fond,
-     sur la croix, ou via la touche Echap. Le focus revient sur la
-     carte d'origine a la fermeture (accessibilite).
+     Parcours de groupe : progression du scroll -> etape active.
 
-     La carte vedette (Titouan, index 0) affiche son detail directement
-     et n'est pas cliquable : seules les mini-cartes exemples ouvrent la
-     modale. Le mur est une grille statique, aucun scroll lateral.
+     - On n'active le mode sticky/fondu (.is-enhanced) que si le viewport
+       est assez large ET que l'utilisateur n'a pas demande reduced-motion.
+       Sinon on laisse le fallback empile (deja lisible en HTML).
+     - La progression = position de la piste dans la fenetre
+       (getBoundingClientRect), lue dans une boucle rAF (synchro Lenis, qui
+       pilote le scroll natif). On en deduit l'index d'etape actif, on trace
+       les brins (stroke-dashoffset), on avance les vehicules le long du rail
+       (offsetDistance) et on met a jour jalons + dots.
+     - Tous les textes sont deja dans le DOM : ce script ne fait qu'orchestrer
+       l'affichage, jamais l'injection de contenu (SEO/GEO).
      ============================================================ */
-  type Temoignage = {
-    type: string;
-    accroche: string;
-    auteur: string;
-    role: string;
-    detail: string;
-  };
 
-  const dataNode = document.querySelector<HTMLScriptElement>(
-    '[data-temoignages-data]'
-  );
-  const modale = document.querySelector<HTMLElement>('[data-temoignage-modale]');
-  const cartes = Array.from(
-    document.querySelectorAll<HTMLButtonElement>('[data-temoignage]')
-  );
+  function initTemoignages() {
+    const section = document.querySelector<HTMLElement>('[data-temoignages]');
+    if (!section) return;
 
-  if (dataNode && modale && cartes.length) {
-    let temoignages: Temoignage[] = [];
-    try {
-      temoignages = JSON.parse(dataNode.textContent ?? '[]');
-    } catch {
-      temoignages = [];
+    const piste = section.querySelector<HTMLElement>('[data-piste]');
+    const items = Array.from(
+      section.querySelectorAll<HTMLElement>('[data-temoignage]')
+    );
+    const jalons = Array.from(
+      section.querySelectorAll<SVGGElement>('[data-jalon]')
+    );
+    const dots = Array.from(section.querySelectorAll<HTMLElement>('[data-dot]'));
+    const brins = Array.from(
+      section.querySelectorAll<SVGPathElement>('.temoignages-brin')
+    );
+    const vehicules = Array.from(
+      section.querySelectorAll<SVGGElement>('[data-vehicule]')
+    );
+    const rail = brins[0] ?? null;
+
+    if (!piste || items.length === 0) return;
+
+    const total = items.length;
+    const reduce = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    // Longueur du rail pour placer les vehicules (offsetDistance en %).
+    let railLen = 0;
+    if (rail) {
+      try {
+        railLen = rail.getTotalLength();
+      } catch {
+        railLen = 0;
+      }
     }
 
-    const elType = modale.querySelector<HTMLElement>(
-      '[data-temoignage-modale-type]'
-    );
-    const elDetail = modale.querySelector<HTMLElement>(
-      '[data-temoignage-modale-detail]'
-    );
-    const elAuteur = modale.querySelector<HTMLElement>(
-      '[data-temoignage-modale-auteur]'
-    );
-    const elRole = modale.querySelector<HTMLElement>(
-      '[data-temoignage-modale-role]'
-    );
-    const fermeBtn = modale.querySelector<HTMLButtonElement>(
-      '.temoignage-modale-fermer'
-    );
-
-    let lastFocused: HTMLElement | null = null;
-
-    const open = (index: number, origin: HTMLElement): void => {
-      const t = temoignages[index];
-      if (!t) return;
-      if (elType) elType.textContent = t.type;
-      if (elDetail) elDetail.textContent = t.detail;
-      if (elAuteur) elAuteur.textContent = t.auteur;
-      if (elRole) elRole.textContent = t.role;
-
-      lastFocused = origin;
-      modale.hidden = false;
-      // Force un reflow avant d'ajouter [data-open] pour jouer la transition.
-      void modale.offsetWidth;
-      modale.setAttribute('data-open', '');
-      document.body.style.overflow = 'hidden';
-      fermeBtn?.focus();
-    };
-
-    const close = (): void => {
-      modale.removeAttribute('data-open');
-      document.body.style.overflow = '';
-      // Attend la fin de la transition avant de masquer completement.
-      const finish = (): void => {
-        modale.hidden = true;
-        modale.removeEventListener('transitionend', finish);
-      };
-      // Fallback si aucune transition (reduced-motion) : ferme direct.
-      const reduced = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-      if (reduced) {
-        modale.hidden = true;
-      } else {
-        const carte = modale.querySelector<HTMLElement>(
-          '.temoignage-modale-carte'
-        );
-        carte?.addEventListener('transitionend', finish, { once: true });
-        // Garde-fou : masque apres 500ms meme si transitionend manque.
-        window.setTimeout(() => {
-          if (!modale.hasAttribute('data-open')) modale.hidden = true;
-        }, 500);
+    // Prepare le trace des brins (dash-array = longueur, offset plein = cache).
+    const brinLens = brins.map((b) => {
+      let len = 0;
+      try {
+        len = b.getTotalLength();
+      } catch {
+        len = 0;
       }
-      lastFocused?.focus();
+      b.style.strokeDasharray = String(len);
+      b.style.strokeDashoffset = String(len);
+      return len;
+    });
+
+    // Applique une progression p (0..1) : trace, vehicules, etape active.
+    let activeIndex = -1;
+    const apply = (p: number) => {
+      const clamped = Math.min(Math.max(p, 0), 1);
+
+      // Trace des brins proportionnel a la progression.
+      brins.forEach((b, i) => {
+        b.style.strokeDashoffset = String(brinLens[i] * (1 - clamped));
+      });
+
+      // Vehicules le long du rail (le second legerement en retrait pour
+      // suggerer un convoi, jamais devant la tete).
+      if (railLen > 0 && rail) {
+        vehicules.forEach((v, i) => {
+          const retrait = i === 0 ? 0 : 0.06;
+          const dist = Math.min(Math.max(clamped - retrait, 0), 1) * railLen;
+          const pt = rail.getPointAtLength(dist);
+          v.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+        });
+      }
+
+      // Etape active : segmente [0..1] en `total` paliers.
+      const index = Math.min(Math.floor(clamped * total), total - 1);
+      if (index !== activeIndex) {
+        activeIndex = index;
+        items.forEach((el, i) => el.classList.toggle('is-active', i === index));
+        jalons.forEach((el, i) =>
+          el.classList.toggle('is-active', i <= index)
+        );
+        dots.forEach((el, i) => el.classList.toggle('is-active', i === index));
+      }
     };
 
-    cartes.forEach((carte) => {
-      carte.addEventListener('click', () => {
-        const index = Number(carte.dataset.index);
-        open(index, carte);
+    // Mode ameliore : uniquement desktop large et hors reduced-motion.
+    const mqEnhance = window.matchMedia(
+      '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
+    );
+
+    let rafId = 0;
+    let running = false;
+
+    const measure = () => {
+      const rect = piste.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Course utile = hauteur de piste - une fenetre (duree du sticky).
+      const course = rect.height - vh;
+      if (course <= 0) {
+        apply(0);
+        return;
+      }
+      // p = combien on a defile dans la piste (0 en haut, 1 en bas).
+      const p = (-rect.top) / course;
+      apply(p);
+    };
+
+    const loop = () => {
+      measure();
+      rafId = window.requestAnimationFrame(loop);
+    };
+
+    const enable = () => {
+      if (running) return;
+      running = true;
+      section.classList.add('is-enhanced');
+      // Reveal vehicules deja gere par CSS (.is-enhanced). Demarre la boucle.
+      measure();
+      rafId = window.requestAnimationFrame(loop);
+    };
+
+    const disable = () => {
+      if (!running) return;
+      running = false;
+      section.classList.remove('is-enhanced');
+      window.cancelAnimationFrame(rafId);
+      // Fallback empile : tout visible, on retire les etats actifs.
+      items.forEach((el) => el.classList.remove('is-active'));
+      jalons.forEach((el) => el.classList.remove('is-active'));
+      dots.forEach((el) => el.classList.remove('is-active'));
+    };
+
+    const sync = () => {
+      if (reduce) {
+        disable();
+        return;
+      }
+      if (mqEnhance.matches) enable();
+      else disable();
+    };
+
+    sync();
+    // Rebranche a chaque changement de largeur / preference.
+    if (mqEnhance.addEventListener) {
+      mqEnhance.addEventListener('change', sync);
+    } else if ((mqEnhance as any).addListener) {
+      (mqEnhance as any).addListener(sync);
+    }
+    window.addEventListener('resize', () => {
+      // Recalcule les longueurs de rail/brins au redimensionnement.
+      if (rail) {
+        try {
+          railLen = rail.getTotalLength();
+        } catch {
+          railLen = 0;
+        }
+      }
+      brins.forEach((b, i) => {
+        try {
+          brinLens[i] = b.getTotalLength();
+        } catch {
+          brinLens[i] = brinLens[i];
+        }
       });
     });
+  }
 
-    // Fermeture : elements marques [data-temoignage-close] (fond + croix).
-    modale.querySelectorAll('[data-temoignage-close]').forEach((el) => {
-      el.addEventListener('click', close);
-    });
-
-    // Echap ferme la modale si ouverte.
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && modale.hasAttribute('data-open')) {
-        close();
-      }
+  if (document.readyState !== 'loading') {
+    initTemoignages();
+  } else {
+    document.addEventListener('DOMContentLoaded', initTemoignages, {
+      once: true,
     });
   }
+  document.addEventListener('astro:page-load', initTemoignages);
 </script>
