@@ -24,6 +24,13 @@ interface Props {
   jsonLd?: object | null;
   /** Meta OG article (dates), ajoutees seulement pour ogType='article'. */
   article?: { publishedTime?: string; modifiedTime?: string };
+  /**
+   * Contexte de fond du header. 'dark' (defaut) : accueil, header transparent
+   * par-dessus le hero sombre, logo et liens clairs. 'light' : pages a fond
+   * creme (/blog, articles), logo en version foncee et liens en --ink pour
+   * rester lisibles.
+   */
+  headerTheme?: 'light' | 'dark';
 }
 const {
   title = 'Transport séminaire et événement à Nantes | Navettes clé en main, Grand Ouest',
@@ -31,6 +38,7 @@ const {
   ogType = 'website',
   jsonLd: jsonLdOverride = null,
   article,
+  headerTheme = 'dark',
 } = Astro.props;
 
 // URL canonique de la page courante, calculee sur Astro.site (defini dans
@@ -176,7 +184,7 @@ const jsonLd = jsonLdOverride ?? {
       Aller au contenu
     </a>
 
-    <Header />
+    <Header theme={headerTheme} />
 
     <main>
       <slot />

@@ -6,6 +6,23 @@
 */
 import ButtonArrow from './ButtonArrow.astro';
 
+interface Props {
+  /**
+   * Contexte de fond. 'dark' (defaut) = accueil, header transparent
+   * par-dessus le hero sombre, logo/liens clairs. 'light' = pages a fond
+   * creme, logo en version foncee et liens en --ink pour rester lisibles.
+   */
+  theme?: 'light' | 'dark';
+}
+const { theme = 'dark' } = Astro.props;
+
+// Sur fond clair, on sert la variante foncee du logo (texte #16241C, soleil
+// dore inchange) ; sur fond sombre, la variante claire d'origine.
+const logoSrc =
+  theme === 'light'
+    ? '/logo-transport-evenementiel-nantes-dark.svg'
+    : '/logo-transport-evenementiel-nantes.svg';
+
 // Liens d'ancre prefixes par '/' : fonctionnent depuis l'accueil ET depuis
 // les pages blog (une ancre nue #... ne cible que la page courante).
 const links = [
@@ -19,7 +36,10 @@ const links = [
 
 <header
   id="site-header"
-  class="fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-smooth"
+  class:list={[
+    'fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-smooth',
+    theme === 'light' && 'is-light',
+  ]}
   data-state="top"
 >
   <div
@@ -31,7 +51,7 @@ const links = [
       aria-label="Transport Événementiel Nantes, accueil"
     >
       <img
-        src="/logo-transport-evenementiel-nantes.svg"
+        src={logoSrc}
         alt="Transport Événementiel Nantes"
         class="site-logo-img"
         width="860"
@@ -214,6 +234,59 @@ const links = [
   #site-header.is-condensed .container {
     padding-top: 0.85rem;
     padding-bottom: 0.85rem;
+  }
+
+  /* =========================================================
+     Variante fond CLAIR (pages /blog, articles). Le logo passe en
+     version foncee (gere cote src), et la navigation doit basculer du
+     texte clair au vert profond --ink pour rester lisible sur le creme.
+     Le bouton CTA (fond dore) fonctionne sur les deux fonds : inchange.
+     ========================================================= */
+  #site-header.is-light .nav-link {
+    /* Tailwind text-on-dark est surcharge ici. Opacite 0.85 gere en propriete
+       distincte : une opacite arbitraire sur une var non-RGB ne se resout pas
+       cote couleur, on separe donc color et opacity. */
+    color: var(--ink);
+    opacity: 0.85;
+  }
+  #site-header.is-light .nav-link:hover {
+    color: var(--gold);
+    opacity: 1;
+  }
+  /* Liens du menu mobile en fond clair (avant ouverture du panneau vert). */
+  #site-header.is-light [data-mobile-link] {
+    color: var(--ink);
+  }
+  #site-header.is-light [data-mobile-link]:hover {
+    color: var(--gold);
+  }
+  /* Barres du burger : vert profond sur fond clair. */
+  #site-header.is-light .menu-toggle span > span {
+    background-color: var(--ink);
+  }
+
+  /* En haut de page (etat non condense) sur fond clair : le header laisse
+     voir le creme dessous, on garde un filet bas tres fin pour delimiter la
+     barre sans l'alourdir. */
+  #site-header.is-light {
+    box-shadow: 0 1px 0 rgba(22, 36, 28, 0.06);
+  }
+
+  /* Sticky au scroll sur fond clair : au lieu du fond vert profond (qui
+     renverrait le logo/nav fonces illisibles), on pose un fond creme legerement
+     contraste et une fine bordure basse doree. Le logo fonce et les liens --ink
+     restent parfaitement lisibles. */
+  #site-header.is-light.is-condensed {
+    background-color: var(--cream-soft);
+    box-shadow: 0 1px 0 var(--line);
+  }
+  /* Une fois le panneau mobile ouvert, il reprend son fond vert sombre :
+     les liens redeviennent clairs a l'interieur pour contraster. */
+  #site-header.is-light .mobile-menu[data-open='true'] [data-mobile-link] {
+    color: var(--on-dark);
+  }
+  #site-header.is-light .mobile-menu[data-open='true'] [data-mobile-link]:hover {
+    color: var(--gold);
   }
 
   /* Menu mobile : animation d'ouverture via max-height. On pilote l'etat
