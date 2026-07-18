@@ -40,12 +40,12 @@ const links = [
       />
     </a>
 
-    <nav class="hidden items-center gap-9 lg:flex" aria-label="Navigation principale">
+    <nav class="nav-desktop items-center" aria-label="Navigation principale">
       {
         links.map((link) => (
           <a
             href={link.href}
-            class="type-nav text-on-dark transition-colors duration-300 hover:text-gold"
+            class="nav-link type-nav text-on-dark transition-colors duration-300 hover:text-gold"
           >
             {link.label}
           </a>
@@ -53,14 +53,14 @@ const links = [
       }
     </nav>
 
-    <div class="hidden lg:block">
+    <div class="cta-desktop">
       <ButtonArrow variant="solid" href="/#formulaire-devis" label="Demander un devis" />
     </div>
 
     <!-- Declencheur menu mobile -->
     <button
       id="menu-toggle"
-      class="flex h-10 w-10 items-center justify-center lg:hidden"
+      class="menu-toggle flex h-10 w-10 items-center justify-center"
       aria-label="Ouvrir le menu"
       aria-expanded="false"
       aria-controls="mobile-menu"
@@ -80,7 +80,7 @@ const links = [
        ajoutee dynamiquement n'a aucune regle CSS et le menu ne s'ouvre pas. -->
   <div
     id="mobile-menu"
-    class="mobile-menu overflow-hidden bg-green-900/98 backdrop-blur lg:hidden"
+    class="mobile-menu overflow-hidden bg-green-900/98 backdrop-blur"
     data-open="false"
   >
     <div class="mobile-menu-inner min-h-0">
@@ -140,6 +140,50 @@ const links = [
 </script>
 
 <style>
+  /* =========================================================
+     Bascule desktop / mobile a 1180px (et non 1024px) : avec cinq
+     liens plus le CTA, la barre ne tient plus sur une ligne entre
+     1024 et 1180px. On bascule donc sur le burger plus tot pour ne
+     jamais afficher une navigation cassee. Visibilite pilotee ici en
+     CSS scope (pas via les utilitaires lg: de Tailwind) pour maitriser
+     le point de bascule exact.
+     ========================================================= */
+  .nav-desktop,
+  .cta-desktop {
+    display: none;
+  }
+  .menu-toggle {
+    display: inline-flex;
+  }
+  @media (min-width: 1180px) {
+    .nav-desktop {
+      display: flex;
+      /* Gap fluide, strictement identique entre chaque lien. Se resserre
+         progressivement vers les largeurs basses sans jamais provoquer
+         de retour a la ligne. */
+      gap: clamp(1.5rem, 2.2vw, 2.25rem);
+    }
+    .cta-desktop {
+      display: block;
+    }
+    .menu-toggle {
+      display: none;
+    }
+  }
+
+  /* Liens de navigation : jamais coupes en deux, taille de police fluide
+     et lisible (ne descend pas sous 15px). */
+  .nav-link {
+    white-space: nowrap;
+    font-size: clamp(0.9rem, 1.1vw, 0.95rem);
+  }
+
+  /* Le libelle du bouton CTA (DEMANDER UN DEVIS) reste sur une seule
+     ligne, la fleche alignee a droite du texte. */
+  .cta-desktop :global(.type-button) {
+    white-space: nowrap;
+  }
+
   /* Logo SVG : hauteur fixe, largeur auto (le viewBox 860x240 preserve le
      ratio). Curseur pointer et leger fondu au survol. La version claire du
      SVG reste lisible sur le fond sombre du header. */
@@ -189,5 +233,12 @@ const links = [
   }
   .mobile-menu[data-open='true'] {
     max-height: 80vh;
+  }
+  /* Au-dela du point de bascule, le menu mobile est masque (la nav
+     desktop prend le relais). */
+  @media (min-width: 1180px) {
+    .mobile-menu {
+      display: none;
+    }
   }
 </style>
