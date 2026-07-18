@@ -1,0 +1,84 @@
+---
+/*
+  ArticleCard : carte d'article pour la grille du blog.
+  Categorie (eyebrow doree), titre (Clash Display), meta (date + temps de
+  lecture), extrait 2 lignes, lien vers l'article. Bordure fine, coins doux,
+  hover subtil. Toute la carte est cliquable (le lien couvre l'article).
+*/
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  date: Date;
+  readingTime?: number;
+}
+const { slug, title, description, category, date, readingTime } = Astro.props;
+
+const dateISO = date.toISOString();
+const dateAffichee = date.toLocaleDateString('fr-FR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<article
+  class="article-card group relative flex flex-col rounded-2xl border border-line bg-cream-soft p-7 transition-all duration-300 ease-smooth hover:border-gold"
+  data-reveal
+>
+  <div class="flex items-center gap-3">
+    <Eyebrow tone="light">{category}</Eyebrow>
+  </div>
+
+  <h3 class="type-h3 mt-4 text-ink transition-colors duration-300 group-hover:text-green-800">
+    <a href={`/blog/${slug}`} class="article-card-lien">
+      <span class="absolute inset-0" aria-hidden="true"></span>
+      {title}
+    </a>
+  </h3>
+
+  <p class="type-body article-card-extrait mt-3 text-ink-muted">{description}</p>
+
+  <div class="mt-6 flex items-center gap-3 text-sm text-ink-muted">
+    <time datetime={dateISO}>{dateAffichee}</time>
+    {
+      readingTime && (
+        <>
+          <span aria-hidden="true" class="text-gold">
+            &middot;
+          </span>
+          <span>{readingTime} min de lecture</span>
+        </>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  /* Extrait limite a 2 lignes, coupe proprement. */
+  .article-card-extrait {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Le lien du titre porte le focus, mais la carte entiere est cliquable
+     via le span inset-0. On garde un outline visible au clavier. */
+  .article-card-lien:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  .article-card {
+    box-shadow: 0 1px 2px rgba(22, 36, 28, 0.04);
+  }
+  .article-card:hover {
+    box-shadow: 0 12px 32px rgba(22, 36, 28, 0.08);
+    transform: translateY(-2px);
+  }
+</style>

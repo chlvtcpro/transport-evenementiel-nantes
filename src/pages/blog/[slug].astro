@@ -1,0 +1,389 @@
+---
+/*
+  /blog/[slug] : template d'article reutilisable.
+  Genere une page par entree de la collection blog (SSG, lisible sans JS).
+  Reutilise le design system (Clash Display, Inter, vert/creme/or), le
+  header/footer via Base, l'accordeon FAQ (ArticleFaq) et le CTA (ButtonArrow).
+
+  SEO/GEO : title + meta + OG/Twitter + canonical (via Base), et un @graph
+  JSON-LD injecte dans Base avec 3 noeuds : Article, BreadcrumbList, FAQPage.
+*/
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Eyebrow from '../../components/Eyebrow.astro';
+import ArticleFaq from '../../components/ArticleFaq.astro';
+import ButtonArrow from '../../components/ButtonArrow.astro';
+import { SITE_DATA } from '../../data/site.ts';
+
+// Une page statique par article. Le slug = id de l'entree (nom de fichier).
+export async function getStaticPaths() {
+  const articles = await getCollection('blog');
+  return articles.map((article) => ({
+    params: { slug: article.id },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { data } = article;
+const { Content } = await render(article);
+
+// Dates. updated retombe sur date si non renseignee.
+const dateISO = data.date.toISOString();
+const updatedISO = (data.updated ?? data.date).toISOString();
+const format = (d: Date) =>
+  d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+const datePubliee = format(data.date);
+const dateMaj = data.updated ? format(data.updated) : null;
+
+// URLs absolues pour le schema (base sur Astro.site / SITE_DATA.url).
+const base = Astro.site ?? new URL(SITE_DATA.url);
+const urlArticle = new URL(`/blog/${article.id}`, base).href;
+const urlAccueil = new URL('/', base).href;
+const urlBlog = new URL('/blog', base).href;
+const ogImageURL = new URL(SITE_DATA.ogImage, base).href;
+
+// Titre de page : titre article + marque.
+const titrePage = `${data.title} | ${SITE_DATA.name}`;
+
+// Noeud Article.
+const articleNode = {
+  '@type': 'Article',
+  headline: data.title,
+  description: data.description,
+  datePublished: dateISO,
+  dateModified: updatedISO,
+  articleSection: data.category,
+  keywords: data.keywords.join(', '),
+  image: ogImageURL,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': urlArticle },
+  author: {
+    '@type': 'Organization',
+    name: SITE_DATA.name,
+    url: SITE_DATA.url,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: SITE_DATA.name,
+    url: SITE_DATA.url,
+    logo: { '@type': 'ImageObject', url: ogImageURL },
+  },
+};
+
+// Noeud BreadcrumbList : Accueil > Blog > Titre.
+const breadcrumbNode = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Accueil', item: urlAccueil },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: urlBlog },
+    { '@type': 'ListItem', position: 3, name: data.title, item: urlArticle },
+  ],
+};
+
+// Noeud FAQPage : depuis le frontmatter faq (meme source que l'accordeon).
+const faqNode =
+  data.faq.length > 0
+    ? {
+        '@type': 'FAQPage',
+        mainEntity: data.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.reponse },
+        })),
+      }
+    : null;
+
+const graph = [articleNode, breadcrumbNode];
+if (faqNode) graph.push(faqNode);
+
+const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
+---
+
+<Base
+  title={titrePage}
+  description={data.description}
+  ogType="article"
+  article={{ publishedTime: dateISO, modifiedTime: updatedISO }}
+  jsonLd={jsonLd}
+>
+  <article
+    data-tone="cream"
+    class="relative bg-cream py-section text-ink scroll-mt-24"
+  >
+    <div class="container">
+      <div class="mx-auto max-w-[760px]">
+        <!-- Fil d'ariane : Accueil > Blog > Titre -->
+        <nav class="fil-ariane" aria-label="Fil d'ariane" data-reveal>
+          <ol>
+            <li><a href="/">Accueil</a></li>
+            <li aria-hidden="true" class="fil-sep">/</li>
+            <li><a href="/blog">Blog</a></li>
+            <li aria-hidden="true" class="fil-sep">/</li>
+            <li aria-current="page">{data.title}</li>
+          </ol>
+        </nav>
+
+        <!-- En-tete de l'article -->
+        <header class="mt-8" data-reveal-stagger="120">
+          <div data-reveal>
+            <Eyebrow tone="light">{data.category}</Eyebrow>
+          </div>
+          <h1 class="type-h2 mt-5 text-ink" data-reveal>{data.title}</h1>
+
+          <div
+            class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-muted"
+            data-reveal
+          >
+            <span>
+              Publié le <time datetime={dateISO}>{datePubliee}</time>
+            </span>
+            {
+              dateMaj && (
+                <>
+                  <span aria-hidden="true" class="text-gold">
+                    &middot;
+                  </span>
+                  <span>
+                    Mis à jour le <time datetime={updatedISO}>{dateMaj}</time>
+                  </span>
+                </>
+              )
+            }
+            {
+              data.readingTime && (
+                <>
+                  <span aria-hidden="true" class="text-gold">
+                    &middot;
+                  </span>
+                  <span>{data.readingTime} min de lecture</span>
+                </>
+              )
+            }
+          </div>
+        </header>
+
+        <!-- Corps de l'article : styles prose cibles -->
+        <div class="prose-article mt-12" data-reveal>
+          <Content />
+        </div>
+
+        <!-- FAQ de l'article (accordeon, si presente dans le frontmatter) -->
+        <ArticleFaq faq={data.faq} />
+
+        <!-- CTA de fin : vers le formulaire de devis de l'accueil -->
+        <div
+          class="cta-article mt-16 rounded-2xl border border-line bg-cream-soft p-8 text-center md:mt-20 md:p-12"
+          data-reveal
+        >
+          <h2 class="type-h3 text-ink">Un événement à transporter ?</h2>
+          <p class="type-body mx-auto mt-3 max-w-md text-ink-muted">
+            Décrivez-nous votre besoin, on orchestre tous les trajets avec un
+            interlocuteur unique.
+          </p>
+          <div class="mt-6 flex justify-center">
+            <ButtonArrow
+              variant="solid"
+              href="/#formulaire-devis"
+              label="Demander un devis"
+            />
+          </div>
+        </div>
+
+        <!-- Retour a la liste des articles -->
+        <div class="mt-10 text-center" data-reveal>
+          <a
+            href="/blog"
+            class="type-nav text-ink-muted transition-colors hover:text-gold"
+          >
+            Retour aux ressources
+          </a>
+        </div>
+      </div>
+    </div>
+  </article>
+</Base>
+
+<style is:global>
+  /* =========================================================
+     Styles prose de l'article. Cibles sur .prose-article pour ne
+     jamais deborder sur le reste du site. Largeur de lecture
+     confortable, hierarchie Clash Display, tableaux et callouts
+     dans la palette (ink / gold / line).
+     ========================================================= */
+  .prose-article {
+    color: var(--ink-muted);
+  }
+
+  /* Paragraphes : largeur max de lecture, interligne aere. */
+  .prose-article p {
+    max-width: 720px;
+    margin: 1.25rem 0;
+    font-family: var(--font-body);
+    font-size: 1.075rem;
+    line-height: 1.75;
+  }
+
+  /* Titres de section en Clash Display, hierarchises. */
+  .prose-article h2 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose-article h3 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-top: 2.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose-article h2:first-child,
+  .prose-article h3:first-child {
+    margin-top: 0;
+  }
+
+  /* Liens dans le corps : dores, souligne au survol. */
+  .prose-article a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: rgba(201, 162, 75, 0.5);
+    text-underline-offset: 3px;
+    transition: color 200ms var(--ease);
+  }
+  .prose-article a:hover {
+    color: var(--gold);
+  }
+
+  /* Listes : puces dorees, largeur de lecture. */
+  .prose-article ul,
+  .prose-article ol {
+    max-width: 720px;
+    margin: 1.25rem 0;
+    padding-left: 1.4rem;
+  }
+  .prose-article li {
+    margin: 0.5rem 0;
+    font-family: var(--font-body);
+    font-size: 1.075rem;
+    line-height: 1.7;
+  }
+  .prose-article ul li::marker {
+    color: var(--gold);
+  }
+  .prose-article ol li::marker {
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Emphase forte en encre pleine. */
+  .prose-article strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Tableau stylise : bordures fines, en-tete sur fond creme, coins doux. */
+  .prose-article table {
+    width: 100%;
+    max-width: 720px;
+    margin: 1.75rem 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: var(--font-body);
+    font-size: 0.975rem;
+  }
+  .prose-article thead {
+    background: var(--cream-soft);
+  }
+  .prose-article th {
+    text-align: left;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--ink);
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .prose-article td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .prose-article tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Citation / callout chiffres cles : encadre borde or, fond creme doux. */
+  .prose-article blockquote {
+    max-width: 720px;
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    border-left: 3px solid var(--gold);
+    background: var(--cream-soft);
+    border-radius: 0 12px 12px 0;
+  }
+  .prose-article blockquote p {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 500;
+    color: var(--ink);
+    font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+    line-height: 1.5;
+  }
+
+  /* Images inserees dans le corps : coins doux, pleine largeur de lecture. */
+  .prose-article img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 1.75rem 0;
+  }
+</style>
+
+<style>
+  /* Fil d'ariane : liens discrets, separateurs dores. */
+  .fil-ariane ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+  }
+  .fil-ariane a {
+    color: var(--ink-muted);
+    transition: color 200ms var(--ease);
+  }
+  .fil-ariane a:hover {
+    color: var(--gold);
+  }
+  .fil-ariane [aria-current='page'] {
+    color: var(--ink);
+    /* Coupe proprement si le titre est long sur mobile. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 45ch;
+  }
+  .fil-sep {
+    color: var(--gold);
+    opacity: 0.7;
+  }
+</style>

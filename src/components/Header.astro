@@ -6,11 +6,14 @@
 */
 import ButtonArrow from './ButtonArrow.astro';
 
+// Liens d'ancre prefixes par '/' : fonctionnent depuis l'accueil ET depuis
+// les pages blog (une ancre nue #... ne cible que la page courante).
 const links = [
-  { href: '#comment-ca-marche', label: 'Comment ça marche' },
-  { href: '#offres', label: 'Offres' },
-  { href: '#cas-client', label: 'Réalisations' },
-  { href: '#differenciateurs', label: 'Notre approche' },
+  { href: '/#comment-ca-marche', label: 'Comment ça marche' },
+  { href: '/#offres', label: 'Offres' },
+  { href: '/#cas-client', label: 'Réalisations' },
+  { href: '/#differenciateurs', label: 'Notre approche' },
+  { href: '/blog', label: 'Ressources' },
 ];
 ---
 
@@ -23,7 +26,7 @@ const links = [
     class="container flex items-center justify-between gap-6 py-5 transition-all duration-500 ease-smooth"
   >
     <a
-      href="#hero"
+      href="/#hero"
       class="site-logo"
       aria-label="Transport Événementiel Nantes, accueil"
     >
@@ -51,7 +54,7 @@ const links = [
     </nav>
 
     <div class="hidden lg:block">
-      <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+      <ButtonArrow variant="solid" href="/#formulaire-devis" label="Demander un devis" />
     </div>
 
     <!-- Declencheur menu mobile -->
@@ -94,7 +97,7 @@ const links = [
           ))
         }
         <div class="pt-2">
-          <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
+          <ButtonArrow variant="solid" href="/#formulaire-devis" label="Demander un devis" />
         </div>
       </nav>
     </div>

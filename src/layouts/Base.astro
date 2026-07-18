@@ -13,10 +13,24 @@ import { FAQ } from '../data/faq.ts';
 interface Props {
   title?: string;
   description?: string;
+  /** og:type de la page. 'website' par defaut, 'article' pour un article de blog. */
+  ogType?: string;
+  /**
+   * JSON-LD propre a la page. Si fourni, remplace le @graph accueil
+   * (LocalBusiness + Services + FAQPage). Utilise par les pages blog pour
+   * injecter Article + BreadcrumbList + FAQPage. Non fourni = comportement
+   * accueil inchange.
+   */
+  jsonLd?: object | null;
+  /** Meta OG article (dates), ajoutees seulement pour ogType='article'. */
+  article?: { publishedTime?: string; modifiedTime?: string };
 }
 const {
   title = 'Transport séminaire et événement à Nantes | Navettes clé en main, Grand Ouest',
   description = SITE_DATA.description,
+  ogType = 'website',
+  jsonLd: jsonLdOverride = null,
+  article,
 } = Astro.props;
 
 // URL canonique de la page courante, calculee sur Astro.site (defini dans
@@ -98,7 +112,9 @@ const faqNode = {
   })),
 };
 
-const jsonLd = {
+// JSON-LD accueil par defaut. Une page peut fournir son propre schema via la
+// prop jsonLd (ex. blog : Article + BreadcrumbList + FAQPage).
+const jsonLd = jsonLdOverride ?? {
   '@context': 'https://schema.org',
   '@graph': [localBusinessNode, ...serviceNodes, faqNode],
 };
@@ -120,7 +136,7 @@ const jsonLd = {
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={SITE_DATA.name} />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:title" content={title} />
@@ -129,6 +145,16 @@ const jsonLd = {
     <meta property="og:image" content={ogImageURL} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {
+      ogType === 'article' && article?.publishedTime && (
+        <meta property="article:published_time" content={article.publishedTime} />
+      )
+    }
+    {
+      ogType === 'article' && article?.modifiedTime && (
+        <meta property="article:modified_time" content={article.modifiedTime} />
+      )
+    }
 
     <!-- Twitter card -->
     <meta name="twitter:card" content="summary_large_image" />

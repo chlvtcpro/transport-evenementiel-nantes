@@ -1,0 +1,117 @@
+---
+/*
+  ArticleFaq : accordeon FAQ de fin d'article. Reprend a l'identique le
+  markup et le style de la section FAQ d'accueil (Faq.astro), mais prend
+  les questions/reponses en prop pour etre reutilisable par article.
+
+  Accordeon natif <details>/<summary> : accessible, sans JS.
+  Le JSON-LD FAQPage est genere cote page article a partir de la meme
+  source (frontmatter faq), aucune divergence possible.
+*/
+import Eyebrow from './Eyebrow.astro';
+
+interface FaqItem {
+  question: string;
+  reponse: string;
+}
+interface Props {
+  faq: FaqItem[];
+  titre?: string;
+}
+const { faq, titre = 'Questions fréquentes' } = Astro.props;
+---
+
+{
+  faq.length > 0 && (
+    <section class="mt-16 md:mt-20" aria-label="Questions fréquentes">
+      <div data-reveal>
+        <Eyebrow tone="light">FAQ</Eyebrow>
+      </div>
+      <h2 class="type-h3 mt-5 text-ink" data-reveal>
+        {titre}
+      </h2>
+
+      <div class="mt-8 max-w-3xl" data-reveal-stagger="90">
+        {faq.map((item) => (
+          <details class="faq-item" data-reveal>
+            <summary class="faq-question">
+              <span class="faq-question-texte text-ink">{item.question}</span>
+              <span class="faq-icone text-gold" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M8 3.5v9M3.5 8h9"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </span>
+            </summary>
+            <p class="faq-reponse type-body text-ink-muted">{item.reponse}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Meme traitement que la FAQ d'accueil : ligne pleine largeur, filet fin. */
+  .faq-item {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .faq-item:first-of-type {
+    border-top: 1px solid var(--line);
+  }
+
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-question-texte {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.15rem, 1.9vw, 1.4rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .faq-icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(201, 162, 75, 0.4);
+    border-radius: 9999px;
+    transition: transform 300ms var(--ease);
+  }
+
+  .faq-icone svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .faq-item[open] .faq-icone {
+    transform: rotate(45deg);
+  }
+
+  .faq-reponse {
+    margin: 0;
+    padding-bottom: 1.5rem;
+    max-width: 62ch;
+  }
+</style>

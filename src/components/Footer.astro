@@ -5,27 +5,30 @@
 */
 const year = new Date().getFullYear();
 
+// Liens d'ancre prefixes par '/' : cliquables depuis l'accueil comme depuis
+// les pages blog.
 const columns = [
   {
     title: 'Prestations',
     links: [
-      { href: '#offres', label: 'Mariage' },
-      { href: '#offres', label: 'Séminaire' },
-      { href: '#offres', label: 'Navette de groupe' },
+      { href: '/#offres', label: 'Mariage' },
+      { href: '/#offres', label: 'Séminaire' },
+      { href: '/#offres', label: 'Navette de groupe' },
     ],
   },
   {
     title: 'L\'entreprise',
     links: [
-      { href: '#comment-ca-marche', label: 'Comment ça marche' },
-      { href: '#cas-client', label: 'Réalisations' },
-      { href: '#differenciateurs', label: 'Notre approche' },
+      { href: '/#comment-ca-marche', label: 'Comment ça marche' },
+      { href: '/#cas-client', label: 'Réalisations' },
+      { href: '/#differenciateurs', label: 'Notre approche' },
+      { href: '/blog', label: 'Ressources' },
     ],
   },
   {
     title: 'Contact',
     links: [
-      { href: '#formulaire-devis', label: 'Demander un devis' },
+      { href: '/#formulaire-devis', label: 'Demander un devis' },
       { href: 'mailto:contact@transport-evenementiel-nantes.fr', label: 'contact@transport-evenementiel-nantes.fr' },
     ],
   },
@@ -37,7 +40,7 @@ const columns = [
     <div class="grid gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
       <div>
         <a
-          href="#hero"
+          href="/#hero"
           class="footer-logo font-display font-medium tracking-tight"
           aria-label="Transport Événementiel Nantes, accueil"
         >

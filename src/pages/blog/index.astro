@@ -1,0 +1,71 @@
+---
+/*
+  /blog : page index des ressources.
+  Liste les articles de la collection blog, tries du plus recent au plus
+  ancien, en grille responsive (aucun scroll horizontal). Reutilise le
+  design system : header/footer, tone cream, Eyebrow, reveal en cascade.
+*/
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Eyebrow from '../../components/Eyebrow.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+
+// Tri anti-chronologique : le dernier article publie en premier.
+const articles = (await getCollection('blog')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const TITRE_META =
+  'Ressources transport événementiel | Guides séminaire, mariage et navettes, Nantes';
+const DESCRIPTION_META =
+  'Guides pratiques pour organiser le transport de votre événement à Nantes et dans le Grand Ouest : navettes de séminaire, transport des invités de mariage, retours de nuit et coordination de flotte.';
+---
+
+<Base title={TITRE_META} description={DESCRIPTION_META}>
+  <section
+    data-tone="cream"
+    class="relative bg-cream py-section text-ink scroll-mt-24"
+  >
+    <div class="container">
+      <!-- En-tete de la page ressources -->
+      <div class="max-w-3xl" data-reveal-stagger="120">
+        <div data-reveal>
+          <Eyebrow tone="light">Ressources</Eyebrow>
+        </div>
+        <h1 class="type-h2 mt-6 text-ink" data-reveal>
+          Ressources transport événementiel
+        </h1>
+        <p class="type-body mt-6 max-w-[60ch] text-ink-muted" data-reveal>
+          Nos guides pour organiser le transport de votre événement à Nantes et
+          dans le Grand Ouest : navettes de séminaire, transport des invités de
+          mariage, rotations de flotte et retours de nuit.
+        </p>
+      </div>
+
+      <!-- Grille d'articles. Une colonne mobile, deux tablette, trois desktop. -->
+      {
+        articles.length > 0 ? (
+          <div
+            class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 md:mt-16"
+            data-reveal-stagger="120"
+          >
+            {articles.map((article) => (
+              <ArticleCard
+                slug={article.id}
+                title={article.data.title}
+                description={article.data.description}
+                category={article.data.category}
+                date={article.data.date}
+                readingTime={article.data.readingTime}
+              />
+            ))}
+          </div>
+        ) : (
+          <p class="type-body mt-14 text-ink-muted" data-reveal>
+            Les premiers articles arrivent bientôt.
+          </p>
+        )
+      }
+    </div>
+  </section>
+</Base>
