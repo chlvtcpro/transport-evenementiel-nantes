@@ -1,37 +1,42 @@
 ---
 /*
-  Section #cas-client de Cortege : PARCOURS DE GROUPE EN SCROLL FIXE.
+  Section #cas-client de Cortege : PARCOURS DE GROUPE HORIZONTAL, SCROLL FIXE.
 
-  Principe. La section se fixe a l'ecran (sticky) a l'arrivee. Le scroll
-  n'avance plus la page : il fait progresser un convoi de groupe le long d'un
-  trace dore multi-brins (plusieurs vehicules ensemble). A chaque etape
-  atteinte, le temoignage correspondant apparait en grande typographie
-  editoriale (Clash Display), un seul visible a la fois, en fondu doux. Apres
-  la derniere etape, la page reprend son defilement normal.
+  Mise en page (desktop, mode ameliore). La section se fixe (100vh) et se
+  divise en deux zones horizontales :
+    - Zone haute (~65%) : LE TEMOIGNAGE, centre, largeur de lecture 900px.
+      Volume dore en capitales, nom d'etape, grand guillemet, citation en
+      tres grande typo (Clash Display), detail, puis nom + contexte. Un seul
+      temoignage a la fois, fondu doux.
+    - Zone basse (~35%) : LE PARCOURS horizontal pleine largeur. Une ligne a
+      trois brins paralleles (convoi) qui traverse l'ecran de 10% a 90%,
+      passant PAR les cinq points d'etape. La portion parcourue se remplit en
+      dore ; trois silhouettes de vehicules (van + autocars) avancent le long
+      de la ligne selon la progression. Sous chaque point : nom d'etape en
+      capitales + volume (visible pour l'etape active).
 
   Technique. Un conteneur haut (500vh) contient un bloc sticky de 100vh. La
-  progression du scroll DANS le conteneur (getBoundingClientRect, synchronise
-  avec Lenis via requestAnimationFrame) pilote quelle etape est active. Aucun
-  blocage brutal du scroll : le visiteur garde le controle.
+  progression du scroll DANS le conteneur (getBoundingClientRect, boucle rAF
+  synchronisee avec Lenis qui pilote le scroll natif) pilote l'etape active,
+  le remplissage de la ligne et la position du convoi. Aucun blocage brutal.
 
   SEO / GEO. TOUS les temoignages sont presents en HTML au chargement (texte
   reel, jamais injecte en JS), en <blockquote>/<cite>. Si le JS echoue ou est
-  desactive, la version empilee (fallback) reste lisible : le sticky et les
-  fondus ne sont actives qu'apres la classe .is-enhanced posee par le JS.
+  desactive, la version empilee (fallback) reste lisible : sticky et fondus ne
+  sont actives qu'apres la classe .is-enhanced posee par le JS.
 
   Accessibilite. prefers-reduced-motion : pas de sticky ni d'animation, les 5
-  etapes sont empilees et lisibles. Contraste AA : creme sur vert profond via
+  etapes empilees et lisibles. Contraste AA : creme sur vert profond via
   color: var(--on-dark) + opacity (jamais l'opacite arbitraire Tailwind qui
   retombe sur un gris delave sur variable non-RGB).
 
-  Mobile. Pas de sticky (trop lourd) : ligne verticale a gauche, 5 etapes
-  empilees (volume, citation en grand, attribution), reveal en fondu a
-  l'entree dans le viewport, defilement naturel.
+  Mobile. Pas de sticky : ligne verticale a gauche traversant tous les points,
+  5 etapes empilees, reveal en fondu a l'entree dans le viewport.
 
   L'ancre #cas-client est conservee : la navigation (Header, Footer, Hero)
   pointe "Realisations" vers cette section.
 
-  Carte 1 (Titouan N.) = temoignage reel, 5 etoiles. Etapes 2 a 5 = exemples
+  Etape 1 (Titouan N.) = temoignage reel, 5 etoiles. Etapes 2 a 5 = exemples
   representatifs (voir la table ETAPES).
 */
 import Eyebrow from './Eyebrow.astro';
@@ -40,16 +45,15 @@ import ButtonArrow from './ButtonArrow.astro';
 // =====================================================================
 // LES 5 ETAPES DU PARCOURS DE GROUPE.
 // Chaque etape porte un compteur de volume (ancre l'echelle du groupe)
-// et un temoignage. Le temoignage 1 (Titouan N.) est un VRAI avis,
-// affiche tel quel avec 5 etoiles. Les temoignages 2 a 5 sont des
-// exemples representatifs credibles, a remplacer par de vrais verbatims
-// des qu'ils seront disponibles.
+// et un temoignage. L'etape 1 (Titouan N.) est un VRAI avis, affiche tel
+// quel avec 5 etoiles. Les etapes 2 a 5 sont des exemples representatifs
+// credibles, a remplacer par de vrais verbatims des qu'ils seront
+// disponibles.
 // =====================================================================
 const ETAPES = [
   {
     etape: 'Arrivée des invités',
     volume: '49 invités transportés',
-    vehicule: 'van',
     vedette: true,
     type: 'Mariage',
     accroche: 'Ponctualité parfaite, une équipe fiable et facile à joindre.',
@@ -61,7 +65,6 @@ const ETAPES = [
   {
     etape: 'Navettes inter-sites',
     volume: '2 jours de rotations',
-    vehicule: 'autocar',
     vedette: false,
     type: 'Séminaire d\'entreprise',
     accroche: 'Une navette séminaire d\'entreprise coordonnée sans le moindre retard sur deux jours.',
@@ -73,7 +76,6 @@ const ETAPES = [
   {
     etape: 'Transfert dirigeants',
     volume: 'Flotte de berlines coordonnée',
-    vehicule: 'van',
     vedette: false,
     type: 'Transfert corporate',
     accroche: 'Un transfert de dirigeants à Nantes avec une flotte de berlines cadrée à la minute.',
@@ -85,7 +87,6 @@ const ETAPES = [
   {
     etape: 'Grand rassemblement',
     volume: 'Plusieurs centaines de personnes',
-    vehicule: 'autocar',
     vedette: false,
     type: 'Navette de groupe',
     accroche: 'Une navette de groupe de plusieurs centaines de personnes, orchestrée par une seule équipe.',
@@ -97,7 +98,6 @@ const ETAPES = [
   {
     etape: 'Retours de nuit',
     volume: 'Rotations jusqu\'à la fin de soirée',
-    vehicule: 'autocar',
     vedette: false,
     type: 'Mariage',
     accroche: 'Des navettes de mariage et retours de nuit gérés sans qu\'on y pense.',
@@ -110,14 +110,45 @@ const ETAPES = [
 
 const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 
-// Trois brins paralleles legerement decales : suggerent plusieurs
-// vehicules qui avancent ensemble (un groupe, pas un trajet isole).
-// Coordonnees dans le repere du viewBox 0 0 120 460, vertical.
-const BRINS = [
-  'M 60 20 C 40 130, 80 230, 56 330 S 44 420, 60 448',
-  'M 52 20 C 32 130, 72 230, 48 330 S 36 420, 52 448',
-  'M 68 20 C 48 130, 88 230, 64 330 S 52 420, 68 448',
-];
+// -- Geometrie du parcours horizontal (repere viewBox 0 0 1000 120) --
+// La ligne va de X0 a X1 ; le brin central (rail) sert d'axe aux points
+// et aux vehicules. Trois brins paralleles decales verticalement de ~4px
+// (en unites viewBox), avec une legere ondulation douce identique.
+const VB_W = 1000;
+const VB_H = 120;
+const RAIL_Y = 46; // milieu vertical de la zone parcours (viewBox)
+const X0 = 100; // 10% de la largeur
+const X1 = 900; // 90% de la largeur
+const N = ETAPES.length;
+// X de chaque etape, reparti regulierement de X0 a X1.
+const stepX = ETAPES.map((_, i) => X0 + ((X1 - X0) * i) / (N - 1));
+// Position verticale du rail exprimee en pourcentage de la hauteur SVG.
+// Les points et les vehicules sont des elements HTML positionnes en absolu
+// par-dessus le SVG (via left/top en %), pour rester de vrais cercles/icones
+// non deformes par le preserveAspectRatio="none" qui etire le trace en X.
+const railTopPct = (RAIL_Y / VB_H) * 100;
+// Fraction verticale du trace au niveau de chaque point (ondulation) : les
+// brins passent tous par RAIL_Y au niveau des points de controle X0/mid/X1,
+// mais entre deux, l'ondulation ecarte de +/- l'amplitude. Aux positions
+// d'etape reparties regulierement, on approxime la hauteur reelle du rail.
+
+// Construit un brin ondulant doux entre X0 et X1 a une hauteur de base y.
+// Ondulation faible (amplitude ~9 unites) via deux courbes cubiques ; les
+// trois brins partagent la meme forme, seul y change (parallelisme).
+function brin(y: number): string {
+  const a = 9; // amplitude d'ondulation
+  const midL = X0 + (X1 - X0) * 0.33;
+  const midR = X0 + (X1 - X0) * 0.66;
+  return [
+    `M ${X0} ${y}`,
+    `C ${X0 + 90} ${y - a}, ${midL - 60} ${y - a}, ${midL} ${y}`,
+    `S ${midR - 60} ${y + a}, ${midR} ${y}`,
+    `S ${X1 - 90} ${y - a}, ${X1} ${y}`,
+  ].join(' ');
+}
+const BRIN_OFFSETS = [-4, 0, 4]; // decalage vertical des 3 brins
+const BRINS = BRIN_OFFSETS.map((dy) => brin(RAIL_Y + dy));
+const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
 ---
 
 <section
@@ -128,131 +159,161 @@ const BRINS = [
 >
   <!-- ============================================================
        CONTENEUR HAUT (500vh) : sa hauteur cree la course de scroll.
-       Le bloc interieur est sticky (100vh) et reste fixe pendant que
-       la progression avance le convoi et bascule les temoignages.
-       Le fallback (JS off / reduced-motion) rend ce conteneur en flux
-       normal : les 5 etapes s'empilent et restent lisibles.
+       Le bloc interieur est sticky (100vh). Fallback (JS off /
+       reduced-motion) : flux normal, 5 etapes empilees, lisibles.
        ============================================================ -->
   <div class="temoignages-piste" data-piste>
     <div class="temoignages-sticky">
-      <div class="container temoignages-grille">
-        <!-- ---------- Colonne parcours (gauche) : trace + jalons ---------- -->
-        <div class="temoignages-parcours" aria-hidden="true">
-          <div class="temoignages-parcours-tete">
-            <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
-          </div>
+      <!-- Eyebrow fixe en haut a gauche pendant toute la section. -->
+      <div class="temoignages-eyebrow container">
+        <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
+      </div>
 
-          <div class="temoignages-plan">
-            <svg
-              class="temoignages-svg"
-              viewBox="0 0 120 460"
-              fill="none"
-              preserveAspectRatio="xMidYMid meet"
-              data-plan
-            >
-              <!-- Trois brins paralleles dores : plusieurs vehicules
-                   ensemble. Traces progressivement selon la progression. -->
-              <g stroke="var(--gold)" stroke-linecap="round" fill="none">
-                {
-                  BRINS.map((d, i) => (
-                    <path
-                      class="temoignages-brin"
-                      d={d}
-                      style={`--i:${i}`}
-                      stroke-width={i === 0 ? 1.6 : 1}
-                      opacity={i === 0 ? 0.6 : 0.28}
-                    />
-                  ))
-                }
-              </g>
+      <!-- ---------- ZONE HAUTE : le temoignage (centre, 900px) ---------- -->
+      <div class="temoignages-scene">
+        <ol class="temoignages-liste" data-liste>
+          {
+            ETAPES.map((t, i) => (
+              <li
+                class:list={['temoignage', { 'is-vedette': t.vedette }]}
+                data-temoignage
+                data-index={i}
+              >
+                <div class="temoignage-etape">
+                  <span class="temoignage-volume type-eyebrow text-gold">
+                    {t.volume}
+                  </span>
+                  <span class="temoignage-etape-nom">{t.etape}</span>
+                </div>
 
-              <!-- Jalons d'etape : un anneau + point par etape, allume
-                   quand la progression l'atteint. Positions le long du
-                   rail (echelonnees verticalement). -->
+                {t.vedette && (
+                  <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
+                    <span aria-hidden="true">★★★★★</span>
+                  </span>
+                )}
+
+                <span class="temoignage-guillemet text-gold" aria-hidden="true">
+                  &ldquo;
+                </span>
+
+                <blockquote class="temoignage-citation">
+                  <p class="temoignage-accroche">{t.accroche}</p>
+                  <p class="temoignage-detail">{t.detail}</p>
+                  <footer class="temoignage-attribution">
+                    <cite class="temoignage-auteur">{t.auteur}</cite>
+                    <span class="temoignage-role type-nav">{t.role}</span>
+                  </footer>
+                </blockquote>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <!-- ---------- ZONE BASSE : le parcours horizontal (pleine largeur) ---------- -->
+      <div class="temoignages-parcours" aria-hidden="true">
+        <!-- La scene du parcours : le SVG (le trace seul) sous une couche HTML
+             (points + vehicules) positionnee en absolu. Le SVG s'etire en X
+             (preserveAspectRatio=none) pour occuper toute la largeur ; les
+             points et vehicules restent de vraies formes non deformees car ce
+             sont des elements HTML places en pourcentage par-dessus. -->
+        <div class="temoignages-scene-parcours" data-scene-parcours>
+          <svg
+            class="temoignages-svg"
+            viewBox="0 0 1000 120"
+            fill="none"
+            preserveAspectRatio="none"
+            data-plan
+          >
+            <!-- Trois brins paralleles dores (base, opacite 0.35) : le convoi. -->
+            <g stroke="var(--gold)" stroke-linecap="round" fill="none">
               {
-                ETAPES.map((_, i) => {
-                  const y = 40 + (i * 384) / (ETAPES.length - 1);
-                  return (
-                    <g
-                      class="temoignages-jalon"
-                      data-jalon
-                      data-index={i}
-                      transform={`translate(60 ${y})`}
-                    >
-                      <circle class="temoignages-jalon-halo" r="11" fill="var(--gold)" opacity="0" />
-                      <circle
-                        class="temoignages-jalon-anneau"
-                        r="6.5"
-                        fill="var(--green-900)"
-                        stroke="var(--gold)"
-                        stroke-width="1.4"
-                      />
-                      <circle class="temoignages-jalon-point" r="2.4" fill="var(--gold-soft)" />
-                    </g>
-                  );
-                })
+                BRINS.map((d) => (
+                  <path
+                    class="temoignages-brin"
+                    d={d}
+                    stroke-width="1.5"
+                    opacity="0.35"
+                    vector-effect="non-scaling-stroke"
+                  />
+                ))
               }
+            </g>
 
-              <!-- Convoi : deux vehicules (van + autocar) qui avancent
-                   ensemble le long du rail selon la progression (pilote
-                   par offsetDistance en JS). Silhouettes minimalistes. -->
-              <g class="temoignages-vehicule temoignages-vehicule--van" data-vehicule="0" aria-hidden="true">
-                <rect x="-7" y="-4" width="14" height="8" rx="2" fill="var(--gold-soft)" />
-                <rect x="-4.5" y="-2.4" width="4.5" height="3" rx="0.8" fill="var(--green-900)" opacity="0.65" />
-              </g>
-              <g class="temoignages-vehicule temoignages-vehicule--autocar" data-vehicule="1" aria-hidden="true">
-                <rect x="-10" y="-3.4" width="20" height="6.8" rx="2" fill="var(--gold)" />
-                <rect x="-7.5" y="-1.8" width="13" height="2.4" rx="0.6" fill="var(--green-900)" opacity="0.6" />
-              </g>
-            </svg>
+            <!-- Portion parcourue : le rail redessine par-dessus, dore plein,
+                 revele de gauche a droite via stroke-dashoffset (progression). -->
+            <path
+              class="temoignages-rail-fill"
+              d={RAIL}
+              stroke="var(--gold)"
+              stroke-width="2"
+              stroke-linecap="round"
+              fill="none"
+              opacity="0.9"
+              vector-effect="non-scaling-stroke"
+              data-rail-fill
+            />
+          </svg>
 
-            <!-- Indicateur de progression discret : 5 points, l'actif
-                 plus lumineux. Reflete l'etape courante. -->
-            <ol class="temoignages-dots" data-dots aria-hidden="true">
-              {ETAPES.map((_, i) => <li class="temoignages-dot" data-dot data-index={i} />)}
-            </ol>
-          </div>
+          <!-- Cinq points d'etape : elements HTML (vrais cercles) poses en
+               absolu sur le rail, a left = position X en %, top = rail en %. -->
+          {
+            ETAPES.map((_, i) => (
+              <span
+                class="temoignages-jalon"
+                data-jalon
+                data-index={i}
+                style={`left:${(stepX[i] / VB_W) * 100}%; top:${railTopPct}%`}
+              />
+            ))
+          }
+
+          <!-- Convoi : trois silhouettes (2 autocars + 1 van), positionnees en
+               absolu par le JS le long du rail (left/top en %). Icones inline a
+               taille fixe : jamais deformees. -->
+          {
+            [0, 1, 2].map((i) => (
+              <span class="temoignages-vehicule" data-vehicule={i} style={`left:${(X0 / VB_W) * 100}%; top:${railTopPct}%`}>
+                {i === 1 ? (
+                  <svg class="temoignages-vehicule-icone" width="30" height="16" viewBox="0 0 30 16" fill="none" aria-hidden="true">
+                    <rect x="1" y="3" width="26" height="11" rx="2.5" fill="var(--gold)" />
+                    <rect x="3.5" y="5.2" width="8" height="4.2" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <rect x="13" y="5.2" width="7" height="4.2" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <circle cx="7.5" cy="15" r="1.6" fill="var(--gold-soft)" />
+                    <circle cx="20.5" cy="15" r="1.6" fill="var(--gold-soft)" />
+                  </svg>
+                ) : (
+                  <svg class="temoignages-vehicule-icone" width="36" height="16" viewBox="0 0 36 16" fill="none" aria-hidden="true">
+                    <rect x="1" y="2" width="32" height="12" rx="3" fill="var(--gold)" />
+                    <rect x="4" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <rect x="11.5" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <rect x="19" y="4.5" width="6" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <rect x="26.5" y="4.5" width="4" height="4.5" rx="1" fill="var(--green-900)" opacity="0.75" />
+                    <circle cx="9" cy="15" r="1.7" fill="var(--gold-soft)" />
+                    <circle cx="25" cy="15" r="1.7" fill="var(--gold-soft)" />
+                  </svg>
+                )}
+              </span>
+            ))
+          }
         </div>
 
-        <!-- ---------- Colonne temoignages (droite) : le contenu reel ---------- -->
-        <div class="temoignages-scene">
-          <ol class="temoignages-liste" data-liste>
-            {
-              ETAPES.map((t, i) => (
-                <li
-                  class:list={['temoignage', { 'is-vedette': t.vedette }]}
-                  data-temoignage
-                  data-index={i}
-                >
-                  <div class="temoignage-etape">
-                    <span class="temoignage-volume type-eyebrow text-gold">
-                      {t.volume}
-                    </span>
-                    <span class="temoignage-etape-nom">{t.etape}</span>
-                  </div>
-
-                  {t.vedette && (
-                    <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
-                      <span aria-hidden="true">★★★★★</span>
-                    </span>
-                  )}
-
-                  <span class="temoignage-guillemet text-gold" aria-hidden="true">
-                    &ldquo;
-                  </span>
-
-                  <blockquote class="temoignage-citation">
-                    <p class="temoignage-accroche">{t.accroche}</p>
-                    <p class="temoignage-detail">{t.detail}</p>
-                    <footer class="temoignage-attribution">
-                      <cite class="temoignage-auteur">{t.auteur}</cite>
-                      <span class="temoignage-role type-nav">{t.role}</span>
-                    </footer>
-                  </blockquote>
-                </li>
-              ))
-            }
-          </ol>
+        <!-- Libelles sous chaque point : nom d'etape + volume (actif).
+             Positionnes en pourcentage pour coller aux points du SVG. -->
+        <div class="temoignages-labels">
+          {
+            ETAPES.map((t, i) => (
+              <div
+                class="temoignages-label"
+                data-label
+                data-index={i}
+                style={`left:${(stepX[i] / VB_W) * 100}%`}
+              >
+                <span class="temoignages-label-nom">{t.etape}</span>
+                <span class="temoignages-label-volume">{t.volume}</span>
+              </div>
+            ))
+          }
         </div>
       </div>
     </div>
@@ -269,107 +330,46 @@ const BRINS = [
 
 <style>
   /* ============================================================
-     PARCOURS DE GROUPE EN SCROLL FIXE.
+     PARCOURS DE GROUPE HORIZONTAL, SCROLL FIXE.
      Deux etats :
-       - PAR DEFAUT (fallback, JS off / reduced-motion) : conteneur en
-         flux normal, 5 etapes empilees, toutes visibles et lisibles.
-       - AMELIORE (.is-enhanced pose par le JS) : conteneur haut + bloc
-         sticky, un temoignage visible a la fois, fondus pilotes par la
-         progression du scroll.
+       - PAR DEFAUT (fallback, JS off / reduced-motion) : flux normal,
+         5 etapes empilees, toutes visibles et lisibles.
+       - AMELIORE (.is-enhanced pose par le JS) : sticky 100vh, zone haute
+         temoignage (fondus) + zone basse parcours horizontal anime.
      ============================================================ */
 
   .temoignages {
     scroll-margin-top: 6rem;
   }
 
-  /* -- Conteneur de piste. Par defaut : hauteur auto (fallback empile). -- */
   .temoignages-piste {
     position: relative;
   }
 
+  /* -- Bloc sticky : en fallback, simple conteneur avec padding. -- */
   .temoignages-sticky {
     padding-top: clamp(4rem, 8vw, 7rem);
     padding-bottom: clamp(4rem, 8vw, 7rem);
   }
 
-  /* Grille : parcours (gauche, etroit) + scene temoignages (droite, large).
-     Asymetrique et aeree. Fallback : les deux colonnes empilees. */
-  .temoignages-grille {
-    display: grid;
-    gap: clamp(2rem, 5vw, 4.5rem);
+  /* Eyebrow : dans le flux en fallback ; fixe en haut en mode ameliore. */
+  .temoignages-eyebrow {
+    margin-bottom: 2rem;
   }
 
-  /* ---- Colonne parcours ---- */
-  .temoignages-parcours-tete {
-    margin-bottom: 1.75rem;
+  /* ---- Zone temoignage (scene) ---- */
+  .temoignages-liste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
-  .temoignages-plan {
-    position: relative;
-  }
-
-  .temoignages-svg {
-    width: 100%;
-    height: auto;
-    overflow: visible;
-  }
-
-  /* Brins : traces progressivement. dash-array/offset poses en JS a partir
-     de getTotalLength ; la progression globale pilote l'offset. */
-  .temoignages-brin {
-    transition: stroke-dashoffset 120ms linear;
-  }
-
-  /* Jalons : eteints au repos, s'allument quand la progression les atteint. */
-  .temoignages-jalon-anneau,
-  .temoignages-jalon-point {
-    transition:
-      fill 400ms var(--ease),
-      stroke 400ms var(--ease);
-  }
-  .temoignages-jalon.is-active .temoignages-jalon-point {
-    fill: var(--gold);
-  }
-  .temoignages-jalon.is-active .temoignages-jalon-halo {
-    animation: temoignages-pulse 900ms var(--ease) both;
-  }
-
-  /* Vehicules du convoi : masques tant que le JS n'a pas pris la main
-     (fallback : inutiles). Reveles en mode ameliore. */
-  .temoignages-vehicule {
-    opacity: 0;
-    transition: opacity 500ms var(--ease);
-  }
-
-  /* Indicateur a points : discret, l'actif plus lumineux et plus grand. */
-  .temoignages-dots {
-    display: none;
-    gap: 0.6rem;
-    margin-top: 1.5rem;
-  }
-  .temoignages-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: var(--gold);
-    opacity: 0.28;
-    transition:
-      opacity 350ms var(--ease),
-      transform 350ms var(--ease);
-  }
-  .temoignages-dot.is-active {
-    opacity: 1;
-    transform: scale(1.35);
-  }
-
-  /* ---- Colonne scene / temoignages ---- */
-
-  /* Etiquette d'etape : volume dore (echelle du groupe) + nom d'etape. */
+  /* Etiquette d'etape au-dessus de la citation. */
   .temoignage-etape {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.1rem;
   }
   .temoignage-etape-nom {
     font-family: var(--font-body);
@@ -385,7 +385,7 @@ const BRINS = [
     letter-spacing: 0.15em;
     color: var(--gold);
     line-height: 1;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
   }
 
   /* Grand guillemet dore, accent editorial. */
@@ -393,23 +393,22 @@ const BRINS = [
     display: block;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-size: clamp(3rem, 5vw, 4.5rem);
     line-height: 0.4;
-    height: clamp(1.5rem, 3vw, 2.4rem);
+    height: clamp(1.3rem, 2.5vw, 2rem);
     opacity: 0.85;
   }
 
   .temoignage-citation {
-    margin: 1.25rem 0 0;
+    margin: 1rem 0 0;
   }
 
-  /* Accroche : la phrase forte, en tres grande typographie Clash Display,
-     sans carte ni cadre. Style magazine. Creme AA sur vert profond. */
+  /* Accroche : la phrase forte, tres grande typo Clash Display, sans cadre. */
   .temoignage-accroche {
     font-family: var(--font-display);
     font-optical-sizing: auto;
     font-weight: 500;
-    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    font-size: clamp(1.5rem, 2.8vw, 2.4rem);
     line-height: 1.16;
     letter-spacing: -0.015em;
     color: var(--on-dark);
@@ -419,8 +418,7 @@ const BRINS = [
 
   /* Detail complet : texte courant plus petit, discret mais lisible (AA). */
   .temoignage-detail {
-    margin: 1.5rem 0 0;
-    max-width: 46ch;
+    margin: 1.35rem 0 0;
     font-family: var(--font-body);
     font-size: 1.02rem;
     line-height: 1.6;
@@ -429,7 +427,7 @@ const BRINS = [
   }
 
   .temoignage-attribution {
-    margin-top: 1.75rem;
+    margin-top: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
@@ -444,6 +442,123 @@ const BRINS = [
   .temoignage-role {
     color: var(--on-dark);
     opacity: 0.7;
+  }
+
+  /* ---- Zone parcours ---- */
+  .temoignages-parcours {
+    position: relative;
+  }
+  /* Scene : conteneur relatif qui empile le SVG (trace) et la couche HTML
+     (points + vehicules) positionnee en absolu par-dessus. */
+  .temoignages-scene-parcours {
+    position: relative;
+    width: 100%;
+    height: 120px;
+  }
+  .temoignages-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* Portion parcourue : masquee au depart (offset plein), revelee par le JS. */
+  .temoignages-rail-fill {
+    transition: stroke-dashoffset 120ms linear;
+  }
+
+  /* Jalons : vrais cercles HTML poses en absolu sur le rail (centres via
+     translate). Anneau dore fin au repos ; se remplissent quand atteints,
+     grossissent et pulsent quand actifs. Non deformes (element HTML). */
+  .temoignages-jalon {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    background: transparent;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+    transition:
+      opacity 400ms var(--ease),
+      width 400ms var(--ease),
+      height 400ms var(--ease),
+      background-color 400ms var(--ease),
+      box-shadow 400ms var(--ease);
+  }
+  /* Etape franchie : point plein a 0.7. */
+  .temoignages-jalon.is-passed {
+    background: var(--gold);
+    opacity: 0.7;
+  }
+  /* Etape active : gros point plein + halo diffus pulse. */
+  .temoignages-jalon.is-active {
+    width: 22px;
+    height: 22px;
+    background: var(--gold);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(201, 162, 75, 0.45);
+    animation: temoignages-halo 1900ms var(--ease) infinite;
+  }
+
+  /* Vehicules : conteneur positionne en absolu (left/top pilotes par le JS le
+     long du rail). L'icone interne garde une taille fixe : jamais deformee. */
+  .temoignages-vehicule {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 500ms var(--ease);
+    pointer-events: none;
+    line-height: 0;
+  }
+  .temoignages-vehicule-icone {
+    display: block;
+  }
+
+  /* Libelles sous les points. Centres sur la position du point (left en %). */
+  .temoignages-labels {
+    position: relative;
+    height: 3.25rem;
+    margin-top: 0.35rem;
+  }
+  .temoignages-label {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 8.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    pointer-events: none;
+  }
+  .temoignages-label-nom {
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.25;
+    color: var(--on-dark);
+    opacity: 0.6;
+    transition:
+      opacity 350ms var(--ease),
+      color 350ms var(--ease);
+  }
+  .temoignages-label.is-active .temoignages-label-nom {
+    opacity: 1;
+  }
+  .temoignages-label-volume {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1.2;
+    opacity: 0;
+    transition: opacity 350ms var(--ease);
+  }
+  .temoignages-label.is-active .temoignages-label-volume {
+    opacity: 1;
   }
 
   /* ---- CTA de fin ---- */
@@ -462,21 +577,26 @@ const BRINS = [
     opacity: 0.92;
   }
 
-  @keyframes temoignages-pulse {
+  /* Halo pulse de l'etape active : box-shadow dore qui se diffuse et s'estompe.
+     transform reserve au centrage (translate -50%,-50%), donc on anime le
+     box-shadow (pas le transform) pour ne pas casser le positionnement. */
+  @keyframes temoignages-halo {
     0% {
-      opacity: 0.5;
-      transform: scale(0.5);
+      box-shadow: 0 0 0 0 rgba(201, 162, 75, 0.45);
+    }
+    70% {
+      box-shadow: 0 0 0 18px rgba(201, 162, 75, 0);
     }
     100% {
-      opacity: 0;
-      transform: scale(2.1);
+      box-shadow: 0 0 0 0 rgba(201, 162, 75, 0);
     }
   }
 
   /* ============================================================
      FALLBACK EMPILE (etat par defaut, avant .is-enhanced).
-     Les 5 etapes sont visibles, empilees, separees. Ligne verticale
-     de parcours a gauche. Aucune dependance JS pour la lisibilite.
+     Les 5 etapes visibles, empilees, separees. Le parcours horizontal
+     (SVG) est masque : la ligne verticale a gauche (geree en mobile
+     ci-dessous) sert de fil conducteur. Aucune dependance JS.
      ============================================================ */
   .temoignage {
     position: relative;
@@ -488,48 +608,59 @@ const BRINS = [
     border-bottom: none;
     margin-bottom: 0;
   }
-  .temoignages-liste {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  /* En fallback, le parcours horizontal n'a pas de sens (pas de scroll
+     pilote) : on le masque. La scene garde son fil vertical (mobile). */
+  .temoignages:not(.is-enhanced) .temoignages-parcours {
+    display: none;
   }
 
   /* ============================================================
-     MODE AMELIORE : pilote par .is-enhanced (pose par le JS une fois
-     l'amelioration active). Sticky + un temoignage a la fois + fondus.
+     MODE AMELIORE : sticky 100vh, zones haute/basse, un temoignage
+     a la fois. Pilote par .is-enhanced (pose par le JS).
      ============================================================ */
   .temoignages.is-enhanced .temoignages-piste {
-    /* Course de scroll : 5 etapes -> ~500vh. */
     height: 500vh;
   }
   .temoignages.is-enhanced .temoignages-sticky {
     position: sticky;
     top: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
+    height: 100vh;
+    padding: 0;
+    display: grid;
+    /* eyebrow (auto) | temoignage (~65%) | parcours (~35%) */
+    grid-template-rows: auto 1fr auto;
   }
-  .temoignages.is-enhanced .temoignages-dots {
-    display: flex;
-  }
-  .temoignages.is-enhanced .temoignages-vehicule {
-    opacity: 0.95;
+  /* Padding-top genereux : le bloc sticky demarre a top:0, sous le header
+     fixe (~80px). On degage l'eyebrow pour qu'il ne chevauche jamais le logo. */
+  .temoignages.is-enhanced .temoignages-eyebrow {
+    margin: 0;
+    padding-top: clamp(6rem, 12vh, 8.5rem);
   }
 
-  /* En mode ameliore, la scene devient une pile empilee (grid stack) :
-     tous les temoignages superposes, un seul opaque a la fois. */
+  /* Zone haute : temoignage centre, largeur de lecture 900px. Pile empilee
+     (grid stack) : tous superposes, un seul opaque a la fois. */
+  .temoignages.is-enhanced .temoignages-scene {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    overflow: hidden;
+  }
   .temoignages.is-enhanced .temoignages-liste {
     display: grid;
-    min-height: 60vh;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 1.5rem;
     align-items: center;
   }
   .temoignages.is-enhanced .temoignage {
     grid-area: 1 / 1;
-    padding-bottom: 0;
-    margin-bottom: 0;
+    padding: 0;
+    margin: 0;
     border-bottom: none;
+    text-align: center;
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(16px);
     transition:
       opacity 600ms var(--ease),
       transform 600ms var(--ease);
@@ -540,30 +671,33 @@ const BRINS = [
     transform: translateY(0);
     pointer-events: auto;
   }
-
-  /* ============================================================
-     DESKTOP (>= 1024px) : grille asymetrique parcours | scene.
-     Uniquement en mode ameliore ; le fallback reste empile.
-     ============================================================ */
-  @media (min-width: 1024px) {
-    .temoignages.is-enhanced .temoignages-grille {
-      grid-template-columns: minmax(220px, 0.9fr) 1.6fr;
-      align-items: center;
-    }
-    .temoignages.is-enhanced .temoignages-svg {
-      max-height: 62vh;
-    }
+  /* Centre les blocs internes du temoignage en mode ameliore. */
+  .temoignages.is-enhanced .temoignage-etape,
+  .temoignages.is-enhanced .temoignage-attribution {
+    align-items: center;
+  }
+  .temoignages.is-enhanced .temoignage-detail {
+    max-width: 62ch;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  /* Sous le point de bascule desktop, le parcours SVG reste discret :
-     en fallback empile on masque le grand SVG (une simple ligne verticale
-     via bordure suffit) pour ne pas alourdir. En mode ameliore mobile, on
-     conserve la ligne verticale a gauche geree ci-dessous. */
+  /* Zone basse : parcours pleine largeur, colle en bas de l'ecran. */
+  .temoignages.is-enhanced .temoignages-parcours {
+    display: block;
+    width: 100%;
+    padding-bottom: clamp(2rem, 4vh, 3.5rem);
+  }
+  .temoignages.is-enhanced .temoignages-vehicule {
+    opacity: 0.95;
+  }
+
+  /* ============================================================
+     MOBILE / FALLBACK (< 1024px) : parcours vertical simple. Le SVG
+     horizontal est masque (gere par :not(.is-enhanced)) ; on trace une
+     ligne verticale a gauche qui traverse tous les points.
+     ============================================================ */
   @media (max-width: 1023px) {
-    .temoignages-parcours {
-      display: none;
-    }
-    /* Ligne verticale de parcours a gauche de chaque etape (mobile). */
     .temoignages-scene {
       position: relative;
       padding-left: 1.75rem;
@@ -596,12 +730,47 @@ const BRINS = [
       background-color: var(--gold);
       box-shadow: 0 0 0 4px var(--green-900);
     }
+    /* Sur mobile on n'active jamais le mode horizontal (gere aussi en JS). */
+    .temoignages.is-enhanced .temoignages-piste {
+      height: auto;
+    }
+    .temoignages.is-enhanced .temoignages-sticky {
+      position: static;
+      height: auto;
+      display: block;
+      padding-top: clamp(4rem, 8vw, 7rem);
+      padding-bottom: clamp(4rem, 8vw, 7rem);
+    }
+    .temoignages.is-enhanced .temoignages-liste {
+      display: block;
+      max-width: none;
+      padding: 0;
+    }
+    .temoignages.is-enhanced .temoignage {
+      grid-area: auto;
+      text-align: left;
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+      padding-bottom: clamp(2.5rem, 5vw, 4rem);
+      margin-bottom: clamp(2.5rem, 5vw, 4rem);
+      border-bottom: 1px solid var(--line-on-dark);
+    }
+    .temoignages.is-enhanced .temoignage:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .temoignages.is-enhanced .temoignage-etape,
+    .temoignages.is-enhanced .temoignage-attribution {
+      align-items: flex-start;
+    }
+    .temoignages.is-enhanced .temoignages-parcours {
+      display: none;
+    }
   }
 
   /* ============================================================
-     REDUCED MOTION : jamais de sticky ni d'animation. Meme si le JS
-     ajoutait .is-enhanced, on neutralise tout ici : les etapes restent
-     empilees, toutes visibles, aucune transition.
+     REDUCED MOTION : jamais de sticky ni d'animation. Etapes empilees.
      ============================================================ */
   @media (prefers-reduced-motion: reduce) {
     .temoignages.is-enhanced .temoignages-piste {
@@ -609,15 +778,19 @@ const BRINS = [
     }
     .temoignages.is-enhanced .temoignages-sticky {
       position: static;
-      min-height: 0;
+      height: auto;
       display: block;
+      padding-top: clamp(4rem, 8vw, 7rem);
+      padding-bottom: clamp(4rem, 8vw, 7rem);
     }
     .temoignages.is-enhanced .temoignages-liste {
       display: block;
-      min-height: 0;
+      max-width: none;
+      padding: 0;
     }
     .temoignages.is-enhanced .temoignage {
       grid-area: auto;
+      text-align: left;
       opacity: 1;
       transform: none;
       transition: none;
@@ -630,30 +803,42 @@ const BRINS = [
       border-bottom: none;
       margin-bottom: 0;
     }
+    .temoignages.is-enhanced .temoignage-etape,
+    .temoignages.is-enhanced .temoignage-attribution {
+      align-items: flex-start;
+    }
+    .temoignages.is-enhanced .temoignages-parcours {
+      display: none;
+    }
     .temoignages-brin,
-    .temoignages-jalon-anneau,
-    .temoignages-jalon-point,
-    .temoignages-dot,
-    .temoignages-vehicule {
+    .temoignages-rail-fill,
+    .temoignages-jalon,
+    .temoignages-vehicule,
+    .temoignages-label-nom,
+    .temoignages-label-volume {
       transition: none;
+    }
+    .temoignages-jalon.is-active {
+      animation: none;
     }
   }
 </style>
 
 <script>
   /* ============================================================
-     Parcours de groupe : progression du scroll -> etape active.
+     Parcours de groupe HORIZONTAL : progression du scroll -> etape,
+     remplissage de la ligne, position du convoi.
 
-     - On n'active le mode sticky/fondu (.is-enhanced) que si le viewport
-       est assez large ET que l'utilisateur n'a pas demande reduced-motion.
-       Sinon on laisse le fallback empile (deja lisible en HTML).
-     - La progression = position de la piste dans la fenetre
-       (getBoundingClientRect), lue dans une boucle rAF (synchro Lenis, qui
-       pilote le scroll natif). On en deduit l'index d'etape actif, on trace
-       les brins (stroke-dashoffset), on avance les vehicules le long du rail
-       (offsetDistance) et on met a jour jalons + dots.
-     - Tous les textes sont deja dans le DOM : ce script ne fait qu'orchestrer
-       l'affichage, jamais l'injection de contenu (SEO/GEO).
+     - Mode ameliore (.is-enhanced) uniquement desktop large (>= 1024px)
+       et hors reduced-motion ; sinon fallback empile (deja en HTML).
+     - Progression = position de la piste (getBoundingClientRect) lue dans
+       une boucle rAF (synchro Lenis, qui pilote le scroll natif).
+     - On en deduit : l'etape active (fondu du temoignage), le remplissage
+       du rail (stroke-dashoffset), la position des 3 vehicules le long du
+       rail (getPointAtLength) avec oscillation verticale, l'etat des points
+       et des libelles.
+     - Tous les textes sont deja dans le DOM : ce script orchestre
+       seulement l'affichage, jamais l'injection de contenu (SEO/GEO).
      ============================================================ */
 
   function initTemoignages() {
@@ -665,16 +850,15 @@ const BRINS = [
       section.querySelectorAll<HTMLElement>('[data-temoignage]')
     );
     const jalons = Array.from(
-      section.querySelectorAll<SVGGElement>('[data-jalon]')
+      section.querySelectorAll<HTMLElement>('[data-jalon]')
     );
-    const dots = Array.from(section.querySelectorAll<HTMLElement>('[data-dot]'));
-    const brins = Array.from(
-      section.querySelectorAll<SVGPathElement>('.temoignages-brin')
+    const labels = Array.from(
+      section.querySelectorAll<HTMLElement>('[data-label]')
     );
+    const railFill = section.querySelector<SVGPathElement>('[data-rail-fill]');
     const vehicules = Array.from(
-      section.querySelectorAll<SVGGElement>('[data-vehicule]')
+      section.querySelectorAll<HTMLElement>('[data-vehicule]')
     );
-    const rail = brins[0] ?? null;
 
     if (!piste || items.length === 0) return;
 
@@ -683,47 +867,44 @@ const BRINS = [
       '(prefers-reduced-motion: reduce)'
     ).matches;
 
-    // Longueur du rail pour placer les vehicules (offsetDistance en %).
+    // Longueur du rail (pour placer les vehicules et remplir la ligne).
     let railLen = 0;
-    if (rail) {
+    const measureRail = () => {
+      if (!railFill) return;
       try {
-        railLen = rail.getTotalLength();
+        railLen = railFill.getTotalLength();
       } catch {
         railLen = 0;
       }
-    }
+      // Prepare le remplissage : dash = longueur, offset plein = cache.
+      railFill.style.strokeDasharray = String(railLen);
+      railFill.style.strokeDashoffset = String(railLen);
+    };
+    measureRail();
 
-    // Prepare le trace des brins (dash-array = longueur, offset plein = cache).
-    const brinLens = brins.map((b) => {
-      let len = 0;
-      try {
-        len = b.getTotalLength();
-      } catch {
-        len = 0;
-      }
-      b.style.strokeDasharray = String(len);
-      b.style.strokeDashoffset = String(len);
-      return len;
-    });
-
-    // Applique une progression p (0..1) : trace, vehicules, etape active.
+    // Applique une progression p (0..1).
     let activeIndex = -1;
     const apply = (p: number) => {
       const clamped = Math.min(Math.max(p, 0), 1);
 
-      // Trace des brins proportionnel a la progression.
-      brins.forEach((b, i) => {
-        b.style.strokeDashoffset = String(brinLens[i] * (1 - clamped));
-      });
+      // Remplissage du rail de gauche a droite.
+      if (railFill && railLen > 0) {
+        railFill.style.strokeDashoffset = String(railLen * (1 - clamped));
+      }
 
-      // Vehicules le long du rail (le second legerement en retrait pour
-      // suggerer un convoi, jamais devant la tete).
-      if (railLen > 0 && rail) {
+      // Convoi : 3 vehicules HTML decales le long du rail, oscillation
+      // verticale. getPointAtLength renvoie des coordonnees en unites viewBox
+      // (x 0..1000, y 0..120) : on les convertit en pourcentage pour piloter
+      // left/top des spans absolus (VB_W=1000, VB_H=120).
+      if (railFill && railLen > 0) {
         vehicules.forEach((v, i) => {
-          const retrait = i === 0 ? 0 : 0.06;
-          const dist = Math.min(Math.max(clamped - retrait, 0), 1) * railLen;
-          const pt = rail.getPointAtLength(dist);
-          v.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+          const retrait = i * 0.05; // decalage du convoi
+          const t = Math.min(Math.max(clamped - retrait, 0), 1);
+          const dist = t * railLen;
+          const pt = railFill.getPointAtLength(dist);
+          const wobble = Math.sin(clamped * Math.PI * 6 + i) * 1.6;
+          v.style.left = `${(pt.x / 1000) * 100}%`;
+          v.style.top = `${((pt.y + wobble) / 120) * 100}%`;
         });
       }
 
@@ -732,14 +913,17 @@ const BRINS = [
       if (index !== activeIndex) {
         activeIndex = index;
         items.forEach((el, i) => el.classList.toggle('is-active', i === index));
-        jalons.forEach((el, i) =>
-          el.classList.toggle('is-active', i <= index)
+        labels.forEach((el, i) =>
+          el.classList.toggle('is-active', i === index)
         );
-        dots.forEach((el, i) => el.classList.toggle('is-active', i === index));
+        jalons.forEach((el, i) => {
+          el.classList.toggle('is-active', i === index);
+          el.classList.toggle('is-passed', i < index);
+        });
       }
     };
 
-    // Mode ameliore : uniquement desktop large et hors reduced-motion.
+    // Mode ameliore : desktop large hors reduced-motion.
     const mqEnhance = window.matchMedia(
       '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
     );
@@ -749,16 +933,12 @@ const BRINS = [
 
     const measure = () => {
       const rect = piste.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // Course utile = hauteur de piste - une fenetre (duree du sticky).
-      const course = rect.height - vh;
+      const course = rect.height - window.innerHeight;
       if (course <= 0) {
         apply(0);
         return;
       }
-      // p = combien on a defile dans la piste (0 en haut, 1 en bas).
-      const p = (-rect.top) / course;
-      apply(p);
+      apply(-rect.top / course);
     };
 
     const loop = () => {
@@ -770,7 +950,7 @@ const BRINS = [
       if (running) return;
       running = true;
       section.classList.add('is-enhanced');
-      // Reveal vehicules deja gere par CSS (.is-enhanced). Demarre la boucle.
+      measureRail();
       measure();
       rafId = window.requestAnimationFrame(loop);
     };
@@ -780,10 +960,12 @@ const BRINS = [
       running = false;
       section.classList.remove('is-enhanced');
       window.cancelAnimationFrame(rafId);
-      // Fallback empile : tout visible, on retire les etats actifs.
       items.forEach((el) => el.classList.remove('is-active'));
-      jalons.forEach((el) => el.classList.remove('is-active'));
-      dots.forEach((el) => el.classList.remove('is-active'));
+      labels.forEach((el) => el.classList.remove('is-active'));
+      jalons.forEach((el) => {
+        el.classList.remove('is-active');
+        el.classList.remove('is-passed');
+      });
     };
 
     const sync = () => {
@@ -796,28 +978,13 @@ const BRINS = [
     };
 
     sync();
-    // Rebranche a chaque changement de largeur / preference.
     if (mqEnhance.addEventListener) {
       mqEnhance.addEventListener('change', sync);
     } else if ((mqEnhance as any).addListener) {
       (mqEnhance as any).addListener(sync);
     }
     window.addEventListener('resize', () => {
-      // Recalcule les longueurs de rail/brins au redimensionnement.
-      if (rail) {
-        try {
-          railLen = rail.getTotalLength();
-        } catch {
-          railLen = 0;
-        }
-      }
-      brins.forEach((b, i) => {
-        try {
-          brinLens[i] = b.getTotalLength();
-        } catch {
-          brinLens[i] = brinLens[i];
-        }
-      });
+      measureRail();
     });
   }
 
