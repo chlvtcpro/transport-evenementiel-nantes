@@ -1,16 +1,32 @@
 ---
 /*
-  Section #offres de Cortege.
-  Trois offres presentees en cartes, seminaire en tete (moteur de CA
-  recurrent, mis en avant par un accent dore discret), puis mariage
-  (vitrine), puis navette de groupe. Tone cream-soft. Titres --ink,
-  corps --ink-muted, display en Fraunces (police validee).
+  Section #offres de Cortege : ACCORDEON HORIZONTAL ASYMETRIQUE.
 
-  Pas de visuel fourni pour l'instant : rendu typographique et sobre,
-  slot image prevu cote SmartImage mais non active (fallback propre).
-  Chaque carte : tag numero, titre H3, promesse, liste de prestations
-  concretes (fine fleche doree devant chaque item, pas de grosses
-  puces), et un CTA outline vers #devis. Reveal en cascade.
+  Desktop (>= 900px). Trois panneaux verticaux cote a cote sur toute la
+  largeur. Le panneau ACTIF est largement ouvert (~58% de la largeur) et
+  montre tout son contenu (numero, badge, titre, promesse, prestations, CTA,
+  emplacement image). Les deux panneaux INACTIFS sont replies en bandes
+  etroites (~21% chacun) : seuls le numero et le titre a la VERTICALE (texte
+  pivote a 90deg) plus une fleche restent visibles. Clic ou survol ouvre le
+  panneau et referme les autres, transition douce sur la largeur (~650ms).
+  Le seminaire (offre phare) est ouvert par defaut : il domine visuellement.
+
+  Mobile (< 900px). L'accordeon horizontal n'a pas de sens : bascule en
+  accordeon VERTICAL classique, trois offres empilees, titres toujours
+  visibles, seminaire ouvert par defaut, les autres se deplient au tap.
+  Aucun texte pivote.
+
+  SEO / GEO. Le contenu des TROIS offres est present en HTML des le
+  chargement, en texte reel, meme replie. Les panneaux inactifs sont masques
+  visuellement par la largeur et l'overflow, jamais retires du DOM ni injectes
+  en JS. Moteurs et IA lisent les trois offres integralement.
+
+  Accessibilite. Navigation clavier entre panneaux (boutons d'en-tete),
+  aria-expanded / aria-controls. prefers-reduced-motion : les trois offres
+  affichees depliees, sans animation ni bascule.
+
+  Emplacement image : slot prevu dans chaque panneau (offre.image). Fallback
+  propre (bloc typographique dore) si l'image n'est pas encore fournie.
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
@@ -21,12 +37,15 @@ const SOUS_TITRE =
   'Chaque événement a sa logistique à Nantes et dans le Grand Ouest. On l\'assemble sur mesure, du transfert de collaborateurs à la navette de deux cents invités.';
 
 // Les 3 offres. Ordre : seminaire (phare), mariage, navette.
-// phare = accent dore discret pour signaler l'offre moteur.
+// phare = accent dore + panneau ouvert par defaut.
+// image : chemin optionnel d'une photo de prestation. Laisse vide tant
+// qu'aucun visuel n'est fourni : le panneau retombe sur un fallback propre.
 const OFFRES = [
   {
     tag: '01',
     titre: 'Séminaire et événement d\'entreprise',
     phare: true,
+    image: '',
     promesse:
       'Vos collaborateurs et invités déplacés sans friction, vous restez concentré sur l\'événement.',
     prestations: [
@@ -40,6 +59,7 @@ const OFFRES = [
     tag: '02',
     titre: 'Mariage',
     phare: false,
+    image: '',
     promesse:
       'De l\'arrivée des invités aux retours de nuit, chaque trajet est réglé, vous vivez votre journée.',
     prestations: [
@@ -53,6 +73,7 @@ const OFFRES = [
     tag: '03',
     titre: 'Navette de groupe',
     phare: false,
+    image: '',
     promesse:
       'Tout transport collectif, ponctuel ou récurrent, dimensionné à votre volume.',
     prestations: [
@@ -63,6 +84,9 @@ const OFFRES = [
     ],
   },
 ];
+
+// Index du panneau ouvert par defaut (l'offre phare).
+const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
 ---
 
 <section
@@ -82,59 +106,122 @@ const OFFRES = [
       </p>
     </div>
 
-    <!-- Les 3 cartes d'offres, stagger 120ms -->
+    <!-- ============================================================
+         ACCORDEON. data-offres pilote par le JS. Chaque panneau est un
+         <article> avec un en-tete cliquable (bouton, pour le clavier et
+         aria) et un corps (contenu complet, toujours dans le DOM).
+         data-open marque le panneau ouvert (l'offre phare au chargement).
+         ============================================================ -->
     <div
-      class="mt-16 grid gap-6 md:mt-20 md:grid-cols-3 md:gap-7"
-      data-reveal-stagger="120"
+      class="offres-accordeon mt-16 md:mt-20"
+      data-offres
+      data-reveal
     >
       {
-        OFFRES.map((offre) => (
+        OFFRES.map((offre, i) => (
           <article
-            class:list={['offre-carte group', { 'offre-phare': offre.phare }]}
-            data-reveal
+            class:list={['offre-panneau', { 'is-open': i === DEFAULT_OPEN, 'offre-phare': offre.phare }]}
+            data-panneau
+            data-index={i}
           >
-            {offre.phare && (
-              <span class="offre-badge" aria-hidden="true">
-                Offre phare
+            {/* En-tete : toujours visible (barre verticale repliee OU haut
+                du panneau ouvert). Bouton pour le clavier + aria. */}
+            <button
+              type="button"
+              class="offre-entete"
+              data-entete
+              id={`offre-entete-${i}`}
+              aria-expanded={i === DEFAULT_OPEN ? 'true' : 'false'}
+              aria-controls={`offre-corps-${i}`}
+            >
+              <span class="offre-tag text-gold" aria-hidden="true">
+                {offre.tag}
               </span>
-            )}
+              <span class="offre-titre-wrap">
+                <span class="offre-titre">{offre.titre}</span>
+              </span>
+              {offre.phare && (
+                <span class="offre-badge">Offre phare</span>
+              )}
+              <span class="offre-chevron" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                  <path
+                    d="M6 3.5L10.5 8L6 12.5"
+                    stroke="currentColor"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
 
-            <span class="offre-tag text-gold" aria-hidden="true">
-              {offre.tag}
-            </span>
+            {/* Corps : contenu complet de l'offre. Toujours en HTML (SEO/GEO),
+                masque visuellement par la largeur/hauteur + overflow quand
+                le panneau est replie. */}
+            <div
+              class="offre-corps"
+              data-corps
+              id={`offre-corps-${i}`}
+              role="region"
+              aria-labelledby={`offre-entete-${i}`}
+            >
+              <div class="offre-corps-inner">
+                <div class="offre-corps-texte">
+                  <p class="offre-promesse text-ink-muted">{offre.promesse}</p>
 
-            <h3 class="offre-titre mt-3 text-ink">{offre.titre}</h3>
+                  <ul class="offre-prestations">
+                    {offre.prestations.map((item) => (
+                      <li class="offre-prestation">
+                        <svg
+                          class="offre-fleche text-gold"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M2 6h8M10 6L6.5 2.5M10 6L6.5 9.5"
+                            stroke="currentColor"
+                            stroke-width="1.25"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                        <span class="type-nav text-ink-muted">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-            <p class="offre-promesse mt-4 text-ink-muted">{offre.promesse}</p>
-
-            <ul class="mt-6 flex flex-col gap-3">
-              {offre.prestations.map((item) => (
-                <li class="flex items-start gap-3">
-                  <svg
-                    class="mt-[0.45rem] h-3 w-3 shrink-0 text-gold"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M2 6h8M10 6L6.5 2.5M10 6L6.5 9.5"
-                      stroke="currentColor"
-                      stroke-width="1.25"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                  <div class="offre-cta">
+                    <ButtonArrow
+                      variant="outline"
+                      href="#formulaire-devis"
+                      label="Demander un devis"
                     />
-                  </svg>
-                  <span class="type-nav text-ink-muted">{item}</span>
-                </li>
-              ))}
-            </ul>
+                  </div>
+                </div>
 
-            <div class="mt-8 pt-2">
-              <ButtonArrow
-                variant="outline"
-                href="#formulaire-devis"
-                label="Demander un devis"
-              />
+                {/* Emplacement image : photo de prestation si fournie, sinon
+                    fallback typographique dore. Ne casse pas si vide. */}
+                <div class="offre-media" aria-hidden="true">
+                  {offre.image ? (
+                    <img
+                      class="offre-media-img"
+                      src={offre.image}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div class="offre-media-fallback">
+                      <span class="offre-media-fallback-tag">{offre.tag}</span>
+                      <span class="offre-media-fallback-label">
+                        Transport événementiel
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </article>
         ))
@@ -144,95 +231,528 @@ const OFFRES = [
 </section>
 
 <style>
-  /* Carte d'offre : fond creme plein sur le cream-soft ambiant, fin
-     lisere, coins doux, ombre tres legere. Aeration genereuse. */
-  .offre-carte {
-    position: relative;
+  /* ============================================================
+     ACCORDEON. Base commune : rangee de trois panneaux. Par defaut (mobile)
+     accordeon VERTICAL ; en desktop (>= 900px) accordeon HORIZONTAL.
+     Etat sans JS : les regles .is-open posees en HTML suffisent (seminaire
+     ouvert), le rendu reste correct meme JS eteint.
+     ============================================================ */
+  .offres-accordeon {
     display: flex;
     flex-direction: column;
-    padding: 2.25rem 2rem;
+    gap: 0.75rem;
+  }
+
+  .offre-panneau {
+    position: relative;
+    overflow: hidden;
     background-color: var(--cream);
     border: 1px solid var(--line);
     border-radius: 18px;
-    box-shadow: 0 1px 2px rgba(22, 36, 28, 0.04);
-    transition:
-      transform 400ms var(--ease),
-      box-shadow 400ms var(--ease),
-      border-color 400ms var(--ease);
   }
 
-  /* Micro hover : legere elevation, ombre un peu plus marquee, liseré
-     qui tire vers l'or. Subtil, pas d'animation lourde. */
-  .offre-carte:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 40px -22px rgba(22, 36, 28, 0.35);
-    border-color: rgba(201, 162, 75, 0.45);
+  /* -- En-tete du panneau : bouton pleine cible, remis a plat. En mobile il
+        occupe toute la largeur (barre de titre de l'accordeon vertical). -- */
+  .offre-entete {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1.35rem 1.5rem;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
   }
 
-  /* Offre phare (seminaire) : accent dore discret. Filet dore en haut
-     de carte et liseré legerement dore au repos pour la faire ressortir
-     sans casser l'alignement de la grille. */
-  .offre-phare {
-    border-color: rgba(201, 162, 75, 0.5);
-    box-shadow: 0 10px 30px -20px rgba(201, 162, 75, 0.4);
+  .offre-tag {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: 1.35rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
-  .offre-phare::before {
-    content: '';
-    position: absolute;
-    inset-inline: 18px;
-    top: 0;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--gold) 25%,
-      var(--gold) 75%,
-      transparent 100%
-    );
+  .offre-titre-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    writing-mode: horizontal-tb;
+  }
+  .offre-titre {
+    display: block;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2.2vw, 1.7rem);
+    line-height: 1.14;
+    letter-spacing: -0.01em;
+    color: var(--ink);
   }
 
-  /* Badge discret de l'offre phare, coin haut droit. */
+  /* Badge offre phare : discret, dore, capitales espacees. */
   .offre-badge {
-    position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
+    flex: 0 0 auto;
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 0.66rem;
     text-transform: uppercase;
     letter-spacing: 0.16em;
     color: var(--gold);
+    white-space: nowrap;
   }
 
-  /* Titre de carte : demande en display (Fraunces) par le prompt Offres.
-     On applique --font-display localement sans toucher au role global
-     .type-h3 (qui reste en Playfair ailleurs). Taille calee sur le H3. */
-  .offre-titre {
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-size: clamp(1.5rem, 2.4vw, 1.95rem);
-    line-height: 1.12;
-    letter-spacing: -0.01em;
+  /* Chevron : indique l'ouverture. */
+  .offre-chevron {
+    flex: 0 0 auto;
+    display: inline-flex;
+    color: var(--ink);
+    opacity: 0.55;
+    transition:
+      transform 400ms var(--ease),
+      opacity 300ms var(--ease);
   }
 
-  /* Tag numero de l'offre : Fraunces, discret mais present. */
-  .offre-tag {
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-size: clamp(1.5rem, 2vw, 1.85rem);
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+  /* -- Corps : contenu complet. -- */
+  .offre-corps-inner {
+    display: grid;
+    gap: 2rem;
+    padding: 0 1.5rem 2rem;
   }
-
-  /* Promesse : corps un peu plus grand que la liste, pose le benefice. */
   .offre-promesse {
     font-family: var(--font-body);
     font-weight: 400;
     font-size: 1.0625rem;
     line-height: 1.6;
   }
+  .offre-prestations {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .offre-prestation {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .offre-fleche {
+    margin-top: 0.45rem;
+    height: 0.75rem;
+    width: 0.75rem;
+    flex-shrink: 0;
+  }
+  .offre-cta {
+    margin-top: 2rem;
+  }
+
+  /* -- Emplacement image / fallback. -- */
+  .offre-media {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: var(--cream-soft);
+    border: 1px solid var(--line);
+    min-height: 200px;
+  }
+  .offre-media-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .offre-media-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background:
+      radial-gradient(
+        120% 120% at 15% 12%,
+        rgba(201, 162, 75, 0.14),
+        transparent 55%
+      ),
+      var(--cream-soft);
+  }
+  .offre-media-fallback-tag {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: 2.75rem;
+    line-height: 1;
+    color: var(--gold);
+    opacity: 0.55;
+  }
+  .offre-media-fallback-label {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-muted);
+    opacity: 0.7;
+  }
+
+  /* ============================================================
+     MOBILE : accordeon VERTICAL. Le corps s'ouvre/ferme en hauteur via
+     grid-template-rows 0fr -> 1fr (fiable : conteneur pleine largeur).
+     Titres toujours visibles.
+     ============================================================ */
+  .offre-corps {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 500ms var(--ease);
+  }
+  .offre-panneau.is-open .offre-corps {
+    grid-template-rows: 1fr;
+  }
+  /* L'enfant direct doit avoir min-height:0 + overflow hidden pour collapser
+     reellement le contenu. */
+  .offre-corps > .offre-corps-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+  /* Contenu : leger fondu a l'ouverture. */
+  .offre-corps-inner {
+    opacity: 0;
+    transition: opacity 400ms var(--ease);
+  }
+  .offre-panneau.is-open .offre-corps-inner {
+    opacity: 1;
+  }
+  /* Chevron ouvert (mobile) : pointe vers le bas. */
+  .offre-panneau.is-open .offre-chevron {
+    transform: rotate(90deg);
+    opacity: 0.9;
+  }
+
+  /* Panneau phare : accent dore au repos ; panneau ouvert : liseré + ombre. */
+  .offre-phare {
+    border-color: rgba(201, 162, 75, 0.5);
+  }
+  .offre-panneau.is-open {
+    border-color: rgba(201, 162, 75, 0.55);
+    box-shadow: 0 14px 36px -24px rgba(201, 162, 75, 0.4);
+  }
+
+  /* ============================================================
+     DESKTOP (>= 900px) : accordeon HORIZONTAL. La rangee repasse en flex
+     horizontal ; la largeur est pilotee par flex-grow. Le corps est toujours
+     rendu, masque par l'overflow des bandes repliees (jamais display:none :
+     SEO/GEO).
+     ============================================================ */
+  @media (min-width: 900px) {
+    .offres-accordeon {
+      flex-direction: row;
+      gap: 0.85rem;
+      height: clamp(520px, 60vh, 600px);
+    }
+
+    .offre-panneau {
+      /* Largeur pilotee par flex-grow. Replie = bande etroite (grow 1) ;
+         ouvert = part large (grow 3.4 -> ~58%). */
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      transition:
+        flex-grow 650ms var(--ease),
+        border-color 500ms var(--ease),
+        box-shadow 500ms var(--ease),
+        background-color 500ms var(--ease);
+    }
+    .offre-panneau.is-open {
+      flex-grow: 3.4;
+    }
+
+    /* En-tete des bandes repliees : colonne, numero en haut, titre a la
+       VERTICALE, chevron en bas. */
+    .offre-entete {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      height: 100%;
+      padding: 1.75rem 1.5rem;
+      gap: 1.25rem;
+    }
+
+    /* Titre pivote a 90deg (bandes repliees), lisible du bas vers le haut. */
+    .offre-titre-wrap {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+    }
+    .offre-titre {
+      white-space: nowrap;
+      font-size: clamp(1.15rem, 1.5vw, 1.45rem);
+    }
+
+    .offre-chevron {
+      transform: none;
+      align-self: center;
+    }
+    .offre-panneau.is-open .offre-chevron {
+      transform: none;
+      opacity: 0;
+    }
+
+    /* Badge phare : vertical dans la bande repliee (masque), horizontal et
+       visible dans le panneau ouvert. */
+    .offre-badge {
+      position: absolute;
+      top: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) rotate(180deg);
+      writing-mode: vertical-rl;
+      opacity: 0;
+      transition: opacity 300ms var(--ease);
+    }
+
+    /* Panneau OUVERT : l'en-tete redevient horizontale en haut, le corps
+       s'affiche dessous a taille pleine. */
+    .offre-panneau.is-open .offre-entete {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      height: auto;
+      padding: 1.85rem 2.25rem 1.25rem;
+      gap: 1rem;
+    }
+    .offre-panneau.is-open .offre-titre-wrap {
+      writing-mode: horizontal-tb;
+      transform: none;
+      flex: 1 1 auto;
+      align-items: baseline;
+    }
+    .offre-panneau.is-open .offre-titre {
+      white-space: normal;
+      font-size: clamp(1.5rem, 2.4vw, 1.95rem);
+    }
+    .offre-panneau.is-open .offre-badge {
+      position: static;
+      transform: none;
+      writing-mode: horizontal-tb;
+      opacity: 1;
+    }
+
+    /* Corps en desktop : on neutralise la mecanique mobile (grid-rows) et on
+       montre toujours a taille pleine. L'overflow du panneau replie masque. */
+    .offre-corps {
+      display: block;
+      grid-template-rows: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .offre-corps > .offre-corps-inner {
+      height: 100%;
+    }
+    /* Contenu : masque (opacity + visibility, pas display:none) dans les
+       bandes repliees, revele a l'ouverture. Reste dans le DOM (SEO). */
+    .offre-corps-inner {
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 400ms var(--ease) 60ms,
+        visibility 0ms linear 460ms;
+    }
+    .offre-panneau.is-open .offre-corps-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: 2.5rem;
+      padding: 0 2.25rem 2.25rem;
+      align-content: start;
+      opacity: 1;
+      visibility: visible;
+      transition:
+        opacity 500ms var(--ease) 180ms,
+        visibility 0ms linear 0ms;
+    }
+    .offre-media {
+      min-height: 0;
+      height: 100%;
+    }
+
+    /* Bande repliee : fond plus sobre, opacite reduite qui remonte au
+       survol / focus. */
+    .offre-panneau:not(.is-open) {
+      background-color: var(--cream-soft);
+    }
+    .offre-panneau:not(.is-open) .offre-entete {
+      opacity: 0.72;
+      transition: opacity 350ms var(--ease);
+    }
+    .offre-panneau:not(.is-open):hover .offre-entete,
+    .offre-panneau:not(.is-open):focus-within .offre-entete {
+      opacity: 1;
+    }
+    .offre-panneau:not(.is-open):hover {
+      border-color: rgba(201, 162, 75, 0.4);
+    }
+
+    /* Filet dore haut du panneau phare (repli comme ouvert). */
+    .offre-phare::before {
+      content: '';
+      position: absolute;
+      inset-inline: 14px;
+      top: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--gold) 25%,
+        var(--gold) 75%,
+        transparent
+      );
+      z-index: 1;
+    }
+  }
+
+  /* ============================================================
+     REDUCED MOTION : pas de bascule ni d'animation. Les trois offres
+     affichees depliees et lisibles (accordeon vertical fige ouvert).
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .offres-accordeon,
+    .offre-panneau,
+    .offre-corps,
+    .offre-corps-inner,
+    .offre-chevron,
+    .offre-badge,
+    .offre-entete {
+      transition: none !important;
+    }
+    .offres-accordeon {
+      flex-direction: column;
+      height: auto;
+      gap: 0.75rem;
+    }
+    .offre-panneau {
+      flex: none;
+      display: block;
+    }
+    .offre-entete {
+      flex-direction: row;
+      align-items: center;
+      height: auto;
+      padding: 1.35rem 1.5rem;
+    }
+    .offre-titre-wrap {
+      writing-mode: horizontal-tb;
+      transform: none;
+    }
+    .offre-titre {
+      white-space: normal;
+    }
+    .offre-badge {
+      position: static;
+      transform: none;
+      writing-mode: horizontal-tb;
+      opacity: 1;
+    }
+    .offre-corps {
+      display: block;
+      grid-template-rows: none;
+      overflow: visible;
+    }
+    .offre-corps-inner,
+    .offre-panneau.is-open .offre-corps-inner {
+      display: block;
+      opacity: 1;
+      visibility: visible;
+      padding: 0 1.5rem 2rem;
+    }
+    .offre-chevron {
+      display: none;
+    }
+  }
 </style>
+
+<script>
+  /* ============================================================
+     Accordeon des offres : ouverture / fermeture d'un panneau a la fois.
+     - Clic sur un en-tete : ouvre son panneau, referme les autres.
+     - Survol (desktop hover uniquement) d'un panneau replie : l'ouvre.
+     - Clavier : les en-tetes sont des <button> focusables ; Enter/Espace
+       les activent nativement. Fleches gauche/droite (desktop) et haut/bas
+       (mobile) deplacent le focus entre en-tetes et ouvrent le panneau.
+     - aria-expanded synchronise sur chaque bouton.
+     - Un panneau reste toujours ouvert (l'offre phare par defaut).
+     - reduced-motion : le JS se desactive (le CSS fige tout ouvert), pour ne
+       jamais refermer de panneaux.
+     ============================================================ */
+  function initOffres() {
+    const accordeon = document.querySelector<HTMLElement>('[data-offres]');
+    if (!accordeon) return;
+
+    const panneaux = Array.from(
+      accordeon.querySelectorAll<HTMLElement>('[data-panneau]')
+    );
+    const entetes = Array.from(
+      accordeon.querySelectorAll<HTMLButtonElement>('[data-entete]')
+    );
+    if (panneaux.length === 0) return;
+
+    const reduce = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    if (reduce) return; // CSS affiche tout ouvert : ne rien piloter.
+
+    const mqHover = window.matchMedia('(min-width: 900px) and (hover: hover)');
+
+    const ouvrir = (index: number) => {
+      panneaux.forEach((p, i) => {
+        const open = i === index;
+        p.classList.toggle('is-open', open);
+        const btn = entetes[i];
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    };
+
+    entetes.forEach((btn, i) => {
+      // Clic / tap : ouvre le panneau vise.
+      btn.addEventListener('click', () => ouvrir(i));
+
+      // Survol desktop : ouvre au pointeur sur les bandes repliees.
+      const panneau = panneaux[i];
+      panneau.addEventListener('mouseenter', () => {
+        if (mqHover.matches) ouvrir(i);
+      });
+
+      // Navigation clavier entre en-tetes.
+      btn.addEventListener('keydown', (e: KeyboardEvent) => {
+        const horizontal = mqHover.matches;
+        const next = horizontal ? 'ArrowRight' : 'ArrowDown';
+        const prev = horizontal ? 'ArrowLeft' : 'ArrowUp';
+        if (e.key === next) {
+          e.preventDefault();
+          const j = (i + 1) % entetes.length;
+          entetes[j].focus();
+          ouvrir(j);
+        } else if (e.key === prev) {
+          e.preventDefault();
+          const j = (i - 1 + entetes.length) % entetes.length;
+          entetes[j].focus();
+          ouvrir(j);
+        }
+      });
+    });
+  }
+
+  if (document.readyState !== 'loading') {
+    initOffres();
+  } else {
+    document.addEventListener('DOMContentLoaded', initOffres, { once: true });
+  }
+  document.addEventListener('astro:page-load', initOffres);
+</script>
