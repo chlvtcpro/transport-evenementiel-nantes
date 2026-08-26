@@ -391,8 +391,9 @@ export const fr = {
     // Champs caches transmis a Web3Forms.
     subject: 'Nouvelle demande de devis Transport Événementiel Nantes',
     fromName: 'Site Transport Événementiel Nantes',
-    successTitle:
-      'Demande reçue. On revient vers vous très vite avec un premier devis.',
+    // Page de confirmation vers laquelle le visiteur est redirige apres un
+    // envoi accepte par Web3Forms. Voir la cle `devisEnvoye` plus bas.
+    sentHref: '/devis-envoye',
     selectPlaceholder: 'Choisir...',
     submit: 'Envoyer ma demande',
     sending: 'Envoi...',
@@ -431,12 +432,37 @@ export const fr = {
       },
       nom: { label: 'Nom', placeholder: 'Votre nom' },
       tel: { label: 'Téléphone', placeholder: '06 00 00 00 00' },
+      societe: { label: 'Société', placeholder: 'Nom de votre société' },
       email: { label: 'Email', placeholder: 'vous@exemple.fr' },
       message: {
         label: 'Décrivez votre besoin',
         placeholder: 'Contexte, horaires, contraintes particulières...',
       },
     },
+  },
+
+  // ------------------------------------------------------------------
+  // Page de confirmation apres envoi du formulaire de devis
+  // (/devis-envoye). Atteinte uniquement par redirection JS depuis le
+  // formulaire : noindex, pas de lien entrant depuis la navigation.
+  //
+  // `delai` est la SEULE promesse de temps de reponse du site. Elle
+  // reprend volontairement la formulation deja employee ailleurs
+  // ("Devis rapide") : ne la remplacer par un engagement chiffre
+  // (24 h, 48 h) qu'en connaissance de cause.
+  // ------------------------------------------------------------------
+  devisEnvoye: {
+    metaTitle: 'Demande envoyée',
+    metaDescription:
+      'Votre demande de devis a bien été transmise à Transport Événementiel Nantes.',
+    eyebrow: 'Demande envoyée',
+    h1: 'Merci, votre demande est bien arrivée.',
+    delai:
+      'On revient vers vous très vite avec un premier devis, par téléphone ou par email.',
+    precision:
+      "Si vous ne voyez rien arriver, pensez à vérifier vos courriers indésirables. Vous pouvez aussi nous rappeler directement en réponse à l'email de confirmation.",
+    homeHref: '/',
+    backHome: "Retour à l'accueil",
   },
 
   // ------------------------------------------------------------------
