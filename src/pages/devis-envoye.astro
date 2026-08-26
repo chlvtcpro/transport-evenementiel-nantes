@@ -1,0 +1,108 @@
+---
+/*
+  /devis-envoye : page de confirmation apres envoi du formulaire de devis.
+
+  Le visiteur n'arrive ici que par la redirection JS declenchee dans
+  Devis.astro apres une reponse Web3Forms acceptee. Aucun lien entrant
+  depuis la navigation. robots noindex,follow : utile au visiteur, sans
+  interet pour l'index.
+
+  Meme grammaire visuelle que les pages legales : fond creme, header en
+  variante claire, largeur de lecture contenue, reveal au scroll. La
+  pastille de validation doree reprend le trait de l'ancien message de
+  succes qui s'affichait en place dans le formulaire.
+
+  `DELAI` est la SEULE promesse de temps de reponse du site. Elle reprend
+  volontairement la formulation deja employee ailleurs ("Devis rapide") :
+  ne la remplacer par un engagement chiffre (24 h, 48 h) qu'en connaissance
+  de cause.
+*/
+import Base from '../layouts/Base.astro';
+import Eyebrow from '../components/Eyebrow.astro';
+import { SITE_DATA } from '../data/site.ts';
+
+const TITRE_META = `Demande envoyée | ${SITE_DATA.name}`;
+const DESCRIPTION_META =
+  'Votre demande de devis a bien été transmise à Transport Événementiel Nantes.';
+
+const DELAI =
+  'On revient vers vous très vite avec un premier devis, par téléphone ou par email.';
+const PRECISION =
+  "Si vous ne voyez rien arriver, pensez à vérifier vos courriers indésirables. Vous pouvez aussi nous rappeler directement en réponse à l'email de confirmation.";
+---
+
+<Base
+  title={TITRE_META}
+  description={DESCRIPTION_META}
+  headerTheme="light"
+  noindex={true}
+>
+  <section
+    data-tone="cream"
+    class="relative bg-cream py-section text-ink scroll-mt-24"
+  >
+    <div class="container">
+      <div class="mx-auto max-w-[640px] text-center" data-reveal-stagger="120">
+        <div class="flex justify-center" data-reveal>
+          <span class="envoye-mark" aria-hidden="true"></span>
+        </div>
+
+        <div class="mt-8 flex justify-center" data-reveal>
+          <Eyebrow tone="light">Demande envoyée</Eyebrow>
+        </div>
+
+        <h1 class="type-h2 mt-5 text-ink" data-reveal>
+          Merci, votre demande est bien arrivée.
+        </h1>
+
+        <p class="type-body mt-6 text-ink-muted" data-reveal>{DELAI}</p>
+
+        <p class="envoye-precision mt-4 text-ink-muted" data-reveal>
+          {PRECISION}
+        </p>
+
+        <div class="mt-12" data-reveal>
+          <a
+            href="/"
+            class="type-nav text-ink-muted transition-colors hover:text-gold"
+          >
+            Retour à l'accueil
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Pastille de validation : cercle fin dore, coche tracee en bordures.
+     Reprise du motif de l'ancien bloc de succes du formulaire, retaillee
+     pour une page entiere. */
+  .envoye-mark {
+    display: block;
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .envoye-mark::after {
+    content: '';
+    position: absolute;
+    left: 1.35rem;
+    top: 0.95rem;
+    width: 0.8rem;
+    height: 1.45rem;
+    border-right: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg);
+  }
+
+  /* Precision secondaire : un cran sous le corps de texte. */
+  .envoye-precision {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+</style>
