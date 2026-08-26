@@ -8,7 +8,15 @@
 
   `satisfies typeof fr` : si une cle presente dans fr.ts manque ici (ou
   change de type), le build echoue. C'est le garde-fou qui rend une
-  traduction oubliee impossible.
+  traduction oubliee impossible. Attention : ce controle ne porte PAS sur
+  la LONGUEUR des tableaux. Un tableau plus court reste valide (c'est ce
+  qui permet de masquer le lien Ressources ci-dessous), mais cela implique
+  aussi de ne jamais reordonner un tableau ici sans reordonner fr.ts : les
+  composants fusionnent la config (icones, images) avec le texte par index.
+
+  LIENS : les chemins racine sont prefixes /en (accueil, ancres, pages
+  legales). Les ancres nues (#formulaire-devis) sont laissees telles
+  quelles : elles ciblent la page courante, donc /en/ aussi bien que /.
 */
 
 import type { fr } from './fr';
@@ -43,8 +51,8 @@ export const en = {
 
   // ------------------------------------------------------------------
   // Header : navigation, CTA, libelles d'accessibilite.
-  // Les href sont portes ici : chaque langue aura ses propres chemins
-  // a l'etape routing.
+  // Chemins prefixes /en. Le lien "Ressources" (/blog) est volontairement
+  // ABSENT : le blog reste francais uniquement, il n'existe pas de /en/blog.
   // ------------------------------------------------------------------
   header: {
     logoAlt: 'Transport Événementiel Nantes',
@@ -52,14 +60,13 @@ export const en = {
     mobileNavAria: 'Navigation mobile',
     openMenu: 'Ouvrir le menu',
     closeMenu: 'Fermer le menu',
-    ctaHref: '/#formulaire-devis',
-    homeHref: '/#hero',
+    ctaHref: '/en/#formulaire-devis',
+    homeHref: '/en/#hero',
     nav: [
-      { href: '/#comment-ca-marche', label: 'Comment ça marche' },
-      { href: '/#offres', label: 'Offres' },
-      { href: '/#cas-client', label: 'Réalisations' },
-      { href: '/#differenciateurs', label: 'Notre approche' },
-      { href: '/blog', label: 'Ressources' },
+      { href: '/en/#comment-ca-marche', label: 'Comment ça marche' },
+      { href: '/en/#offres', label: 'Offres' },
+      { href: '/en/#cas-client', label: 'Réalisations' },
+      { href: '/en/#differenciateurs', label: 'Notre approche' },
     ],
   },
 
@@ -69,7 +76,7 @@ export const en = {
   footer: {
     logoMain: 'Transport Événementiel',
     logoSub: 'Nantes',
-    homeHref: '/#hero',
+    homeHref: '/en/#hero',
     tagline:
       'Organisateur de transport événementiel à Nantes et dans le Grand Ouest.',
     // Rendu tel quel apres le symbole copyright et l'annee courante.
@@ -78,24 +85,23 @@ export const en = {
       {
         title: 'Prestations',
         links: [
-          { href: '/#offres', label: 'Mariage' },
-          { href: '/#offres', label: 'Séminaire' },
-          { href: '/#offres', label: 'Navette de groupe' },
+          { href: '/en/#offres', label: 'Mariage' },
+          { href: '/en/#offres', label: 'Séminaire' },
+          { href: '/en/#offres', label: 'Navette de groupe' },
         ],
       },
       {
         title: "L'entreprise",
         links: [
-          { href: '/#comment-ca-marche', label: 'Comment ça marche' },
-          { href: '/#cas-client', label: 'Réalisations' },
-          { href: '/#differenciateurs', label: 'Notre approche' },
-          { href: '/blog', label: 'Ressources' },
+          { href: '/en/#comment-ca-marche', label: 'Comment ça marche' },
+          { href: '/en/#cas-client', label: 'Réalisations' },
+          { href: '/en/#differenciateurs', label: 'Notre approche' },
         ],
       },
       {
         title: 'Contact',
         links: [
-          { href: '/#formulaire-devis', label: 'Demander un devis' },
+          { href: '/en/#formulaire-devis', label: 'Demander un devis' },
           {
             href: 'mailto:contact@transport-evenementiel-nantes.fr',
             label: 'contact@transport-evenementiel-nantes.fr',
@@ -104,8 +110,8 @@ export const en = {
       },
     ],
     legalLinks: [
-      { href: '/mentions-legales', label: 'Mentions légales' },
-      { href: '/confidentialite', label: 'Confidentialité' },
+      { href: '/en/mentions-legales', label: 'Mentions légales' },
+      { href: '/en/confidentialite', label: 'Confidentialité' },
     ],
   },
 
@@ -391,8 +397,9 @@ export const en = {
     // Champs caches transmis a Web3Forms.
     subject: 'Nouvelle demande de devis Transport Événementiel Nantes',
     fromName: 'Site Transport Événementiel Nantes',
-    successTitle:
-      'Demande reçue. On revient vers vous très vite avec un premier devis.',
+    // Page de confirmation vers laquelle le visiteur est redirige apres un
+    // envoi accepte par Web3Forms. Voir la cle `devisEnvoye` plus bas.
+    sentHref: '/en/devis-envoye',
     selectPlaceholder: 'Choisir...',
     submit: 'Envoyer ma demande',
     sending: 'Envoi...',
@@ -431,12 +438,32 @@ export const en = {
       },
       nom: { label: 'Nom', placeholder: 'Votre nom' },
       tel: { label: 'Téléphone', placeholder: '06 00 00 00 00' },
+      societe: { label: 'Société', placeholder: 'Nom de votre société' },
       email: { label: 'Email', placeholder: 'vous@exemple.fr' },
       message: {
         label: 'Décrivez votre besoin',
         placeholder: 'Contexte, horaires, contraintes particulières...',
       },
     },
+  },
+
+  // ------------------------------------------------------------------
+  // Page de confirmation apres envoi du formulaire de devis
+  // (/en/devis-envoye). Atteinte uniquement par redirection JS depuis le
+  // formulaire : noindex, pas de lien entrant depuis la navigation.
+  // ------------------------------------------------------------------
+  devisEnvoye: {
+    metaTitle: 'Demande envoyée',
+    metaDescription:
+      'Votre demande de devis a bien été transmise à Transport Événementiel Nantes.',
+    eyebrow: 'Demande envoyée',
+    h1: 'Merci, votre demande est bien arrivée.',
+    delai:
+      'On revient vers vous très vite avec un premier devis, par téléphone ou par email.',
+    precision:
+      "Si vous ne voyez rien arriver, pensez à vérifier vos courriers indésirables. Vous pouvez aussi nous rappeler directement en réponse à l'email de confirmation.",
+    homeHref: '/en/',
+    backHome: "Retour à l'accueil",
   },
 
   // ------------------------------------------------------------------
@@ -462,8 +489,10 @@ export const en = {
   ],
 
   // ------------------------------------------------------------------
-  // Blog. Reste francais uniquement (hors perimetre anglais), mais
-  // externalise ici pour garder une source unique de contenu.
+  // Blog. Hors perimetre anglais : aucune route /en/blog n'existe et ce
+  // bloc n'est JAMAIS lu en anglais. Il n'est conserve que parce que
+  // `satisfies typeof fr` exige la cle. Ne rien traduire, ne pas prefixer
+  // les liens par /en.
   // ------------------------------------------------------------------
   blog: {
     metaTitle:
@@ -496,7 +525,7 @@ export const en = {
   // ------------------------------------------------------------------
   legal: {
     breadcrumbHome: 'Accueil',
-    homeHref: '/',
+    homeHref: '/en/',
     backHome: "Retour à l'accueil",
     // Rendu : "<prefixe> <date>."
     updatedPrefix: 'Dernière mise à jour le',
