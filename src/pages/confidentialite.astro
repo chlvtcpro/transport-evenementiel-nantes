@@ -105,9 +105,21 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
 
           <h2>Base légale</h2>
           <p>
-            Le traitement repose sur votre consentement, exprimé lors de l'envoi du
-            formulaire, ainsi que sur l'exécution de mesures précontractuelles
-            prises à votre demande.
+            <strong>Demande de devis.</strong> Le traitement repose sur votre
+            consentement, exprimé lors de l'envoi du formulaire, ainsi que sur
+            l'exécution de mesures précontractuelles prises à votre demande.
+          </p>
+          <p>
+            <strong>Mesure d'audience et publicité.</strong> La lecture et le
+            dépôt d'informations sur votre terminal reposent sur votre
+            consentement, au sens de l'article 82 de la loi Informatique et
+            Libertés. Ce consentement est recueilli par le bandeau affiché lors
+            de votre première visite : rien n'est déposé avant que vous ne
+            l'ayez donné, et le refus est aussi simple que l'acceptation. Le
+            traitement des données qui en découle repose sur ce même
+            consentement, au sens de l'article 6.1.a du RGPD. Vous pouvez le
+            retirer à tout moment, aussi facilement que vous l'avez donné, via
+            le lien de la section « Cookies » ci-dessous.
           </p>
 
           <h2>Sous-traitants</h2>
@@ -167,11 +179,12 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
           </ul>
           <p>
             Ces outils déposent des cookies ou des identifiants similaires sur
-            votre terminal et traitent votre adresse IP. Vous pouvez vous y
-            opposer à tout moment en configurant votre navigateur pour bloquer
-            les cookies tiers, en utilisant une extension de blocage, ou en
-            activant le signal « Do Not Track ». Vous pouvez également nous
-            écrire pour exercer votre droit d'opposition.
+            votre terminal et traitent votre adresse IP. Ils ne sont chargés
+            qu'après votre accord explicite : tant que vous n'avez pas accepté,
+            aucun script Google n'est téléchargé et aucun cookie Google n'est
+            déposé. Nous utilisons pour cela le mode consentement (Consent Mode)
+            de Google, dont tous les signaux sont positionnés sur « refusé » par
+            défaut et ne passent à « accordé » qu'au moment où vous acceptez.
           </p>
 
           <h2>Durée de conservation</h2>
@@ -203,9 +216,20 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
             Google.
           </p>
           <p>
-            Vous gardez la main sur ces dépôts depuis les réglages de votre
+            Les cookies de mesure et de publicité ne sont déposés qu'après votre
+            acceptation via le bandeau affiché lors de votre première visite.
+            Votre choix est conservé et vous pouvez en changer à tout moment,
+            dans les deux sens :
+          </p>
+          <p class="cookie-reglages">
+            <button type="button" class="tarteaucitronOpenPanel cookie-bouton">
+              Modifier mes préférences de cookies
+            </button>
+          </p>
+          <p>
+            Vous gardez par ailleurs la main depuis les réglages de votre
             navigateur, qui permet de bloquer ou de supprimer les cookies, y
-            compris ceux déjà enregistrés. Le blocage des cookies de mesure et de
+            compris ceux déjà enregistrés. Refuser les cookies de mesure et de
             publicité n'altère en rien la consultation du site ni l'envoi d'une
             demande de devis.
           </p>
@@ -309,5 +333,37 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
   .fil-sep {
     color: var(--gold);
     opacity: 0.7;
+  }
+
+  /* Reouverture du panneau de consentement. La classe
+     .tarteaucitronOpenPanel est ce que tarteaucitron cherche pour y
+     brancher l'ouverture : la retirer casse le lien, la renommer aussi.
+     Rendu en bouton et non en lien parce que l'element n'amene nulle
+     part, il ouvre une interface. */
+  .cookie-reglages {
+    margin: 1.5rem 0;
+  }
+  .cookie-bouton {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--gold);
+    border-radius: 0.5rem;
+    padding: 0.7rem 1.3rem;
+    cursor: pointer;
+    transition:
+      background-color 200ms var(--ease),
+      color 200ms var(--ease);
+  }
+  .cookie-bouton:hover,
+  .cookie-bouton:focus-visible {
+    background: var(--gold);
+    color: var(--green-900);
+  }
+  .cookie-bouton:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
   }
 </style>

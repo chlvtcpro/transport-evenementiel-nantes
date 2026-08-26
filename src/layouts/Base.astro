@@ -7,12 +7,14 @@ import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Consent from '../components/Consent.astro';
 import { SITE_DATA, SERVICES } from '../data/site.ts';
 import { FAQ } from '../data/faq.ts';
 
 // Conteneur Google Tag Manager. Une seule ligne a editer pour changer de
-// conteneur : l'identifiant alimente a la fois le script du <head> et le
-// <noscript> d'ouverture du <body>.
+// conteneur. L'identifiant n'est plus consomme ici : il est transmis a
+// <Consent>, seul endroit d'ou GTM peut etre charge, et uniquement apres
+// consentement explicite du visiteur.
 const GTM_ID = 'GTM-KQ393ZFD';
 
 interface Props {
@@ -146,23 +148,12 @@ const jsonLd = jsonLdOverride ?? {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Google Tag Manager, place le plus haut possible dans le <head> pour
-         que dataLayer existe avant tout autre script de la page.
-         is:inline est indispensable : sans lui Astro bundlerait le snippet en
-         module differe, il s'executerait trop tard et les push emis ailleurs
-         seraient perdus. -->
-    <script is:inline define:vars={{ GTM_ID }}>
-      (function (w, d, s, l, i) {
-        w[l] = w[l] || [];
-        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : '';
-        j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-        f.parentNode.insertBefore(j, f);
-      })(window, document, 'script', 'dataLayer', GTM_ID);
-    </script>
+    <!-- Consentement. Place le plus haut possible dans le <head> : le
+         Consent Mode doit poser ses valeurs par defaut (tout refuse) avant
+         que quoi que ce soit d'autre ne s'execute. C'est aussi le seul
+         endroit d'ou Google Tag Manager peut etre charge, et uniquement
+         apres un clic explicite du visiteur. -->
+    <Consent gtmId={GTM_ID} />
 
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -209,16 +200,17 @@ const jsonLd = jsonLdOverride ?? {
     />
   </head>
   <body>
-    <!-- Google Tag Manager, repli sans JavaScript. Doit rester le tout
-         premier element du <body>. -->
-    <noscript>
-      <iframe
-        src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"
-        title="Google Tag Manager"></iframe>
-    </noscript>
+    {/* Le repli noscript de Google Tag Manager a ete retire, deliberement.
+        Il chargeait l'iframe ns.html des l'ouverture du body, sans condition
+        et sans moyen d'y echapper : un visiteur sans JavaScript ne peut pas
+        afficher le bandeau, donc pas consentir, donc le trace serait depose
+        sans accord. C'est exactement ce que l'article 82 interdit. Ne pas le
+        remettre.
+
+        Commentaire en accolades et non en <!-- --> : Astro n'emet pas les
+        premiers dans le HTML livre. Un commentaire HTML classique aurait
+        expedie ces lignes a chaque visiteur, sur chaque page, et pollue les
+        audits qui cherchent des traces de GTM dans le build. */}
 
     <a
       href="#hero"
