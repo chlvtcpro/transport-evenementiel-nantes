@@ -93,13 +93,52 @@ const { gtmId } = Astro.props;
 </script>
 
 {/*
-  2. Librairie. Script classique, ni async ni defer : l'ordre d'execution
+  2. Textes du bandeau et du panneau, dans le ton du site.
+
+     tarteaucitronCustomText est lu par la librairie a la ligne 15 de son
+     propre fichier, sous la forme `var x = (x === undefined) ? '' : x`.
+     Il doit donc exister AVANT le <script src> qui suit, sinon la valeur
+     est ecrasee par la chaine vide et les libelles par defaut reviennent.
+     Ne pas deplacer ce bloc apres le chargement de la librairie.
+*/}
+<script is:inline>
+  window.tarteaucitronCustomText = {
+    /* Bandeau. Deux phrases, vouvoiement, aucun jargon. */
+    alertBigPrivacy:
+      "Nous utilisons des cookies pour mesurer l'audience du site et l'efficacité de nos campagnes. Vous choisissez, et vous pouvez changer d'avis à tout moment.",
+    acceptAll: 'Tout accepter',
+    denyAll: 'Tout refuser',
+    personalize: 'Choisir',
+    privacyUrl: 'Politique de confidentialité',
+    close: 'Fermer',
+
+    /* Panneau de reglages. `all` est le titre de la ligne de reglage
+       global, pas le message anti-adblock (celui-la, c'est `adblock_call`,
+       qu'on laisse tel quel). */
+    title: 'Vos préférences de cookies',
+    info: 'Vos préférences de cookies',
+    all: 'Tout le site',
+    disclaimer:
+      'Autorisez ce que vous souhaitez, refusez le reste. Le site fonctionne de la même façon dans les deux cas.',
+    allow: 'Autoriser',
+    deny: 'Refuser',
+    allowAll: 'Tout accepter',
+    mandatoryTitle: 'Cookies nécessaires',
+    mandatoryText:
+      'Ils font fonctionner le site et mémorisent votre choix. Ils ne peuvent pas être désactivés.',
+    save: 'Enregistrer',
+    noServices: "Ce site n'utilise aucun cookie soumis à votre accord.",
+  };
+</script>
+
+{/*
+  3. Librairie. Script classique, ni async ni defer : l'ordre d'execution
      avec le script d'init qui suit doit etre garanti.
 */}
 <script is:inline src="/tarteaucitron/tarteaucitron.min.js"></script>
 
 {/*
-  3. Initialisation, declaration du service GTM et cablage du Consent Mode.
+  4. Initialisation, declaration du service GTM et cablage du Consent Mode.
 */}
 <script is:inline define:vars={{ gtmId }}>
   tarteaucitron.init({
@@ -190,23 +229,48 @@ const { gtmId } = Astro.props;
 
 <style is:global>
   /* =========================================================
-     Theme sombre tarteaucitron, aligne sur les tokens du site.
+     Habillage tarteaucitron, aligne sur l'identite du site.
 
-     tarteaucitron injecte sa feuille par <link> au moment de l'init,
-     donc APRES ce bloc dans la cascade. On ne peut pas compter sur
-     l'ordre : les declarations qui doivent gagner sont en !important,
-     et les selecteurs reprennent le prefixe "html body" que la feuille
-     d'origine utilise deja.
+     Regles de cascade : tarteaucitron injecte sa propre feuille par
+     <link> au moment de l'init, donc APRES ce bloc. On ne peut pas
+     compter sur l'ordre, d'ou le !important sur les declarations qui
+     doivent gagner, et le prefixe "html body" qui reprend la
+     specificite des selecteurs d'origine.
+
+     Aucune couleur en dur : tout vient des tokens de global.css
+     (--green-900, --green-800, --green-700, --gold, --gold-soft,
+     --on-dark, --line-on-dark, --ease, --font-body, --font-display).
+     Une seule exception, le voile de fond, qui a besoin d'une valeur
+     alpha : il est derive de --green-900 via --tac-voile ci-dessous.
      ========================================================= */
 
-  /* ---- Bandeau ---- */
+  #tarteaucitronRoot {
+    /* Vocabulaire de boutons du site, repris de ButtonArrow.astro et de
+       .type-button dans global.css. Definis une fois ici pour que le
+       bandeau et le panneau ne puissent pas diverger. */
+    --tac-radius-pill: 999px;
+    --tac-radius-box: 0.75rem;
+    --tac-voile: rgba(20, 38, 28, 0.72);
+
+    /* .type-button : Inter 500, 0.82rem, capitales, interlettrage 0.1em */
+    --tac-btn-font: var(--font-body);
+    --tac-btn-size: 0.82rem;
+    --tac-btn-weight: 500;
+    --tac-btn-spacing: 0.1em;
+    --tac-btn-pad: 1rem 1.75rem;
+    --tac-btn-min: 12rem;
+  }
+
+  /* =========================================================
+     1. Bandeau
+     ========================================================= */
   html body #tarteaucitronRoot #tarteaucitronAlertBig {
     background: var(--green-900) !important;
     color: var(--on-dark) !important;
     border-top: 1px solid var(--gold) !important;
     box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.35) !important;
     font-family: var(--font-body) !important;
-    padding: 1.5rem 1.25rem !important;
+    padding: 1.75rem 1.25rem !important;
     text-align: center;
   }
 
@@ -214,93 +278,131 @@ const { gtmId } = Astro.props;
   html body #tarteaucitronRoot #tarteaucitronDisclaimerAlert strong {
     color: var(--on-dark) !important;
     font-family: var(--font-body) !important;
-    font-size: 0.98rem !important;
-    line-height: 1.65 !important;
-    max-width: 62ch;
-    margin: 0 auto 0.25rem !important;
+    font-weight: 400 !important;
+    font-size: 1.0625rem !important;
+    line-height: 1.7 !important;
+    max-width: 64ch;
+    margin: 0 auto 1rem !important;
     display: block;
   }
 
-  /* ---- Les deux CTA de consentement ----
-     Meme geometrie, meme typographie, meme contraste : "Tout refuser"
-     n'est ni plus petit, ni plus pale, ni relegue. Seule la couleur de
-     remplissage distingue les deux, et les deux sont pleines. Toute
-     modification qui minorerait le refus casserait la conformite CNIL. */
+  /* ---------------------------------------------------------
+     2. Les deux CTA de consentement
+
+     Geometrie, typographie et taille STRICTEMENT identiques. Seul le
+     remplissage distingue l'acceptation (pilule doree, le CTA principal
+     du site) du refus (meme pilule, variante secondaire a bordure
+     pleine). Le refus garde le meme corps de texte, le meme poids, le
+     meme interlettrage et un contraste eleve sur le fond vert.
+
+     Ne pas reduire la taille du refus, ne pas baisser son opacite, ne
+     pas le passer en simple lien : ce serait un refus minore, ce que la
+     CNIL interdit.
+     --------------------------------------------------------- */
   html body #tarteaucitronRoot #tarteaucitronAlertBig button.tarteaucitronCTAButton {
-    font-family: var(--font-body) !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
+    font-family: var(--tac-btn-font) !important;
+    font-size: var(--tac-btn-size) !important;
+    font-weight: var(--tac-btn-weight) !important;
+    letter-spacing: var(--tac-btn-spacing) !important;
+    text-transform: uppercase !important;
     line-height: 1 !important;
-    letter-spacing: 0.01em !important;
-    padding: 0.85rem 1.6rem !important;
-    margin: 0.35rem 0.3rem !important;
-    min-width: 11rem !important;
+    padding: var(--tac-btn-pad) !important;
+    margin: 0.4rem 0.35rem !important;
+    min-width: var(--tac-btn-min) !important;
     border: 1px solid transparent !important;
-    border-radius: 0.5rem !important;
+    border-radius: var(--tac-radius-pill) !important;
     cursor: pointer !important;
-    transition: filter 200ms var(--ease) !important;
     opacity: 1 !important;
-    text-transform: none !important;
+    transition:
+      background-color 300ms var(--ease),
+      border-color 300ms var(--ease),
+      color 300ms var(--ease) !important;
   }
 
-  /* Accepter : dore plein, texte encre. */
+  /* Accepter : pilule doree, texte encre. Identique au CTA solid du site. */
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPersonalize2 {
     background: var(--gold) !important;
-    color: var(--green-900) !important;
     border-color: var(--gold) !important;
+    color: var(--ink) !important;
+  }
+  html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPersonalize2:hover,
+  html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPersonalize2:focus-visible {
+    background: var(--gold-soft) !important;
+    border-color: var(--gold-soft) !important;
   }
 
-  /* Refuser : creme plein, texte encre. Meme surface, meme poids visuel. */
+  /* Refuser : meme pilule, variante secondaire. Bordure pleine en creme,
+     pas la bordure a 14 % d'opacite du reste du site : a cet endroit
+     precis, le bouton doit se voir autant que celui d'a cote. */
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronAllDenied2 {
+    background: transparent !important;
+    border-color: var(--on-dark) !important;
+    color: var(--on-dark) !important;
+  }
+  html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronAllDenied2:hover,
+  html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronAllDenied2:focus-visible {
     background: var(--on-dark) !important;
     color: var(--green-900) !important;
-    border-color: var(--on-dark) !important;
   }
 
-  html body #tarteaucitronRoot #tarteaucitronAlertBig button.tarteaucitronCTAButton:hover,
-  html body #tarteaucitronRoot #tarteaucitronAlertBig button.tarteaucitronCTAButton:focus-visible {
-    filter: brightness(1.08) !important;
-  }
+  /* ---------------------------------------------------------
+     3. "Choisir" et lien vers la politique
 
-  /* ---- "Personnaliser" ----
-     Lien discret, mais c'est un acces aux reglages, pas un choix de
-     consentement : le minorer ne pose pas de probleme de conformite. */
+     Ce sont des acces, pas des choix de consentement : les rendre
+     discrets ne pose pas de probleme de conformite. Ils restent
+     au-dessus de 4.5:1 malgre tout.
+     --------------------------------------------------------- */
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronCloseAlert,
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPrivacyUrl {
     background: transparent !important;
     color: var(--on-dark) !important;
     border: 0 !important;
     font-family: var(--font-body) !important;
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
-    padding: 0.6rem 0.9rem !important;
-    margin: 0.35rem 0.2rem !important;
-    opacity: 0.85 !important;
+    padding: 0.7rem 0.9rem !important;
+    margin: 0.4rem 0.25rem !important;
+    opacity: 1 !important;
     cursor: pointer !important;
+    transition: color 300ms var(--ease) !important;
   }
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronCloseAlert:hover,
   html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPrivacyUrl:hover {
     color: var(--gold) !important;
-    opacity: 1 !important;
   }
 
   /* ---- Focus visible, navigation clavier ---- */
   html body #tarteaucitronRoot button:focus-visible,
   html body #tarteaucitronRoot a:focus-visible {
     outline: 2px solid var(--gold) !important;
-    outline-offset: 2px !important;
+    outline-offset: 3px !important;
   }
 
-  /* ---- Panneau de reglages ---- */
+  /* =========================================================
+     4. Panneau de reglages
+
+     La feuille d'origine est pensee pour un panneau clair : fonds
+     blancs, titres noirs, descriptifs gris. Sur le vert du site, cela
+     donne des paves blancs et du texte illisible. Tout est repris.
+     ========================================================= */
   html body #tarteaucitronRoot #tarteaucitron {
     background: var(--green-900) !important;
     color: var(--on-dark) !important;
     font-family: var(--font-body) !important;
-    border-radius: 0.75rem !important;
     border: 1px solid var(--line-on-dark) !important;
+    border-radius: var(--tac-radius-box) !important;
     overflow: hidden !important;
+  }
+
+  /* Couleur de base : elle descend par heritage sur toute la liste. */
+  html body #tarteaucitronRoot #tarteaucitronServices,
+  html body #tarteaucitronRoot #tarteaucitronServices ul,
+  html body #tarteaucitronRoot #tarteaucitronServices li {
+    color: var(--on-dark) !important;
   }
 
   html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronMainLine,
@@ -308,6 +410,13 @@ const { gtmId } = Astro.props;
   html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronTitle {
     background: var(--green-800) !important;
     color: var(--on-dark) !important;
+    border-color: var(--line-on-dark) !important;
+  }
+
+  /* Cadre blanc autour des categories, et barre du bouton Enregistrer. */
+  html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronBorder,
+  html body #tarteaucitronRoot #tarteaucitronSave {
+    background: var(--green-900) !important;
     border-color: var(--line-on-dark) !important;
   }
 
@@ -320,13 +429,57 @@ const { gtmId } = Astro.props;
     background: var(--green-700) !important;
   }
 
+  /* Titres : noirs a l'origine. Police display, comme les titres du site. */
+  html body #tarteaucitronRoot .tarteaucitronH1,
+  html body #tarteaucitronRoot .tarteaucitronH2,
+  html body #tarteaucitronRoot .tarteaucitronH3 {
+    color: var(--on-dark) !important;
+    font-family: var(--font-display) !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* Exception. tarteaucitron reutilise .tarteaucitronH3 pour deux choses
+     tres differentes : le NOM d'un service ("Google Tag Manager"), qui est
+     bien un titre, et le TEXTE descriptif de la categorie obligatoire, qui
+     est du corps de texte. Les deux ont le meme balisage, seule la liste
+     parente les distingue. En Clash Display, ce paragraphe ressortait en
+     police d'affichage au milieu d'un panneau en Inter. On le ramene aux
+     metriques de corps de texte du site. */
+  html body #tarteaucitronRoot #tarteaucitronServices_mandatory .tarteaucitronH3 {
+    font-family: var(--font-body) !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.6 !important;
+  }
+
   html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronName,
   html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronName a,
   html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronName b,
   html body #tarteaucitronRoot #tarteaucitronInfo,
   html body #tarteaucitronRoot #tarteaucitronInfo p,
-  html body #tarteaucitronRoot #tarteaucitronInfo a {
+  html body #tarteaucitronRoot #tarteaucitronInfo a,
+  html body #tarteaucitronRoot .tarteaucitronListCookies,
+  html body #tarteaucitronRoot #tarteaucitronNoServicesTitle,
+  html body #tarteaucitronRoot .tarteaucitronLine .tarteaucitronName span {
     color: var(--on-dark) !important;
+  }
+
+  /* En-tetes de categorie : rendus en boutons blancs par la feuille
+     d'origine. */
+  html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronTitle button {
+    background: transparent !important;
+    color: var(--on-dark) !important;
+    font-family: var(--font-body) !important;
+    font-weight: 500 !important;
+  }
+
+  /* Encarts explicatifs de chaque categorie. */
+  html body #tarteaucitronRoot .tarteaucitronDetails,
+  html body #tarteaucitronRoot .tarteaucitronInfoBox {
+    background: var(--green-800) !important;
+    color: var(--on-dark) !important;
+    border: 1px solid var(--line-on-dark) !important;
+    border-radius: 0.5rem !important;
   }
 
   html body #tarteaucitronRoot #tarteaucitronClosePanel {
@@ -336,67 +489,32 @@ const { gtmId } = Astro.props;
     font-family: var(--font-body) !important;
   }
 
-  /* Les blocs suivants sont blancs ou noirs dans la feuille d'origine, pensee
-     pour un panneau clair. Sur fond vert ils donnaient soit des pavés blancs,
-     soit du texte noir sur vert : illisible dans les deux cas. */
-
-  /* Conteneur general : la couleur de base du panneau descend par heritage. */
-  html body #tarteaucitronRoot #tarteaucitronServices,
-  html body #tarteaucitronRoot #tarteaucitronServices ul,
-  html body #tarteaucitronRoot #tarteaucitronServices li {
-    color: var(--on-dark) !important;
-  }
-
-  /* Cadre blanc autour de la liste des categories, et barre du bouton
-     Enregistrer. */
-  html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronBorder,
-  html body #tarteaucitronRoot #tarteaucitronSave {
-    background: var(--green-900) !important;
-    border-color: var(--line-on-dark) !important;
-  }
-
-  /* Titres du panneau : noirs a l'origine. */
-  html body #tarteaucitronRoot .tarteaucitronH1,
-  html body #tarteaucitronRoot .tarteaucitronH2,
-  html body #tarteaucitronRoot .tarteaucitronH3 {
-    color: var(--on-dark) !important;
-    font-family: var(--font-display) !important;
-  }
-
-  /* En-tetes de categorie (« Cookies obligatoires », « APIs ») : rendus en
-     boutons blancs par la feuille d'origine. */
-  html body #tarteaucitronRoot #tarteaucitronServices .tarteaucitronTitle button {
-    background: transparent !important;
-    color: var(--on-dark) !important;
-    font-family: var(--font-body) !important;
-    font-weight: 600 !important;
-  }
-
-  /* Encarts explicatifs de chaque categorie. */
-  html body #tarteaucitronRoot .tarteaucitronDetails,
-  html body #tarteaucitronRoot .tarteaucitronInfoBox {
-    background: var(--green-800) !important;
-    color: var(--on-dark) !important;
-    border: 1px solid var(--line-on-dark) !important;
-  }
-
-  /* Lien vers la politique, dans le panneau : discret, pas un pave blanc. */
+  /* Lien vers la politique dans le panneau : pilule secondaire, pas un
+     pave blanc. */
   html body #tarteaucitronRoot #tarteaucitronPrivacyUrlDialog {
     background: transparent !important;
     color: var(--on-dark) !important;
-    border: 1px solid var(--line-on-dark) !important;
-    border-radius: 0.4rem !important;
-    font-family: var(--font-body) !important;
-    padding: 0.5rem 1rem !important;
+    border: 1px solid var(--on-dark) !important;
+    border-radius: var(--tac-radius-pill) !important;
+    font-family: var(--tac-btn-font) !important;
+    font-size: var(--tac-btn-size) !important;
+    font-weight: var(--tac-btn-weight) !important;
+    letter-spacing: var(--tac-btn-spacing) !important;
+    text-transform: uppercase !important;
+    padding: 0.7rem 1.4rem !important;
+    transition:
+      background-color 300ms var(--ease),
+      color 300ms var(--ease) !important;
   }
   html body #tarteaucitronRoot #tarteaucitronPrivacyUrlDialog:hover,
   html body #tarteaucitronRoot #tarteaucitronPrivacyUrlDialog:focus-visible {
-    background: var(--green-700) !important;
+    background: var(--on-dark) !important;
+    color: var(--green-900) !important;
   }
 
-  /* Le « + » d'ouverture des categories est un glyphe de police, pas un trace
-     en bordures : on ne touche qu'a la couleur. Lui poser un background-color
-     le transforme en pave plein. */
+  /* Le « + » des categories est un glyphe de police, pas un trace en
+     bordures : on ne touche qu'a la couleur. Lui poser un
+     background-color le transformerait en pave plein. */
   html body #tarteaucitronRoot .tarteaucitronPlus,
   html body #tarteaucitronRoot .tarteaucitronPlus::before,
   html body #tarteaucitronRoot .tarteaucitronPlus::after {
@@ -404,63 +522,99 @@ const { gtmId } = Astro.props;
     background: transparent !important;
   }
 
-  /* Glyphes coche / croix : ils doivent suivre la couleur du bouton. */
-  html body #tarteaucitronRoot .tarteaucitronCheck,
-  html body #tarteaucitronRoot .tarteaucitronCross {
-    color: inherit !important;
-  }
+  /* ---------------------------------------------------------
+     5. Boutons Autoriser / Refuser du panneau
 
-  /* Descriptif du service et ligne « aucun cookie » : gris sombre a
-     l'origine. */
-  html body #tarteaucitronRoot .tarteaucitronListCookies,
-  html body #tarteaucitronRoot #tarteaucitronNoServicesTitle,
-  html body #tarteaucitronRoot .tarteaucitronLine .tarteaucitronName span {
-    color: var(--on-dark) !important;
-  }
-
-  /* Boutons Autoriser / Interdire du panneau : meme taille, meme poids,
-     meme logique de symetrie que les CTA du bandeau. */
+     Meme logique de symetrie que les CTA du bandeau, un cran plus
+     compact. La aussi, le refus n'est pas minore.
+     --------------------------------------------------------- */
   html body #tarteaucitronRoot .tarteaucitronAsk button,
   html body #tarteaucitronRoot #tarteaucitronServices button.tarteaucitronAllow,
   html body #tarteaucitronRoot #tarteaucitronServices button.tarteaucitronDeny {
-    font-family: var(--font-body) !important;
-    font-size: 0.85rem !important;
-    font-weight: 600 !important;
-    border-radius: 0.4rem !important;
-    padding: 0.55rem 1rem !important;
-    min-width: 8.5rem !important;
+    font-family: var(--tac-btn-font) !important;
+    font-size: 0.72rem !important;
+    font-weight: var(--tac-btn-weight) !important;
+    letter-spacing: var(--tac-btn-spacing) !important;
+    text-transform: uppercase !important;
+    /* Largeur et style seulement, jamais la couleur. Ce selecteur porte un
+       id de plus (#tarteaucitronServices) que les regles de variante qui
+       suivent : une shorthand `border` ici gagnerait la cascade et
+       repeindrait le contour du bouton Refuser en transparent, ce qui le
+       ferait disparaitre a cote du bouton dore. La couleur est donc laissee
+       aux regles de variante. */
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-radius: var(--tac-radius-pill) !important;
+    padding: 0.6rem 1.15rem !important;
+    min-width: 9rem !important;
     opacity: 1 !important;
+    transition:
+      background-color 300ms var(--ease),
+      color 300ms var(--ease) !important;
   }
+
   html body #tarteaucitronRoot button.tarteaucitronAllow {
     background: var(--gold) !important;
-    color: var(--green-900) !important;
+    border-color: var(--gold) !important;
+    color: var(--ink) !important;
   }
+  html body #tarteaucitronRoot button.tarteaucitronAllow:hover,
+  html body #tarteaucitronRoot button.tarteaucitronAllow:focus-visible {
+    background: var(--gold-soft) !important;
+    border-color: var(--gold-soft) !important;
+  }
+
   html body #tarteaucitronRoot button.tarteaucitronDeny {
+    background: transparent !important;
+    border-color: var(--on-dark) !important;
+    color: var(--on-dark) !important;
+  }
+  html body #tarteaucitronRoot button.tarteaucitronDeny:hover,
+  html body #tarteaucitronRoot button.tarteaucitronDeny:focus-visible {
     background: var(--on-dark) !important;
     color: var(--green-900) !important;
   }
 
-  /* Etat courant du service : lisible sur fond sombre. */
+  /* Glyphes coche / croix.
+
+     tarteaucitron les dessine via ::before avec le caractere U+2610
+     (BALLOT BOX). Inter, la fonte de corps du site, ne contient pas ce
+     glyphe : le navigateur affichait un rectangle vide devant chaque
+     libelle ("□ AUTORISER"). Ils sont purement decoratifs, le mot du
+     bouton dit deja l'action, et un carre identique devant Autoriser et
+     Refuser n'apporte aucune information. On les retire plutot que de
+     charger une fonte supplementaire pour deux caracteres. */
+  html body #tarteaucitronRoot .tarteaucitronCheck,
+  html body #tarteaucitronRoot .tarteaucitronCross,
+  html body #tarteaucitronRoot .tarteaucitronCheck::before,
+  html body #tarteaucitronRoot .tarteaucitronCross::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  /* Etat courant du service. */
   html body #tarteaucitronRoot .tarteaucitronIsAllowed .tarteaucitronStatus,
   html body #tarteaucitronRoot .tarteaucitronIsDenied .tarteaucitronStatus {
     color: var(--on-dark) !important;
-    opacity: 0.9 !important;
+    opacity: 1 !important;
   }
 
   /* Voile derriere le panneau. */
   html body.tarteaucitron-modal-open div#tarteaucitronRoot::before {
-    background: rgba(20, 38, 28, 0.72) !important;
+    background: var(--tac-voile) !important;
     backdrop-filter: blur(3px);
   }
 
-  /* ---- Mobile : les CTA passent en pleine largeur, empiles, toujours
-     de meme taille l'un que l'autre. ---- */
+  /* =========================================================
+     6. Mobile : les deux CTA passent en pleine largeur, empiles,
+     toujours de meme taille l'un que l'autre.
+     ========================================================= */
   @media (max-width: 600px) {
     html body #tarteaucitronRoot #tarteaucitronAlertBig button.tarteaucitronCTAButton {
       display: block !important;
       width: 100% !important;
       min-width: 0 !important;
-      margin: 0.4rem 0 !important;
+      margin: 0.45rem 0 !important;
     }
   }
 
