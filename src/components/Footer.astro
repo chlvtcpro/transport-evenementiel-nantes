@@ -3,36 +3,14 @@
   Footer : fond vert profond, logo, liens, mentions, credit.
   Contenu minimal placeholder, sera enrichi plus tard.
 */
+import { getLang, useTranslations } from '../i18n';
+
 const year = new Date().getFullYear();
 
-// Liens d'ancre prefixes par '/' : cliquables depuis l'accueil comme depuis
-// les pages blog.
-const columns = [
-  {
-    title: 'Prestations',
-    links: [
-      { href: '/#offres', label: 'Mariage' },
-      { href: '/#offres', label: 'Séminaire' },
-      { href: '/#offres', label: 'Navette de groupe' },
-    ],
-  },
-  {
-    title: 'L\'entreprise',
-    links: [
-      { href: '/#comment-ca-marche', label: 'Comment ça marche' },
-      { href: '/#cas-client', label: 'Réalisations' },
-      { href: '/#differenciateurs', label: 'Notre approche' },
-      { href: '/blog', label: 'Ressources' },
-    ],
-  },
-  {
-    title: 'Contact',
-    links: [
-      { href: '/#formulaire-devis', label: 'Demander un devis' },
-      { href: 'mailto:contact@transport-evenementiel-nantes.fr', label: 'contact@transport-evenementiel-nantes.fr' },
-    ],
-  },
-];
+// Textes et liens : src/i18n/<langue>.ts, cle `footer`. Les liens d'ancre
+// y sont prefixes par '/' pour rester cliquables depuis les pages blog.
+const dict = useTranslations(getLang(Astro.url));
+const t = dict.footer;
 ---
 
 <footer class="border-t border-[var(--line-on-dark)] bg-green-900 text-on-dark">
@@ -40,20 +18,20 @@ const columns = [
     <div class="grid gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
       <div>
         <a
-          href="/#hero"
+          href={t.homeHref}
           class="footer-logo font-display font-medium tracking-tight"
-          aria-label="Transport Événementiel Nantes, accueil"
+          aria-label={dict.common.homeAria}
         >
-          <span class="footer-logo-main">Transport Événementiel</span>
-          <span class="footer-logo-sub">Nantes</span>
+          <span class="footer-logo-main">{t.logoMain}</span>
+          <span class="footer-logo-sub">{t.logoSub}</span>
         </a>
         <p class="type-body mt-4 max-w-xs text-on-dark/[0.92]">
-          Organisateur de transport événementiel à Nantes et dans le Grand Ouest.
+          {t.tagline}
         </p>
       </div>
 
       {
-        columns.map((col) => (
+        t.columns.map((col) => (
           <nav aria-label={col.title}>
             <p class="type-eyebrow text-on-dark/[0.85]">{col.title}</p>
             <ul class="mt-5 space-y-3">
@@ -76,10 +54,15 @@ const columns = [
     <div
       class="mt-14 flex flex-col gap-4 border-t border-[var(--line-on-dark)] pt-8 text-sm text-on-dark/[0.85] sm:flex-row sm:items-center sm:justify-between"
     >
-      <p>&copy; {year} Transport Événementiel Nantes. Tous droits réservés.</p>
+      <p>&copy; {year} {t.copyright}</p>
       <div class="flex gap-6">
-        <a href="/mentions-legales" class="transition-colors hover:text-gold">Mentions légales</a>
-        <a href="/confidentialite" class="transition-colors hover:text-gold">Confidentialité</a>
+        {
+          t.legalLinks.map((link) => (
+            <a href={link.href} class="transition-colors hover:text-gold">
+              {link.label}
+            </a>
+          ))
+        }
       </div>
     </div>
   </div>

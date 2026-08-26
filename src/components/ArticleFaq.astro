@@ -9,6 +9,9 @@
   source (frontmatter faq), aucune divergence possible.
 */
 import Eyebrow from './Eyebrow.astro';
+import { getLang, useTranslations } from '../i18n';
+
+const dict = useTranslations(getLang(Astro.url));
 
 interface FaqItem {
   question: string;
@@ -18,12 +21,12 @@ interface Props {
   faq: FaqItem[];
   titre?: string;
 }
-const { faq, titre = 'Questions fréquentes' } = Astro.props;
+const { faq, titre = dict.blog.faqTitle } = Astro.props;
 ---
 
 {
   faq.length > 0 && (
-    <section class="mt-16 md:mt-20" aria-label="Questions fréquentes">
+    <section class="mt-16 md:mt-20" aria-label={titre}>
       <div data-reveal>
         <Eyebrow tone="light">FAQ</Eyebrow>
       </div>

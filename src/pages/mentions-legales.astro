@@ -9,12 +9,16 @@
 import Base from '../layouts/Base.astro';
 import Eyebrow from '../components/Eyebrow.astro';
 import { SITE_DATA } from '../data/site.ts';
+import { getLang, useTranslations } from '../i18n';
 
-const TITRE_META = `Mentions légales | ${SITE_DATA.name}`;
-const DESCRIPTION_META =
-  'Mentions légales du site Transport Événementiel Nantes : éditeur, hébergeur, propriété intellectuelle et conception.';
+// Textes : src/i18n/<langue>.ts, cle `legal.mentions`. Le corps de la page est
+// stocke en HTML dans le dictionnaire et rendu via set:html : la structure
+// des sections reste identique d'une langue a l'autre.
+const dict = useTranslations(getLang(Astro.url));
+const g = dict.legal;
+const t = g.mentions;
 
-const dateMaj = new Date().toLocaleDateString('fr-FR', {
+const dateMaj = new Date().toLocaleDateString(dict.common.locale, {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -22,8 +26,8 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
 ---
 
 <Base
-  title={TITRE_META}
-  description={DESCRIPTION_META}
+  title={`${t.metaTitle} | ${SITE_DATA.name}`}
+  description={t.metaDescription}
   headerTheme="light"
   noindex={true}
 >
@@ -33,106 +37,46 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
   >
     <div class="container">
       <div class="mx-auto max-w-[760px]">
-        <!-- Fil d'ariane : Accueil > Mentions légales -->
-        <nav class="fil-ariane" aria-label="Fil d'ariane" data-reveal>
+        <!-- Fil d'ariane : Accueil > page courante -->
+        <nav
+          class="fil-ariane"
+          aria-label={dict.common.breadcrumbAria}
+          data-reveal
+        >
           <ol>
-            <li><a href="/">Accueil</a></li>
+            <li><a href={g.homeHref}>{g.breadcrumbHome}</a></li>
             <li aria-hidden="true" class="fil-sep">/</li>
-            <li aria-current="page">Mentions légales</li>
+            <li aria-current="page">{t.breadcrumb}</li>
           </ol>
         </nav>
 
         <header class="mt-8" data-reveal-stagger="120">
           <div data-reveal>
-            <Eyebrow tone="light">Informations légales</Eyebrow>
+            <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
           </div>
-          <h1 class="type-h2 mt-5 text-ink" data-reveal>Mentions légales</h1>
+          <h1 class="type-h2 mt-5 text-ink" data-reveal>{t.h1}</h1>
           <p class="type-body mt-6 text-ink-muted" data-reveal>
-            Dernière mise à jour le {dateMaj}.
+            {g.updatedPrefix} {dateMaj}.
           </p>
         </header>
 
         <div class="prose-legal mt-12" data-reveal>
-          <h2>Éditeur du site</h2>
-          <p>
-            Le présent site est édité par <strong>CHL VTC</strong>, qui exploite
-            l'activité de transport événementiel Transport Événementiel Nantes.
-          </p>
-          <ul>
-            <li>Raison sociale : CHL VTC</li>
-            <li>Forme juridique : [FORME JURIDIQUE À REMPLIR]</li>
-            <li>Siège social : [ADRESSE DU SIÈGE À REMPLIR]</li>
-            <li>SIREN / SIRET : [NUMÉRO SIREN/SIRET À REMPLIR]</li>
-            <li>Numéro de TVA intracommunautaire : [NUMÉRO DE TVA À REMPLIR]</li>
-            <li>
-              Licence de transport intérieur de personnes : [NUMÉRO DE LICENCE À
-              REMPLIR]
-            </li>
-            <li>
-              Courriel :
-              <a href="mailto:contact@transport-evenementiel-nantes.fr">
-                contact@transport-evenementiel-nantes.fr
-              </a>
-            </li>
-            <li>Téléphone : [TÉLÉPHONE À REMPLIR]</li>
-          </ul>
-
-          <h2>Directeur de la publication</h2>
-          <p>
-            Le directeur de la publication est le représentant légal de CHL VTC :
-            [NOM DU DIRECTEUR DE PUBLICATION À REMPLIR].
-          </p>
-
-          <h2>Hébergement</h2>
-          <p>
-            Le site est hébergé par <strong>Vercel Inc.</strong>, 340 S Lemon Ave
-            #4133, Walnut, CA 91789, États-Unis.
-          </p>
-
-          <h2>Conception et réalisation</h2>
-          <p>
-            La conception et la réalisation du site sont assurées par
-            <strong>Outvolt</strong>.
-          </p>
-
-          <h2>Propriété intellectuelle</h2>
-          <p>
-            L'ensemble des contenus présents sur ce site (textes, visuels, logo,
-            éléments graphiques, mise en page) est protégé par le droit de la
-            propriété intellectuelle. Toute reproduction, représentation ou
-            diffusion, totale ou partielle, sans autorisation écrite préalable de
-            l'éditeur, est interdite.
-          </p>
-
-          <h2>Responsabilité</h2>
-          <p>
-            L'éditeur s'efforce d'assurer l'exactitude des informations diffusées
-            sur le site. Les tarifs et fourchettes indiqués dans les contenus sont
-            donnés à titre indicatif et ne constituent pas une offre commerciale.
-            Seul un devis établi sur demande fait foi.
-          </p>
-
-          <h2>Liens externes</h2>
-          <p>
-            Le site peut contenir des liens vers des sites tiers. L'éditeur n'exerce
-            aucun contrôle sur ces sites et décline toute responsabilité quant à
-            leur contenu.
-          </p>
-
-          <h2>Données personnelles</h2>
-          <p>
-            Le traitement des données transmises via les formulaires du site est
-            décrit dans notre
-            <a href="/confidentialite">politique de confidentialité</a>.
-          </p>
+          {
+            t.sections.map((section) => (
+              <>
+                <h2>{section.h2}</h2>
+                <Fragment set:html={section.html} />
+              </>
+            ))
+          }
         </div>
 
         <div class="mt-12 text-center" data-reveal>
           <a
-            href="/"
+            href={g.homeHref}
             class="type-nav text-ink-muted transition-colors hover:text-gold"
           >
-            Retour à l'accueil
+            {g.backHome}
           </a>
         </div>
       </div>

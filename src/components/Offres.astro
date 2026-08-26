@@ -30,60 +30,24 @@
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
+import { getLang, useTranslations } from '../i18n';
 
-// En-tete de section. Editez en un point.
-const H2 = 'Trois façons d\'orchestrer vos déplacements.';
-const SOUS_TITRE =
-  'Chaque événement a sa logistique à Nantes et dans le Grand Ouest. On l\'assemble sur mesure, du transfert de collaborateurs à la navette de deux cents invités.';
+// Textes : src/i18n/<langue>.ts, cle `offres`.
+const dict = useTranslations(getLang(Astro.url));
+const t = dict.offres;
 
-// Les 3 offres. Ordre : seminaire (phare), mariage, navette.
+// Configuration d'affichage des 3 offres, fusionnee PAR INDEX avec
+// t.items. Ordre : seminaire (phare), mariage, navette.
 // phare = accent dore + panneau ouvert par defaut.
 // image : chemin optionnel d'une photo de prestation. Laisse vide tant
 // qu'aucun visuel n'est fourni : le panneau retombe sur un fallback propre.
-const OFFRES = [
-  {
-    tag: '01',
-    titre: 'Séminaire et événement d\'entreprise',
-    phare: true,
-    image: '',
-    promesse:
-      'Vos collaborateurs et invités déplacés sans friction, vous restez concentré sur l\'événement.',
-    prestations: [
-      'Transferts gare et aéroport',
-      'Navettes inter-sites et hôtel vers lieu',
-      'Rotations sur toute la durée de l\'événement',
-      'Un interlocuteur unique, une facture unique',
-    ],
-  },
-  {
-    tag: '02',
-    titre: 'Mariage',
-    phare: false,
-    image: '',
-    promesse:
-      'De l\'arrivée des invités aux retours de nuit, chaque trajet est réglé, vous vivez votre journée.',
-    prestations: [
-      'Transferts invités gare et aéroport',
-      'Navettes cérémonie, réception, hébergement',
-      'Rotations et retours de nuit',
-      'Coordination multi-véhicules, berlines à autocar',
-    ],
-  },
-  {
-    tag: '03',
-    titre: 'Navette de groupe',
-    phare: false,
-    image: '',
-    promesse:
-      'Tout transport collectif, ponctuel ou récurrent, dimensionné à votre volume.',
-    prestations: [
-      'Groupes de quelques personnes à plusieurs centaines',
-      'Événementiel, associatif, institutionnel',
-      'Ponctuel ou récurrent',
-      'Berlines, vans, autocars selon le besoin',
-    ],
-  },
+const OFFRES_CONFIG = [
+  { tag: '01', phare: true, image: '' },
+  { tag: '02', phare: false, image: '' },
+  { tag: '03', phare: false, image: '' },
 ];
+
+const OFFRES = OFFRES_CONFIG.map((config, i) => ({ ...config, ...t.items[i] }));
 
 // Index du panneau ouvert par defaut (l'offre phare).
 const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
@@ -98,11 +62,11 @@ const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
     <!-- En-tete : cascade eyebrow, H2, sous-titre -->
     <div class="mx-auto max-w-3xl text-center" data-reveal-stagger="120">
       <div class="flex justify-center" data-reveal>
-        <Eyebrow tone="light">Nos offres</Eyebrow>
+        <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
       </div>
-      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{t.title}</h2>
       <p class="type-body mx-auto mt-6 max-w-[60ch] text-ink-muted" data-reveal>
-        {SOUS_TITRE}
+        {t.subtitle}
       </p>
     </div>
 
@@ -141,7 +105,7 @@ const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
                 <span class="offre-titre">{offre.titre}</span>
               </span>
               {offre.phare && (
-                <span class="offre-badge">Offre phare</span>
+                <span class="offre-badge">{t.badgePhare}</span>
               )}
               <span class="offre-chevron" aria-hidden="true">
                 <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
@@ -195,8 +159,8 @@ const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
                   <div class="offre-cta">
                     <ButtonArrow
                       variant="outline"
-                      href="#formulaire-devis"
-                      label="Demander un devis"
+                      href={t.ctaHref}
+                      label={dict.common.ctaDevis}
                     />
                   </div>
                 </div>
@@ -216,7 +180,7 @@ const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
                     <div class="offre-media-fallback">
                       <span class="offre-media-fallback-tag">{offre.tag}</span>
                       <span class="offre-media-fallback-label">
-                        Transport événementiel
+                        {t.mediaFallback}
                       </span>
                     </div>
                   )}

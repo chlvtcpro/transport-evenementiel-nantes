@@ -8,12 +8,16 @@
 import Base from '../layouts/Base.astro';
 import Eyebrow from '../components/Eyebrow.astro';
 import { SITE_DATA } from '../data/site.ts';
+import { getLang, useTranslations } from '../i18n';
 
-const TITRE_META = `Politique de confidentialité | ${SITE_DATA.name}`;
-const DESCRIPTION_META =
-  'Politique de confidentialité de Transport Événementiel Nantes : données collectées via le formulaire de devis, finalités, conservation et droits.';
+// Textes : src/i18n/<langue>.ts, cle `legal.confidentialite`. Le corps de la page est
+// stocke en HTML dans le dictionnaire et rendu via set:html : la structure
+// des sections reste identique d'une langue a l'autre.
+const dict = useTranslations(getLang(Astro.url));
+const g = dict.legal;
+const t = g.confidentialite;
 
-const dateMaj = new Date().toLocaleDateString('fr-FR', {
+const dateMaj = new Date().toLocaleDateString(dict.common.locale, {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -21,8 +25,8 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
 ---
 
 <Base
-  title={TITRE_META}
-  description={DESCRIPTION_META}
+  title={`${t.metaTitle} | ${SITE_DATA.name}`}
+  description={t.metaDescription}
   headerTheme="light"
   noindex={true}
 >
@@ -32,117 +36,46 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
   >
     <div class="container">
       <div class="mx-auto max-w-[760px]">
-        <!-- Fil d'ariane : Accueil > Confidentialité -->
-        <nav class="fil-ariane" aria-label="Fil d'ariane" data-reveal>
+        <!-- Fil d'ariane : Accueil > page courante -->
+        <nav
+          class="fil-ariane"
+          aria-label={dict.common.breadcrumbAria}
+          data-reveal
+        >
           <ol>
-            <li><a href="/">Accueil</a></li>
+            <li><a href={g.homeHref}>{g.breadcrumbHome}</a></li>
             <li aria-hidden="true" class="fil-sep">/</li>
-            <li aria-current="page">Confidentialité</li>
+            <li aria-current="page">{t.breadcrumb}</li>
           </ol>
         </nav>
 
         <header class="mt-8" data-reveal-stagger="120">
           <div data-reveal>
-            <Eyebrow tone="light">Vos données</Eyebrow>
+            <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
           </div>
-          <h1 class="type-h2 mt-5 text-ink" data-reveal>
-            Politique de confidentialité
-          </h1>
+          <h1 class="type-h2 mt-5 text-ink" data-reveal>{t.h1}</h1>
           <p class="type-body mt-6 text-ink-muted" data-reveal>
-            Dernière mise à jour le {dateMaj}.
+            {g.updatedPrefix} {dateMaj}.
           </p>
         </header>
 
         <div class="prose-legal mt-12" data-reveal>
-          <h2>Responsable du traitement</h2>
-          <p>
-            Le responsable du traitement des données collectées sur ce site est
-            <strong>CHL VTC</strong>, éditeur du site Transport Événementiel
-            Nantes. Pour toute question relative à vos données, vous pouvez écrire
-            à
-            <a href="mailto:contact@transport-evenementiel-nantes.fr">
-              contact@transport-evenementiel-nantes.fr
-            </a>.
-          </p>
-
-          <h2>Données collectées</h2>
-          <p>
-            Les données personnelles sont collectées uniquement lorsque vous
-            remplissez le formulaire de demande de devis. Il s'agit des
-            informations que vous renseignez volontairement :
-          </p>
-          <ul>
-            <li>Nom et prénom</li>
-            <li>Adresse électronique</li>
-            <li>Numéro de téléphone</li>
-            <li>Nom de l'organisation, le cas échéant</li>
-            <li>
-              Détails de votre demande (type d'événement, dates, lieux, nombre de
-              participants)
-            </li>
-          </ul>
-          <p>
-            Aucune donnée n'est collectée à votre insu et le site n'utilise aucun
-            cookie publicitaire ni de traçage tiers.
-          </p>
-
-          <h2>Finalité du traitement</h2>
-          <p>
-            Les données transmises servent exclusivement à traiter votre demande
-            de devis, à vous recontacter et à organiser la prestation de transport.
-            Elles ne font l'objet d'aucune revente ni d'aucune prospection non
-            sollicitée.
-          </p>
-
-          <h2>Base légale</h2>
-          <p>
-            Le traitement repose sur votre consentement, exprimé lors de l'envoi du
-            formulaire, ainsi que sur l'exécution de mesures précontractuelles
-            prises à votre demande.
-          </p>
-
-          <h2>Sous-traitants</h2>
-          <p>
-            Le formulaire de contact s'appuie sur le service
-            <strong>Web3Forms</strong> pour l'acheminement des messages, et le site
-            est hébergé par <strong>Vercel Inc.</strong> Ces prestataires
-            n'utilisent vos données que pour fournir ce service technique.
-          </p>
-
-          <h2>Durée de conservation</h2>
-          <p>
-            Vos données sont conservées le temps nécessaire au traitement de votre
-            demande et à la relation commerciale, puis archivées ou supprimées
-            conformément aux obligations légales applicables. Durée de conservation
-            indicative : [DURÉE DE CONSERVATION À REMPLIR].
-          </p>
-
-          <h2>Vos droits</h2>
-          <p>
-            Conformément au Règlement général sur la protection des données (RGPD)
-            et à la loi Informatique et Libertés, vous disposez d'un droit d'accès,
-            de rectification, d'effacement, de limitation, d'opposition et de
-            portabilité de vos données. Vous pouvez exercer ces droits en écrivant à
-            <a href="mailto:contact@transport-evenementiel-nantes.fr">
-              contact@transport-evenementiel-nantes.fr
-            </a>. Vous avez également le droit d'introduire une réclamation auprès
-            de la CNIL (www.cnil.fr).
-          </p>
-
-          <h2>Cookies</h2>
-          <p>
-            Le site n'utilise que les cookies strictement nécessaires à son
-            fonctionnement. Aucun cookie de mesure d'audience ou publicitaire n'est
-            déposé sans votre accord.
-          </p>
+          {
+            t.sections.map((section) => (
+              <>
+                <h2>{section.h2}</h2>
+                <Fragment set:html={section.html} />
+              </>
+            ))
+          }
         </div>
 
         <div class="mt-12 text-center" data-reveal>
           <a
-            href="/"
+            href={g.homeHref}
             class="type-nav text-ink-muted transition-colors hover:text-gold"
           >
-            Retour à l'accueil
+            {g.backHome}
           </a>
         </div>
       </div>

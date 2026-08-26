@@ -9,19 +9,20 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Eyebrow from '../../components/Eyebrow.astro';
 import ArticleCard from '../../components/ArticleCard.astro';
+import { getLang, useTranslations } from '../../i18n';
+
+// Textes : src/i18n/<langue>.ts, cle `blog`. Le blog reste hors perimetre
+// anglais (pas de /en/blog) : getLang renvoie donc toujours 'fr' ici.
+const t = useTranslations(getLang(Astro.url)).blog;
 
 // Tri anti-chronologique : le dernier article publie en premier.
 const articles = (await getCollection('blog')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
-const TITRE_META =
-  'Ressources transport événementiel | Guides séminaire, mariage et navettes, Nantes';
-const DESCRIPTION_META =
-  'Guides pratiques pour organiser le transport de votre événement à Nantes et dans le Grand Ouest : navettes de séminaire, transport des invités de mariage, retours de nuit et coordination de flotte.';
 ---
 
-<Base title={TITRE_META} description={DESCRIPTION_META} headerTheme="light">
+<Base title={t.metaTitle} description={t.metaDescription} headerTheme="light">
   <section
     data-tone="cream"
     class="relative bg-cream py-section text-ink scroll-mt-24"
@@ -30,15 +31,11 @@ const DESCRIPTION_META =
       <!-- En-tete de la page ressources -->
       <div class="max-w-3xl" data-reveal-stagger="120">
         <div data-reveal>
-          <Eyebrow tone="light">Ressources</Eyebrow>
+          <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
         </div>
-        <h1 class="type-h2 mt-6 text-ink" data-reveal>
-          Ressources transport événementiel
-        </h1>
+        <h1 class="type-h2 mt-6 text-ink" data-reveal>{t.h1}</h1>
         <p class="type-body mt-6 max-w-[60ch] text-ink-muted" data-reveal>
-          Nos guides pour organiser le transport de votre événement à Nantes et
-          dans le Grand Ouest : navettes de séminaire, transport des invités de
-          mariage, rotations de flotte et retours de nuit.
+          {t.intro}
         </p>
       </div>
 
@@ -62,7 +59,7 @@ const DESCRIPTION_META =
           </div>
         ) : (
           <p class="type-body mt-14 text-ink-muted" data-reveal>
-            Les premiers articles arrivent bientôt.
+            {t.empty}
           </p>
         )
       }

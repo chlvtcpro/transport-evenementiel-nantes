@@ -10,34 +10,20 @@
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
+import { getLang, useTranslations } from '../i18n';
 
 // Cle Web3Forms. A editer ici en une seule ligne pour changer la boite
 // de reception des demandes de devis.
 const WEB3FORMS_KEY = '4dcb99a0-1a80-4aa2-958f-3785bc0d2bb7';
 
-// Sujet des emails recus, transmis en champ cache.
-const SUBJECT = 'Nouvelle demande de devis Transport Événementiel Nantes';
-
-// En-tete de section.
-const H2 = 'Décrivez-nous votre événement. On orchestre le transport.';
-const SOUS_TITRE =
-  'Trajets, véhicules, rotations : un devis clair et un interlocuteur unique pour toute la logistique de déplacement.';
-
-// Options du type d'evenement.
-const TYPES = [
-  'Mariage',
-  'Séminaire ou événement d\'entreprise',
-  'Navette de groupe',
-  'Autre',
-];
-
-// Besoins specifiques (cases a cocher, optionnel).
-const BESOINS = [
-  'Transferts gare ou aéroport',
-  'Navettes de nuit',
-  'Plusieurs rotations',
-  'Autocar ou grande capacité',
-];
+// Textes : src/i18n/<langue>.ts, cle `devis`.
+//
+// ATTENTION : les attributs `name` des champs restent EN DUR en francais
+// ci-dessous. Web3Forms s'en sert comme intitules dans le mail recu :
+// les traduire changerait la forme des mails et casserait toute regle de
+// tri cote boite de reception.
+const t = useTranslations(getLang(Astro.url)).devis;
+const f = t.fields;
 ---
 
 <section
@@ -58,17 +44,17 @@ const BESOINS = [
     <!-- Colonne gauche : editorial, centre verticalement -->
     <div class="devis-intro" data-reveal-stagger="120">
       <div data-reveal>
-        <Eyebrow tone="dark">Parlons de votre événement</Eyebrow>
+        <Eyebrow tone="dark">{t.eyebrow}</Eyebrow>
       </div>
 
-      <h2 class="devis-titre mt-6 text-on-dark" data-reveal>{H2}</h2>
+      <h2 class="devis-titre mt-6 text-on-dark" data-reveal>{t.title}</h2>
 
       <p class="type-body mt-6 max-w-md text-on-dark/[0.92]" data-reveal>
-        {SOUS_TITRE}
+        {t.subtitle}
       </p>
 
       <p class="devis-ancrage type-nav mt-6 text-on-dark/[0.85]" data-reveal>
-        Nantes et Grand Ouest, adossé à CHL VTC.
+        {t.ancrage}
       </p>
     </div>
 
@@ -84,16 +70,26 @@ const BESOINS = [
       >
         <span class="devis-success-mark" aria-hidden="true"></span>
         <p class="devis-success-titre">
-          Demande reçue. On revient vers vous très vite avec un premier devis.
+          {t.successTitle}
         </p>
       </div>
 
-      <!-- Formulaire de qualification -->
-      <form id="devis-form" class="devis-form" novalidate>
+      <!-- Formulaire de qualification. Les libelles dont le <script> a
+           besoin sont passes en data-* : ce script est un module ES
+           compile a part, il ne peut pas lire le frontmatter. -->
+      <form
+        id="devis-form"
+        class="devis-form"
+        novalidate
+        data-label-sending={t.sending}
+        data-error-required={t.errors.required}
+        data-error-failed={t.errors.failed}
+        data-error-network={t.errors.network}
+      >
         <!-- Champs caches Web3Forms -->
         <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
-        <input type="hidden" name="subject" value={SUBJECT} />
-        <input type="hidden" name="from_name" value="Site Transport Événementiel Nantes" />
+        <input type="hidden" name="subject" value={t.subject} />
+        <input type="hidden" name="from_name" value={t.fromName} />
         <!-- Honeypot anti-spam : doit rester vide -->
         <input
           type="checkbox"
@@ -107,12 +103,12 @@ const BESOINS = [
         <!-- 1. Type d'evenement -->
         <div class="devis-field">
           <label class="devis-label" for="devis-type">
-            Type d'événement <span class="devis-req" aria-hidden="true">*</span>
+            {f.type.label} <span class="devis-req" aria-hidden="true">*</span>
           </label>
           <div class="devis-select-wrap">
             <select id="devis-type" name="Type d'événement" class="devis-input" required>
-              <option value="" disabled selected>Choisir...</option>
-              {TYPES.map((t) => <option value={t}>{t}</option>)}
+              <option value="" disabled selected>{t.selectPlaceholder}</option>
+              {f.type.options.map((opt) => <option value={opt}>{opt}</option>)}
             </select>
             <span class="devis-select-arrow" aria-hidden="true"></span>
           </div>
@@ -122,13 +118,13 @@ const BESOINS = [
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-date">
-              Date approximative <span class="devis-req" aria-hidden="true">*</span>
+              {f.date.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
             <input id="devis-date" name="Date approximative" type="date" class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-pax">
-              Nombre de personnes <span class="devis-req" aria-hidden="true">*</span>
+              {f.pax.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
             <input
               id="devis-pax"
@@ -136,7 +132,7 @@ const BESOINS = [
               type="number"
               min="1"
               inputmode="numeric"
-              placeholder="Ex : 40"
+              placeholder={f.pax.placeholder}
               class="devis-input"
               required
             />
@@ -147,24 +143,24 @@ const BESOINS = [
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-depart">
-              Ville de départ <span class="devis-req" aria-hidden="true">*</span>
+              {f.depart.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-depart" name="Ville de départ" type="text" placeholder="Ex : Nantes" class="devis-input" required />
+            <input id="devis-depart" name="Ville de départ" type="text" placeholder={f.depart.placeholder} class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-arrivee">
-              Ville d'arrivée ou lieu <span class="devis-req" aria-hidden="true">*</span>
+              {f.arrivee.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-arrivee" name="Ville d'arrivée ou lieu" type="text" placeholder="Ex : Château de..." class="devis-input" required />
+            <input id="devis-arrivee" name="Ville d'arrivée ou lieu" type="text" placeholder={f.arrivee.placeholder} class="devis-input" required />
           </div>
         </div>
 
         <!-- 6. Besoins specifiques (optionnel) -->
         <fieldset class="devis-field devis-fieldset">
-          <legend class="devis-label">Besoins spécifiques</legend>
+          <legend class="devis-label">{f.besoins.legend}</legend>
           <div class="devis-checks">
             {
-              BESOINS.map((b, i) => (
+              f.besoins.options.map((b, i) => (
                 <label class="devis-check" for={`devis-besoin-${i}`}>
                   <input
                     id={`devis-besoin-${i}`}
@@ -185,30 +181,30 @@ const BESOINS = [
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-nom">
-              Nom <span class="devis-req" aria-hidden="true">*</span>
+              {f.nom.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-nom" name="Nom" type="text" autocomplete="name" placeholder="Votre nom" class="devis-input" required />
+            <input id="devis-nom" name="Nom" type="text" autocomplete="name" placeholder={f.nom.placeholder} class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-tel">
-              Téléphone <span class="devis-req" aria-hidden="true">*</span>
+              {f.tel.label} <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-tel" name="Téléphone" type="tel" autocomplete="tel" placeholder="06 00 00 00 00" class="devis-input" required />
+            <input id="devis-tel" name="Téléphone" type="tel" autocomplete="tel" placeholder={f.tel.placeholder} class="devis-input" required />
           </div>
         </div>
 
         <!-- 8. Email -->
         <div class="devis-field">
           <label class="devis-label" for="devis-email">
-            Email <span class="devis-req" aria-hidden="true">*</span>
+            {f.email.label} <span class="devis-req" aria-hidden="true">*</span>
           </label>
-          <input id="devis-email" name="Email" type="email" autocomplete="email" placeholder="vous@exemple.fr" class="devis-input" required />
+          <input id="devis-email" name="Email" type="email" autocomplete="email" placeholder={f.email.placeholder} class="devis-input" required />
         </div>
 
         <!-- 10. Message libre (optionnel) -->
         <div class="devis-field">
-          <label class="devis-label" for="devis-message">Décrivez votre besoin</label>
-          <textarea id="devis-message" name="Message" rows="4" placeholder="Contexte, horaires, contraintes particulières..." class="devis-input devis-textarea"></textarea>
+          <label class="devis-label" for="devis-message">{f.message.label}</label>
+          <textarea id="devis-message" name="Message" rows="4" placeholder={f.message.placeholder} class="devis-input devis-textarea"></textarea>
         </div>
 
         <!-- Message d'erreur (masque par defaut) -->
@@ -216,9 +212,9 @@ const BESOINS = [
 
         <!-- Bouton d'envoi -->
         <div class="devis-actions">
-          <ButtonArrow variant="solid" type="submit" label="Envoyer ma demande" class="devis-submit" />
+          <ButtonArrow variant="solid" type="submit" label={t.submit} class="devis-submit" />
           <p class="devis-privacy type-nav">
-            Vos informations servent uniquement à établir votre devis.
+            {t.privacy}
           </p>
         </div>
       </form>
@@ -234,7 +230,13 @@ const BESOINS = [
   if (form && success && errorBox) {
     const submitBtn = form.querySelector<HTMLButtonElement>('.devis-submit');
     const submitLabel = submitBtn?.querySelector<HTMLElement>('.type-button');
-    const defaultLabel = submitLabel?.textContent ?? 'Envoyer ma demande';
+    const defaultLabel = submitLabel?.textContent ?? '';
+
+    // Libelles traduits, lus sur le <form> (data-*).
+    const labelSending = form.dataset.labelSending ?? '';
+    const errorRequired = form.dataset.errorRequired ?? '';
+    const errorFailed = form.dataset.errorFailed ?? '';
+    const errorNetwork = form.dataset.errorNetwork ?? '';
 
     const setError = (message: string) => {
       errorBox.textContent = message;
@@ -250,7 +252,7 @@ const BESOINS = [
       submitBtn.disabled = sending;
       submitBtn.setAttribute('aria-busy', String(sending));
       if (submitLabel) {
-        submitLabel.textContent = sending ? 'Envoi...' : defaultLabel;
+        submitLabel.textContent = sending ? labelSending : defaultLabel;
       }
     };
 
@@ -262,7 +264,7 @@ const BESOINS = [
       if (!form.checkValidity()) {
         const firstInvalid = form.querySelector<HTMLElement>(':invalid');
         firstInvalid?.focus();
-        setError('Merci de compléter les champs requis avant d\'envoyer.');
+        setError(errorRequired);
         return;
       }
 
@@ -284,15 +286,11 @@ const BESOINS = [
           success.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
           setSending(false);
-          setError(
-            'L\'envoi a échoué. Merci de réessayer ou de nous contacter directement.'
-          );
+          setError(errorFailed);
         }
       } catch {
         setSending(false);
-        setError(
-          'Problème de connexion. Vérifiez votre réseau puis réessayez.'
-        );
+        setError(errorNetwork);
       }
     });
   }

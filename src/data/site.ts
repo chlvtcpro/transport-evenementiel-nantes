@@ -13,8 +13,6 @@ export const SITE_DATA = {
   // Domaine de production (doit correspondre a `site` dans astro.config.mjs).
   // Sans slash final.
   url: 'https://transport-evenementiel-nantes.fr',
-  description:
-    'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et dans le Grand Ouest. Un seul interlocuteur, flotte bas-carbone. Devis rapide.',
   foundingDate: '2023',
   priceRange: '€€',
 
@@ -55,22 +53,3 @@ export const SITE_DATA = {
   // d'une revision de contenu significative.
   dateModified: '2026-07-04',
 };
-
-// Les 3 services, rattaches au provider LocalBusiness dans le JSON-LD.
-export const SERVICES = [
-  {
-    name: 'Séminaire et événement d\'entreprise',
-    description:
-      'Transferts gare et aéroport, navettes inter-sites et rotations sur toute la durée de l\'événement, avec un interlocuteur unique et une facture unique.',
-  },
-  {
-    name: 'Mariage',
-    description:
-      'Transport des invités de l\'arrivée aux retours de nuit : navettes cérémonie, réception et hébergement, coordination multi-véhicules de la berline à l\'autocar.',
-  },
-  {
-    name: 'Navette de groupe',
-    description:
-      'Transport collectif ponctuel ou récurrent, de quelques personnes à plusieurs centaines, dimensionné au volume, pour l\'événementiel, l\'associatif et l\'institutionnel.',
-  },
-];

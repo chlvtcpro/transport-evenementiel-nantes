@@ -8,28 +8,10 @@
   cascade.
 */
 import Eyebrow from './Eyebrow.astro';
+import { getLang, useTranslations } from '../i18n';
 
-// En-tete de section.
-const H2 = 'Un métier à part entière, pas une ligne de service.';
-
-// Les 3 differenciateurs. Editez en un point.
-const DIFFERENCIATEURS = [
-  {
-    titre: 'Local et humain',
-    texte:
-      'Basés à Nantes, nous connaissons la Loire-Atlantique et le Grand Ouest, de Saint-Nazaire à La Baule et Angers. Vous parlez à la personne qui coordonne votre événement, pas à un centre d\'appel national.',
-  },
-  {
-    titre: 'Démarche bas-carbone',
-    texte:
-      'Priorité à l\'électrique sur nos berlines et un engagement écoresponsable honnête. On ne promet pas une flotte 100 pour cent électrique qu\'un autocar dément, on réduit l\'empreinte là où c\'est réel.',
-  },
-  {
-    titre: 'Transport orchestré clé en main',
-    texte:
-      'Véhicules, trajets, rotations, horaires, itinéraires, retours de nuit. On gère toute la logistique de déplacement de bout en bout, vous ne coordonnez aucun chauffeur.',
-  },
-];
+// Textes : src/i18n/<langue>.ts, cle `differenciateurs`.
+const t = useTranslations(getLang(Astro.url)).differenciateurs;
 ---
 
 <section
@@ -41,9 +23,9 @@ const DIFFERENCIATEURS = [
     <!-- En-tete : cascade eyebrow, H2 -->
     <div class="max-w-3xl" data-reveal-stagger="120">
       <div data-reveal>
-        <Eyebrow tone="light">Pourquoi nous</Eyebrow>
+        <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
       </div>
-      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{t.title}</h2>
     </div>
 
     <!-- Les 3 differenciateurs, stagger 120ms -->
@@ -52,7 +34,7 @@ const DIFFERENCIATEURS = [
       data-reveal-stagger="120"
     >
       {
-        DIFFERENCIATEURS.map((item) => (
+        t.items.map((item) => (
           <div class="diff-item" data-reveal>
             <!-- Accent dore : petit rond fin avec icone diagonale inline -->
             <span class="diff-accent text-gold" aria-hidden="true">
