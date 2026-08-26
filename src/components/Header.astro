@@ -5,7 +5,6 @@
   IntersectionObserver sentinelle en haut de page).
 */
 import ButtonArrow from './ButtonArrow.astro';
-import { getLang, useTranslations } from '../i18n';
 
 interface Props {
   /**
@@ -24,11 +23,15 @@ const logoSrc =
     ? '/logo-transport-evenementiel-nantes-dark.svg'
     : '/logo-transport-evenementiel-nantes.svg';
 
-// Textes et liens : src/i18n/<langue>.ts, cle `header`. Les ancres y sont
-// prefixees par '/' pour fonctionner depuis l'accueil ET depuis les pages
-// blog (une ancre nue #... ne cible que la page courante).
-const dict = useTranslations(getLang(Astro.url));
-const t = dict.header;
+// Liens d'ancre prefixes par '/' : fonctionnent depuis l'accueil ET depuis
+// les pages blog (une ancre nue #... ne cible que la page courante).
+const links = [
+  { href: '/#comment-ca-marche', label: 'Comment ça marche' },
+  { href: '/#offres', label: 'Offres' },
+  { href: '/#cas-client', label: 'Réalisations' },
+  { href: '/#differenciateurs', label: 'Notre approche' },
+  { href: '/blog', label: 'Ressources' },
+];
 ---
 
 <header
@@ -43,13 +46,13 @@ const t = dict.header;
     class="container flex items-center justify-between gap-6 py-5 transition-all duration-500 ease-smooth"
   >
     <a
-      href={t.homeHref}
+      href="/#hero"
       class="site-logo"
-      aria-label={dict.common.homeAria}
+      aria-label="Transport Événementiel Nantes, accueil"
     >
       <img
         src={logoSrc}
-        alt={t.logoAlt}
+        alt="Transport Événementiel Nantes"
         class="site-logo-img"
         width="860"
         height="240"
@@ -57,9 +60,9 @@ const t = dict.header;
       />
     </a>
 
-    <nav class="nav-desktop items-center" aria-label={t.navAria}>
+    <nav class="nav-desktop items-center" aria-label="Navigation principale">
       {
-        t.nav.map((link) => (
+        links.map((link) => (
           <a
             href={link.href}
             class="nav-link type-nav text-on-dark transition-colors duration-300 hover:text-gold"
@@ -71,20 +74,16 @@ const t = dict.header;
     </nav>
 
     <div class="cta-desktop">
-      <ButtonArrow variant="solid" href={t.ctaHref} label={dict.common.ctaDevis} />
+      <ButtonArrow variant="solid" href="/#formulaire-devis" label="Demander un devis" />
     </div>
 
-    <!-- Declencheur menu mobile. Les deux libelles d'etat sont passes en
-         data-* : le <script> ci-dessous est un module ES compile a part,
-         il ne peut pas lire les variables du frontmatter. -->
+    <!-- Declencheur menu mobile -->
     <button
       id="menu-toggle"
       class="menu-toggle flex h-10 w-10 items-center justify-center"
-      aria-label={t.openMenu}
+      aria-label="Ouvrir le menu"
       aria-expanded="false"
       aria-controls="mobile-menu"
-      data-label-open={t.openMenu}
-      data-label-close={t.closeMenu}
     >
       <span class="relative block h-3 w-6">
         <span class="absolute left-0 top-0 h-px w-6 bg-on-dark transition-all duration-300"></span>
@@ -105,9 +104,9 @@ const t = dict.header;
     data-open="false"
   >
     <div class="mobile-menu-inner min-h-0">
-      <nav class="container flex flex-col gap-5 py-8" aria-label={t.mobileNavAria}>
+      <nav class="container flex flex-col gap-5 py-8" aria-label="Navigation mobile">
         {
-          t.nav.map((link) => (
+          links.map((link) => (
             <a
               href={link.href}
               class="type-nav text-on-dark transition-colors hover:text-gold"
@@ -118,7 +117,7 @@ const t = dict.header;
           ))
         }
         <div class="pt-2">
-          <ButtonArrow variant="solid" href={t.ctaHref} label={dict.common.ctaDevis} />
+          <ButtonArrow variant="solid" href="/#formulaire-devis" label="Demander un devis" />
         </div>
       </nav>
     </div>
@@ -145,14 +144,10 @@ const t = dict.header;
   // scope gere l'animation d'ouverture). Fiable car la regle CSS existe
   // toujours, independamment du scan JIT de Tailwind.
   if (toggle && menu) {
-    // Libelles traduits, lus sur le bouton (data-*) : ce script est un
-    // module compile a part, il n'a pas acces au frontmatter.
-    const labelOpen = toggle.dataset.labelOpen ?? '';
-    const labelClose = toggle.dataset.labelClose ?? '';
     const setOpen = (open: boolean) => {
       menu.dataset.open = String(open);
       toggle.setAttribute('aria-expanded', String(open));
-      toggle.setAttribute('aria-label', open ? labelClose : labelOpen);
+      toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
     };
     toggle.addEventListener('click', () => {
       const open = toggle.getAttribute('aria-expanded') === 'true';

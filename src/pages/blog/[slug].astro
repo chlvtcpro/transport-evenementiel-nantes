@@ -14,12 +14,6 @@ import Eyebrow from '../../components/Eyebrow.astro';
 import ArticleFaq from '../../components/ArticleFaq.astro';
 import ButtonArrow from '../../components/ButtonArrow.astro';
 import { SITE_DATA } from '../../data/site.ts';
-import { getLang, useTranslations } from '../../i18n';
-
-// Textes : src/i18n/<langue>.ts, cle `blog`. Le blog reste hors perimetre
-// anglais (pas de /en/blog) : getLang renvoie donc toujours 'fr' ici.
-const dict = useTranslations(getLang(Astro.url));
-const t = dict.blog;
 
 // Une page statique par article. Le slug = id de l'entree (nom de fichier).
 export async function getStaticPaths() {
@@ -38,11 +32,7 @@ const { Content } = await render(article);
 const dateISO = data.date.toISOString();
 const updatedISO = (data.updated ?? data.date).toISOString();
 const format = (d: Date) =>
-  d.toLocaleDateString(dict.common.locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 const datePubliee = format(data.date);
 const dateMaj = data.updated ? format(data.updated) : null;
 
@@ -84,18 +74,8 @@ const articleNode = {
 const breadcrumbNode = {
   '@type': 'BreadcrumbList',
   itemListElement: [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: t.breadcrumbHome,
-      item: urlAccueil,
-    },
-    {
-      '@type': 'ListItem',
-      position: 2,
-      name: t.breadcrumbBlog,
-      item: urlBlog,
-    },
+    { '@type': 'ListItem', position: 1, name: 'Accueil', item: urlAccueil },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: urlBlog },
     { '@type': 'ListItem', position: 3, name: data.title, item: urlArticle },
   ],
 };
@@ -134,15 +114,11 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     <div class="container">
       <div class="mx-auto max-w-[760px]">
         <!-- Fil d'ariane : Accueil > Blog > Titre -->
-        <nav
-          class="fil-ariane"
-          aria-label={dict.common.breadcrumbAria}
-          data-reveal
-        >
+        <nav class="fil-ariane" aria-label="Fil d'ariane" data-reveal>
           <ol>
-            <li><a href="/">{t.breadcrumbHome}</a></li>
+            <li><a href="/">Accueil</a></li>
             <li aria-hidden="true" class="fil-sep">/</li>
-            <li><a href="/blog">{t.breadcrumbBlog}</a></li>
+            <li><a href="/blog">Blog</a></li>
             <li aria-hidden="true" class="fil-sep">/</li>
             <li aria-current="page">{data.title}</li>
           </ol>
@@ -160,7 +136,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
             data-reveal
           >
             <span>
-              {t.publishedOn} <time datetime={dateISO}>{datePubliee}</time>
+              Publié le <time datetime={dateISO}>{datePubliee}</time>
             </span>
             {
               dateMaj && (
@@ -169,7 +145,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
                     &middot;
                   </span>
                   <span>
-                    {t.updatedOn} <time datetime={updatedISO}>{dateMaj}</time>
+                    Mis à jour le <time datetime={updatedISO}>{dateMaj}</time>
                   </span>
                 </>
               )
@@ -180,9 +156,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
                   <span aria-hidden="true" class="text-gold">
                     &middot;
                   </span>
-                  <span>
-                    {data.readingTime} {t.readingTime}
-                  </span>
+                  <span>{data.readingTime} min de lecture</span>
                 </>
               )
             }
@@ -202,15 +176,16 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
           class="cta-article mt-16 rounded-2xl border border-line bg-cream-soft p-8 text-center md:mt-20 md:p-12"
           data-reveal
         >
-          <h2 class="type-h3 text-ink">{t.ctaTitle}</h2>
+          <h2 class="type-h3 text-ink">Un événement à transporter ?</h2>
           <p class="type-body mx-auto mt-3 max-w-md text-ink-muted">
-            {t.ctaText}
+            Décrivez-nous votre besoin, on orchestre tous les trajets avec un
+            interlocuteur unique.
           </p>
           <div class="mt-6 flex justify-center">
             <ButtonArrow
               variant="solid"
-              href={t.ctaHref}
-              label={dict.common.ctaDevis}
+              href="/#formulaire-devis"
+              label="Demander un devis"
             />
           </div>
         </div>
@@ -221,7 +196,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
             href="/blog"
             class="type-nav text-ink-muted transition-colors hover:text-gold"
           >
-            {t.backToBlog}
+            Retour aux ressources
           </a>
         </div>
       </div>

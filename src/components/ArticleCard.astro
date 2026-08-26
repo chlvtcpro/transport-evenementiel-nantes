@@ -6,9 +6,6 @@
   hover subtil. Toute la carte est cliquable (le lien couvre l'article).
 */
 import Eyebrow from './Eyebrow.astro';
-import { getLang, useTranslations } from '../i18n';
-
-const dict = useTranslations(getLang(Astro.url));
 
 interface Props {
   slug: string;
@@ -21,7 +18,7 @@ interface Props {
 const { slug, title, description, category, date, readingTime } = Astro.props;
 
 const dateISO = date.toISOString();
-const dateAffichee = date.toLocaleDateString(dict.common.locale, {
+const dateAffichee = date.toLocaleDateString('fr-FR', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -53,7 +50,7 @@ const dateAffichee = date.toLocaleDateString(dict.common.locale, {
           <span aria-hidden="true" class="text-gold">
             &middot;
           </span>
-          <span>{readingTime} {dict.blog.readingTime}</span>
+          <span>{readingTime} min de lecture</span>
         </>
       )
     }

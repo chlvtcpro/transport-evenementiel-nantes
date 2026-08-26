@@ -4,16 +4,16 @@
   Questions formulees en vraies questions, reponses directes (la reponse
   arrive des la premiere phrase) pour la citation par les moteurs IA.
 
-  Les textes viennent de src/i18n/<langue>.ts (cle `faq`), source unique
-  partagee avec le balisage JSON-LD FAQPage du layout : aucune divergence
-  possible entre le visible et le schema.
+  Les textes viennent de src/data/faq.ts, source unique partagee avec le
+  balisage JSON-LD FAQPage du layout : aucune divergence possible entre le
+  visible et le schema.
 
   Accordeon natif <details>/<summary> : accessible, sans JS, propre.
 */
 import Eyebrow from './Eyebrow.astro';
-import { getLang, useTranslations } from '../i18n';
+import { FAQ } from '../data/faq.ts';
 
-const t = useTranslations(getLang(Astro.url)).faq;
+const H2 = 'Les questions qu\'on nous pose le plus souvent.';
 ---
 
 <section
@@ -25,15 +25,15 @@ const t = useTranslations(getLang(Astro.url)).faq;
     <!-- En-tete : cascade eyebrow, H2 -->
     <div class="max-w-3xl" data-reveal-stagger="120">
       <div data-reveal>
-        <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
+        <Eyebrow tone="light">Questions fréquentes</Eyebrow>
       </div>
-      <h2 class="type-h2 mt-6 text-ink" data-reveal>{t.title}</h2>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
     </div>
 
     <!-- Liste des questions, stagger doux -->
     <div class="mt-12 max-w-3xl md:mt-16" data-reveal-stagger="90">
       {
-        t.items.map((item) => (
+        FAQ.map((item) => (
           <details class="faq-item" data-reveal>
             <summary class="faq-question">
               <span class="faq-question-texte text-ink">{item.question}</span>

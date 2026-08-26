@@ -7,13 +7,8 @@ import 'lenis/dist/lenis.css';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE_DATA } from '../data/site.ts';
-import { getLang, useTranslations } from '../i18n';
-
-// Textes : src/i18n/<langue>.ts. Le dictionnaire alimente a la fois les meta
-// par defaut, le lien d'evitement, et les noeuds Service / FAQPage du JSON-LD
-// (meme source que les sections visibles : aucune divergence possible).
-const dict = useTranslations(getLang(Astro.url));
+import { SITE_DATA, SERVICES } from '../data/site.ts';
+import { FAQ } from '../data/faq.ts';
 
 interface Props {
   title?: string;
@@ -44,8 +39,8 @@ interface Props {
   noindex?: boolean;
 }
 const {
-  title = dict.meta.home.title,
-  description = dict.meta.home.description,
+  title = 'Transport séminaire et événement à Nantes | Navettes clé en main, Grand Ouest',
+  description = SITE_DATA.description,
   ogType = 'website',
   jsonLd: jsonLdOverride = null,
   article,
@@ -83,7 +78,7 @@ const localBusinessNode: Record<string, unknown> = {
   '@id': orgId,
   name: SITE_DATA.name,
   url: SITE_DATA.url,
-  description: dict.meta.home.description,
+  description: SITE_DATA.description,
   image: ogImageURL,
   priceRange: SITE_DATA.priceRange,
   foundingDate: SITE_DATA.foundingDate,
@@ -110,7 +105,7 @@ if (SITE_DATA.sameAs.length > 0) {
 // avis reels collectes sur le site.
 
 // Trois noeuds Service, rattaches au provider LocalBusiness.
-const serviceNodes = dict.services.map((service) => ({
+const serviceNodes = SERVICES.map((service) => ({
   '@type': 'Service',
   name: service.name,
   description: service.description,
@@ -122,7 +117,7 @@ const serviceNodes = dict.services.map((service) => ({
 const faqNode = {
   '@type': 'FAQPage',
   dateModified: SITE_DATA.dateModified,
-  mainEntity: dict.faq.items.map((item) => ({
+  mainEntity: FAQ.map((item) => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
@@ -194,7 +189,7 @@ const jsonLd = jsonLdOverride ?? {
       href="#hero"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-gold focus:px-4 focus:py-2 focus:text-ink"
     >
-      {dict.common.skipToContent}
+      Aller au contenu
     </a>
 
     <Header theme={headerTheme} />

@@ -41,31 +41,74 @@
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
-import { getLang, useTranslations } from '../i18n';
-
-// Textes : src/i18n/<langue>.ts, cle `casClient`. Attention, le template
-// utilise deja `t` comme variable de boucle : le dictionnaire est donc
-// nomme `tr` ici.
-const dict = useTranslations(getLang(Astro.url));
-const tr = dict.casClient;
 
 // =====================================================================
 // LES 5 ETAPES DU PARCOURS DE GROUPE.
 // Chaque etape porte un compteur de volume (ancre l'echelle du groupe)
 // et un temoignage. L'etape 1 (Titouan N.) est un VRAI avis, affiche tel
-// quel avec 5 etoiles : c'est le seul a porter `vedette`. Les etapes 2 a
-// 5 sont des exemples representatifs credibles, a remplacer par de vrais
-// verbatims des qu'ils seront disponibles.
-//
-// `vedette` est de la configuration d'affichage : elle reste ici et se
-// fusionne PAR INDEX avec les textes du dictionnaire.
+// quel avec 5 etoiles. Les etapes 2 a 5 sont des exemples representatifs
+// credibles, a remplacer par de vrais verbatims des qu'ils seront
+// disponibles.
 // =====================================================================
-const VEDETTE_INDEX = 0;
+const ETAPES = [
+  {
+    etape: 'Arrivée des invités',
+    volume: '49 invités transportés',
+    vedette: true,
+    type: 'Mariage',
+    accroche: 'Ponctualité parfaite, une équipe fiable et facile à joindre.',
+    auteur: 'Titouan N.',
+    role: 'Mariage, Loire-Atlantique',
+    detail:
+      'Simon a assuré le transport de nos invités le jour de notre mariage avec un grand professionnalisme. Très à l\'écoute, transparent et réactif, il a pris le temps d\'optimiser les trajets pour trouver le meilleur compromis entre le confort des invités et le budget. Tout s\'est déroulé parfaitement : ponctualité, excellente communication et super organisation. Nous recommandons à 100 pour cent.',
+  },
+  {
+    etape: 'Navettes inter-sites',
+    volume: '2 jours de rotations',
+    vedette: false,
+    type: 'Séminaire d\'entreprise',
+    accroche: 'Une navette séminaire d\'entreprise coordonnée sans le moindre retard sur deux jours.',
+    auteur: 'Camille R.',
+    role: 'Séminaire, secteur tertiaire',
+    detail:
+      'Pour notre séminaire d\'entreprise à Nantes, nous avions besoin de navettes entre l\'hôtel, le lieu de réunion et un restaurant. Le transport des participants a été entièrement coordonné par un seul interlocuteur, avec les transferts gare et les rotations. Aucun trajet à gérer de notre côté.',
+  },
+  {
+    etape: 'Transfert dirigeants',
+    volume: 'Flotte de berlines coordonnée',
+    vedette: false,
+    type: 'Transfert corporate',
+    accroche: 'Un transfert de dirigeants à Nantes avec une flotte de berlines cadrée à la minute.',
+    auteur: 'Julien M.',
+    role: 'Transfert dirigeants, Nantes',
+    detail:
+      'Nous cherchions un transport de dirigeants fiable entre la gare de Nantes, le siège et un dîner d\'affaires. Véhicules impeccables, chauffeurs ponctuels, coordination sans faille. Le niveau attendu pour un transfert corporate en Loire-Atlantique.',
+  },
+  {
+    etape: 'Grand rassemblement',
+    volume: 'Plusieurs centaines de personnes',
+    vedette: false,
+    type: 'Navette de groupe',
+    accroche: 'Une navette de groupe de plusieurs centaines de personnes, orchestrée par une seule équipe.',
+    auteur: 'Sophie L.',
+    role: 'Rassemblement, Grand Ouest',
+    detail:
+      'Pour notre rassemblement dans le Grand Ouest, il fallait un transport de groupe de grande capacité depuis plusieurs points. Berlines, vans et autocars dimensionnés selon le volume, rotations enchaînées sans attente. Une navette événementielle clé en main.',
+  },
+  {
+    etape: 'Retours de nuit',
+    volume: 'Rotations jusqu\'à la fin de soirée',
+    vedette: false,
+    type: 'Mariage',
+    accroche: 'Des navettes de mariage et retours de nuit gérés sans qu\'on y pense.',
+    auteur: 'Marie et Thomas D.',
+    role: 'Mariage, Vendée',
+    detail:
+      'Pour notre mariage en Vendée, le transport des invités et les navettes de nuit étaient notre inquiétude. Tout a été orchestré : transferts, rotations, retours de fin de soirée en sécurité. Un transport de mariage dans le Grand Ouest géré de bout en bout.',
+  },
+];
 
-const ETAPES = tr.steps.map((etape, i) => ({
-  ...etape,
-  vedette: i === VEDETTE_INDEX,
-}));
+const CTA_PHRASE = 'Votre événement mérite la même tranquillité.';
 
 // -- Geometrie du parcours horizontal (repere viewBox 0 0 1000 120) --
 // La ligne va de X0 a X1 ; le brin central (rail) sert d'axe aux points
@@ -123,7 +166,7 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
     <div class="temoignages-sticky">
       <!-- Eyebrow fixe en haut a gauche pendant toute la section. -->
       <div class="temoignages-eyebrow container">
-        <Eyebrow tone="dark">{tr.eyebrow}</Eyebrow>
+        <Eyebrow tone="dark">Ils nous ont fait confiance</Eyebrow>
       </div>
 
       <!-- ---------- ZONE HAUTE : le temoignage (centre, 900px) ---------- -->
@@ -175,7 +218,7 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
                 </div>
 
                 {t.vedette && (
-                  <span class="temoignage-etoiles" aria-label={tr.starsAria}>
+                  <span class="temoignage-etoiles" aria-label="Cinq étoiles sur cinq">
                     <span aria-hidden="true">★★★★★</span>
                   </span>
                 )}
@@ -310,8 +353,8 @@ const RAIL = brin(RAIL_Y); // brin central : rail des points et vehicules
   <div class="container">
     <!-- CTA de fin de section, centre -->
     <div class="temoignages-cta" data-reveal>
-      <p class="type-body temoignages-cta-phrase">{tr.ctaPhrase}</p>
-      <ButtonArrow variant="solid" href={tr.ctaHref} label={dict.common.ctaDevis} />
+      <p class="type-body temoignages-cta-phrase">{CTA_PHRASE}</p>
+      <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
     </div>
   </div>
 </section>

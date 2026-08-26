@@ -4,28 +4,40 @@
   (--green-900), traitement premium avec un halo dore radial discret en
   fond. Titre H2 gros en Fraunces, sous-titre court, puis un vrai
   formulaire de qualification envoye via Web3Forms (fetch, sans
-  rechargement). Etats geres cote client : idle, envoi, erreur. Le succes
-  n'est pas un etat de cette page : il redirige vers /devis-envoye
-  (cle `devis.sentHref` du dictionnaire, prefixee /en en anglais).
+  rechargement). Etats geres cote client : idle, envoi, succes, erreur.
 
   Cle Web3Forms editable en une ligne ci-dessous (WEB3FORMS_KEY).
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
-import { getLang, useTranslations } from '../i18n';
 
 // Cle Web3Forms. A editer ici en une seule ligne pour changer la boite
 // de reception des demandes de devis.
 const WEB3FORMS_KEY = '4dcb99a0-1a80-4aa2-958f-3785bc0d2bb7';
 
-// Textes : src/i18n/<langue>.ts, cle `devis`.
-//
-// ATTENTION : les attributs `name` des champs restent EN DUR en francais
-// ci-dessous. Web3Forms s'en sert comme intitules dans le mail recu :
-// les traduire changerait la forme des mails et casserait toute regle de
-// tri cote boite de reception.
-const t = useTranslations(getLang(Astro.url)).devis;
-const f = t.fields;
+// Sujet des emails recus, transmis en champ cache.
+const SUBJECT = 'Nouvelle demande de devis Transport Événementiel Nantes';
+
+// En-tete de section.
+const H2 = 'Décrivez-nous votre événement. On orchestre le transport.';
+const SOUS_TITRE =
+  'Trajets, véhicules, rotations : un devis clair et un interlocuteur unique pour toute la logistique de déplacement.';
+
+// Options du type d'evenement.
+const TYPES = [
+  'Mariage',
+  'Séminaire ou événement d\'entreprise',
+  'Navette de groupe',
+  'Autre',
+];
+
+// Besoins specifiques (cases a cocher, optionnel).
+const BESOINS = [
+  'Transferts gare ou aéroport',
+  'Navettes de nuit',
+  'Plusieurs rotations',
+  'Autocar ou grande capacité',
+];
 ---
 
 <section
@@ -46,41 +58,42 @@ const f = t.fields;
     <!-- Colonne gauche : editorial, centre verticalement -->
     <div class="devis-intro" data-reveal-stagger="120">
       <div data-reveal>
-        <Eyebrow tone="dark">{t.eyebrow}</Eyebrow>
+        <Eyebrow tone="dark">Parlons de votre événement</Eyebrow>
       </div>
 
-      <h2 class="devis-titre mt-6 text-on-dark" data-reveal>{t.title}</h2>
+      <h2 class="devis-titre mt-6 text-on-dark" data-reveal>{H2}</h2>
 
       <p class="type-body mt-6 max-w-md text-on-dark/[0.92]" data-reveal>
-        {t.subtitle}
+        {SOUS_TITRE}
       </p>
 
       <p class="devis-ancrage type-nav mt-6 text-on-dark/[0.85]" data-reveal>
-        {t.ancrage}
+        Nantes et Grand Ouest, adossé à CHL VTC.
       </p>
     </div>
 
     <!-- Colonne droite : carte formulaire posee sur --green-800 -->
     <div class="devis-form-wrap" data-reveal>
-      <!-- Formulaire de qualification. Les libelles dont le <script> a
-           besoin sont passes en data-* : ce script est un module ES
-           compile a part, il ne peut pas lire le frontmatter.
-           data-sent-href porte la page de confirmation de la langue
-           courante, vers laquelle on redirige apres un envoi accepte. -->
-      <form
-        id="devis-form"
-        class="devis-form"
-        novalidate
-        data-sent-href={t.sentHref}
-        data-label-sending={t.sending}
-        data-error-required={t.errors.required}
-        data-error-failed={t.errors.failed}
-        data-error-network={t.errors.network}
+      <!-- Message de succes (masque tant que non soumis) -->
+      <div
+        id="devis-success"
+        class="devis-success"
+        role="status"
+        aria-live="polite"
+        hidden
       >
+        <span class="devis-success-mark" aria-hidden="true"></span>
+        <p class="devis-success-titre">
+          Demande reçue. On revient vers vous très vite avec un premier devis.
+        </p>
+      </div>
+
+      <!-- Formulaire de qualification -->
+      <form id="devis-form" class="devis-form" novalidate>
         <!-- Champs caches Web3Forms -->
         <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
-        <input type="hidden" name="subject" value={t.subject} />
-        <input type="hidden" name="from_name" value={t.fromName} />
+        <input type="hidden" name="subject" value={SUBJECT} />
+        <input type="hidden" name="from_name" value="Site Transport Événementiel Nantes" />
         <!-- Honeypot anti-spam : doit rester vide -->
         <input
           type="checkbox"
@@ -94,12 +107,12 @@ const f = t.fields;
         <!-- 1. Type d'evenement -->
         <div class="devis-field">
           <label class="devis-label" for="devis-type">
-            {f.type.label} <span class="devis-req" aria-hidden="true">*</span>
+            Type d'événement <span class="devis-req" aria-hidden="true">*</span>
           </label>
           <div class="devis-select-wrap">
             <select id="devis-type" name="Type d'événement" class="devis-input" required>
-              <option value="" disabled selected>{t.selectPlaceholder}</option>
-              {f.type.options.map((opt) => <option value={opt}>{opt}</option>)}
+              <option value="" disabled selected>Choisir...</option>
+              {TYPES.map((t) => <option value={t}>{t}</option>)}
             </select>
             <span class="devis-select-arrow" aria-hidden="true"></span>
           </div>
@@ -109,13 +122,13 @@ const f = t.fields;
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-date">
-              {f.date.label} <span class="devis-req" aria-hidden="true">*</span>
+              Date approximative <span class="devis-req" aria-hidden="true">*</span>
             </label>
             <input id="devis-date" name="Date approximative" type="date" class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-pax">
-              {f.pax.label} <span class="devis-req" aria-hidden="true">*</span>
+              Nombre de personnes <span class="devis-req" aria-hidden="true">*</span>
             </label>
             <input
               id="devis-pax"
@@ -123,7 +136,7 @@ const f = t.fields;
               type="number"
               min="1"
               inputmode="numeric"
-              placeholder={f.pax.placeholder}
+              placeholder="Ex : 40"
               class="devis-input"
               required
             />
@@ -134,24 +147,24 @@ const f = t.fields;
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-depart">
-              {f.depart.label} <span class="devis-req" aria-hidden="true">*</span>
+              Ville de départ <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-depart" name="Ville de départ" type="text" placeholder={f.depart.placeholder} class="devis-input" required />
+            <input id="devis-depart" name="Ville de départ" type="text" placeholder="Ex : Nantes" class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-arrivee">
-              {f.arrivee.label} <span class="devis-req" aria-hidden="true">*</span>
+              Ville d'arrivée ou lieu <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-arrivee" name="Ville d'arrivée ou lieu" type="text" placeholder={f.arrivee.placeholder} class="devis-input" required />
+            <input id="devis-arrivee" name="Ville d'arrivée ou lieu" type="text" placeholder="Ex : Château de..." class="devis-input" required />
           </div>
         </div>
 
         <!-- 6. Besoins specifiques (optionnel) -->
         <fieldset class="devis-field devis-fieldset">
-          <legend class="devis-label">{f.besoins.legend}</legend>
+          <legend class="devis-label">Besoins spécifiques</legend>
           <div class="devis-checks">
             {
-              f.besoins.options.map((b, i) => (
+              BESOINS.map((b, i) => (
                 <label class="devis-check" for={`devis-besoin-${i}`}>
                   <input
                     id={`devis-besoin-${i}`}
@@ -172,38 +185,30 @@ const f = t.fields;
         <div class="devis-grid">
           <div class="devis-field">
             <label class="devis-label" for="devis-nom">
-              {f.nom.label} <span class="devis-req" aria-hidden="true">*</span>
+              Nom <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-nom" name="Nom" type="text" autocomplete="name" placeholder={f.nom.placeholder} class="devis-input" required />
+            <input id="devis-nom" name="Nom" type="text" autocomplete="name" placeholder="Votre nom" class="devis-input" required />
           </div>
           <div class="devis-field">
             <label class="devis-label" for="devis-tel">
-              {f.tel.label} <span class="devis-req" aria-hidden="true">*</span>
+              Téléphone <span class="devis-req" aria-hidden="true">*</span>
             </label>
-            <input id="devis-tel" name="Téléphone" type="tel" autocomplete="tel" placeholder={f.tel.placeholder} class="devis-input" required />
+            <input id="devis-tel" name="Téléphone" type="tel" autocomplete="tel" placeholder="06 00 00 00 00" class="devis-input" required />
           </div>
         </div>
 
-        <!-- 8. Societe -->
-        <div class="devis-field">
-          <label class="devis-label" for="devis-societe">
-            {f.societe.label} <span class="devis-req" aria-hidden="true">*</span>
-          </label>
-          <input id="devis-societe" name="Société" type="text" autocomplete="organization" placeholder={f.societe.placeholder} class="devis-input" required />
-        </div>
-
-        <!-- 9. Email -->
+        <!-- 8. Email -->
         <div class="devis-field">
           <label class="devis-label" for="devis-email">
-            {f.email.label} <span class="devis-req" aria-hidden="true">*</span>
+            Email <span class="devis-req" aria-hidden="true">*</span>
           </label>
-          <input id="devis-email" name="Email" type="email" autocomplete="email" placeholder={f.email.placeholder} class="devis-input" required />
+          <input id="devis-email" name="Email" type="email" autocomplete="email" placeholder="vous@exemple.fr" class="devis-input" required />
         </div>
 
         <!-- 10. Message libre (optionnel) -->
         <div class="devis-field">
-          <label class="devis-label" for="devis-message">{f.message.label}</label>
-          <textarea id="devis-message" name="Message" rows="4" placeholder={f.message.placeholder} class="devis-input devis-textarea"></textarea>
+          <label class="devis-label" for="devis-message">Décrivez votre besoin</label>
+          <textarea id="devis-message" name="Message" rows="4" placeholder="Contexte, horaires, contraintes particulières..." class="devis-input devis-textarea"></textarea>
         </div>
 
         <!-- Message d'erreur (masque par defaut) -->
@@ -211,9 +216,9 @@ const f = t.fields;
 
         <!-- Bouton d'envoi -->
         <div class="devis-actions">
-          <ButtonArrow variant="solid" type="submit" label={t.submit} class="devis-submit" />
+          <ButtonArrow variant="solid" type="submit" label="Envoyer ma demande" class="devis-submit" />
           <p class="devis-privacy type-nav">
-            {t.privacy}
+            Vos informations servent uniquement à établir votre devis.
           </p>
         </div>
       </form>
@@ -223,20 +228,13 @@ const f = t.fields;
 
 <script>
   const form = document.getElementById('devis-form') as HTMLFormElement | null;
+  const success = document.getElementById('devis-success');
   const errorBox = document.getElementById('devis-error');
 
-  if (form && errorBox) {
+  if (form && success && errorBox) {
     const submitBtn = form.querySelector<HTMLButtonElement>('.devis-submit');
     const submitLabel = submitBtn?.querySelector<HTMLElement>('.type-button');
-    const defaultLabel = submitLabel?.textContent ?? '';
-
-    // Page de confirmation de la langue courante (/devis-envoye ou
-    // /en/devis-envoye), et libelles traduits, lus sur le <form> (data-*).
-    const sentHref = form.dataset.sentHref ?? '/devis-envoye';
-    const labelSending = form.dataset.labelSending ?? '';
-    const errorRequired = form.dataset.errorRequired ?? '';
-    const errorFailed = form.dataset.errorFailed ?? '';
-    const errorNetwork = form.dataset.errorNetwork ?? '';
+    const defaultLabel = submitLabel?.textContent ?? 'Envoyer ma demande';
 
     const setError = (message: string) => {
       errorBox.textContent = message;
@@ -252,7 +250,7 @@ const f = t.fields;
       submitBtn.disabled = sending;
       submitBtn.setAttribute('aria-busy', String(sending));
       if (submitLabel) {
-        submitLabel.textContent = sending ? labelSending : defaultLabel;
+        submitLabel.textContent = sending ? 'Envoi...' : defaultLabel;
       }
     };
 
@@ -264,7 +262,7 @@ const f = t.fields;
       if (!form.checkValidity()) {
         const firstInvalid = form.querySelector<HTMLElement>(':invalid');
         firstInvalid?.focus();
-        setError(errorRequired);
+        setError('Merci de compléter les champs requis avant d\'envoyer.');
         return;
       }
 
@@ -279,17 +277,22 @@ const f = t.fields;
         const data = await response.json();
 
         if (response.ok && data.success) {
-          // Succes : on quitte la page pour l'ecran de confirmation.
-          // Le bouton reste desactive pendant la navigation, ce qui evite
-          // un second envoi si la redirection tarde.
-          window.location.assign(sentHref);
+          // Succes : le message remplace le formulaire.
+          form.hidden = true;
+          success.hidden = false;
+          requestAnimationFrame(() => success.classList.add('is-shown'));
+          success.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
           setSending(false);
-          setError(errorFailed);
+          setError(
+            'L\'envoi a échoué. Merci de réessayer ou de nous contacter directement.'
+          );
         }
       } catch {
         setSending(false);
-        setError(errorNetwork);
+        setError(
+          'Problème de connexion. Vérifiez votre réseau puis réessayez.'
+        );
       }
     });
   }
@@ -601,5 +604,60 @@ const f = t.fields;
     color: #f0c9c1;
     font-family: var(--font-body);
     font-size: 0.95rem;
+  }
+
+  /* ---- Message de succes ---- */
+  /* Tant que l'attribut hidden est present (etat par defaut), le bloc est
+     retire du flux : sinon son display:flex l'emporte sur [hidden] et il
+     occupe le haut de la carte, poussant le formulaire vers le bas. */
+  .devis-success[hidden] {
+    display: none;
+  }
+  .devis-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+    padding: 2.5rem 1.5rem;
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 700ms var(--ease),
+      transform 700ms var(--ease);
+  }
+  .devis-success.is-shown {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .devis-success-mark {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .devis-success-mark::after {
+    content: '';
+    position: absolute;
+    left: 1.15rem;
+    top: 0.85rem;
+    width: 0.7rem;
+    height: 1.25rem;
+    border-right: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg);
+  }
+  .devis-success-titre {
+    margin: 0;
+    max-width: 32rem;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--on-dark);
   }
 </style>

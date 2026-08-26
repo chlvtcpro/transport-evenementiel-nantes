@@ -13,39 +13,32 @@
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
-import { getLang, useTranslations } from '../i18n';
-
-// Textes : src/i18n/<langue>.ts, cle `hero`.
-const dict = useTranslations(getLang(Astro.url));
-const t = dict.hero;
 
 // URL absolue de l'image de fond (servie depuis public).
 const HERO_BG_URL =
   '/src/assets/hero/seminaire-entreprise-rassemblement-lieu-reception.jpg';
 
-// Compteur d'activite agregee. Valeurs chiffrees et reglages d'animation
-// seulement : les libelles viennent de t.statLabels, fusionnes PAR INDEX.
+// Compteur d'activite agregee. Editez ces valeurs en un point.
 // - cible   : valeur numerique visee pour l'incrementation animee
 // - prefixe : signe eventuel affiche avant (ex "+")
 // - anime   : false pour afficher directement (ex l'annee 2025)
 // - duree   : duree du comptage en ms (ease-out)
 const HERO_STATS = [
-  { cible: 1700, prefixe: '+', anime: true, duree: 1600 },
-  { cible: 35, prefixe: '+', anime: true, duree: 1400 },
-  { cible: 2025, prefixe: '', anime: false, duree: 0 },
-].map((stat, i) => ({ ...stat, label: t.statLabels[i] }));
+  { cible: 1700, prefixe: '+', label: 'passagers transportés', anime: true, duree: 1600 },
+  { cible: 35, prefixe: '+', label: 'événements et transferts', anime: true, duree: 1400 },
+  { cible: 2025, prefixe: '', label: 'depuis', anime: false, duree: 0 },
+];
 
 // Noeuds du plan de transport (parcours d'un evenement).
 // Coordonnees dans le repere du viewBox 0 0 440 480, composition
 // asymetrique et aeree. Chaque noeud s'allume en cascade (delai).
-// Les libelles viennent de t.planNodeLabels, fusionnes PAR INDEX.
 const PLAN_NODES = [
-  { id: 'gare', x: 70, y: 92, anchor: 'start' },
-  { id: 'hotel', x: 250, y: 60, anchor: 'start' },
-  { id: 'ceremonie', x: 360, y: 200, anchor: 'end' },
-  { id: 'reception', x: 210, y: 300, anchor: 'start' },
-  { id: 'retours', x: 96, y: 410, anchor: 'start' },
-].map((node, i) => ({ ...node, label: t.planNodeLabels[i] }));
+  { id: 'gare', x: 70, y: 92, label: 'Gare de Nantes', anchor: 'start' },
+  { id: 'hotel', x: 250, y: 60, label: 'Hôtel', anchor: 'start' },
+  { id: 'ceremonie', x: 360, y: 200, label: 'Cérémonie', anchor: 'end' },
+  { id: 'reception', x: 210, y: 300, label: 'Réception', anchor: 'start' },
+  { id: 'retours', x: 96, y: 410, label: 'Retours de nuit', anchor: 'start' },
+];
 
 // Trajets courbes reliant les noeuds (chemin d'orchestration).
 // Chaque trajet porte un point lumineux qui parcourt la courbe en boucle.
@@ -95,25 +88,27 @@ const PLAN_ROUTES = [
     <!-- Colonne gauche : copy + preuve -->
     <div class="lg:col-span-7" data-reveal-stagger="120">
       <div data-reveal>
-        <Eyebrow tone="dark">{t.eyebrow}</Eyebrow>
+        <Eyebrow tone="dark">Organisateur de transport événementiel, Nantes et Grand Ouest</Eyebrow>
       </div>
 
       <h1 class="hero-title mt-8 max-w-[20ch]">
-        <span class="block" data-reveal>{t.titleLine1}</span>
-        <span class="block text-gold-soft" data-reveal>{t.titleLine2}</span>
+        <span class="block" data-reveal>Séminaires, mariages :</span>
+        <span class="block text-gold-soft" data-reveal>on transporte tout le monde.</span>
       </h1>
 
       <p class="hero-subtitle type-body mt-10 max-w-xl" data-reveal>
-        {t.subtitle}
+        Transport de séminaire et d'événement d'entreprise, navettes de mariage,
+        transferts de groupe à Nantes et dans le Grand Ouest. Un seul contact
+        coordonne toute la flotte. Vous ne gérez aucun trajet.
       </p>
 
       <div class="mt-7 flex flex-wrap items-center gap-6" data-reveal>
-        <ButtonArrow variant="solid" href={t.ctaHref} label={dict.common.ctaDevis} />
+        <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
         <a
-          href={t.ctaSecondaryHref}
+          href="#cas-client"
           class="type-nav text-on-dark underline decoration-[var(--line-on-dark)] decoration-1 underline-offset-[6px] transition-colors duration-300 hover:text-gold hover:decoration-gold"
         >
-          {t.ctaSecondary}
+          Voir nos réalisations
         </a>
       </div>
 
@@ -139,10 +134,9 @@ const PLAN_ROUTES = [
                     data-count={stat.anime ? String(stat.cible) : undefined}
                     data-count-prefix={stat.prefixe}
                     data-count-duration={String(stat.duree)}
-                    data-count-locale={dict.common.locale}
                   >
                     {stat.anime
-                      ? `${stat.prefixe}${stat.cible.toLocaleString(dict.common.locale)}`
+                      ? `${stat.prefixe}${stat.cible.toLocaleString('fr-FR')}`
                       : `${stat.prefixe}${stat.cible}`}
                   </dt>
                   <dd class="type-nav mt-1.5 text-on-dark/[0.92]">{stat.label}</dd>
@@ -185,7 +179,7 @@ const PLAN_ROUTES = [
           viewBox="0 0 440 480"
           fill="none"
           role="img"
-          aria-label={t.planAria}
+          aria-label="Plan d orchestration des trajets d un événement : gare de Nantes, hôtel, cérémonie, réception, retours de nuit"
           data-plan
         >
           <!-- Trajets courbes : traces au chargement (stroke-dashoffset). -->
@@ -267,7 +261,7 @@ const PLAN_ROUTES = [
     class="absolute bottom-8 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 lg:flex"
     aria-hidden="true"
   >
-    <span class="type-eyebrow text-on-dark/40">{t.scroll}</span>
+    <span class="type-eyebrow text-on-dark/40">Défiler</span>
     <span class="h-10 w-px bg-gradient-to-b from-gold/70 to-transparent"></span>
   </div>
 </section>
@@ -523,13 +517,10 @@ const PLAN_ROUTES = [
       const target = Number(el.getAttribute('data-count'));
       const prefix = el.getAttribute('data-count-prefix') || '';
       const duration = Number(el.getAttribute('data-count-duration')) || 1500;
-      // Locale de formatage passee par le frontmatter (data-*), les scripts
-      // Astro etant des modules isoles qui ne voient pas le dictionnaire.
-      const locale = el.getAttribute('data-count-locale') || 'fr-FR';
       if (!Number.isFinite(target)) return;
 
       if (reduce) {
-        el.textContent = prefix + target.toLocaleString(locale);
+        el.textContent = prefix + target.toLocaleString('fr-FR');
         return;
       }
 
@@ -541,7 +532,7 @@ const PLAN_ROUTES = [
       const step = (now: number) => {
         const p = Math.min((now - start) / duration, 1);
         const value = Math.round(easeOut(p) * target);
-        el.textContent = prefix + value.toLocaleString(locale);
+        el.textContent = prefix + value.toLocaleString('fr-FR');
         if (p < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);

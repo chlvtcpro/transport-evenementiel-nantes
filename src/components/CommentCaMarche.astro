@@ -13,11 +13,36 @@
 */
 import Eyebrow from './Eyebrow.astro';
 import ButtonArrow from './ButtonArrow.astro';
-import { getLang, useTranslations } from '../i18n';
 
-// Textes : src/i18n/<langue>.ts, cle `process`.
-const dict = useTranslations(getLang(Astro.url));
-const t = dict.process;
+// En-tete : message de scalabilite. Editez en un point.
+const H2 = 'Un événement. Un interlocuteur. N\'importe quel volume.';
+const SOUS_TITRE =
+  'Une berline pour deux invités ou dix véhicules pour le transport des participants d\'un séminaire, c\'est le même contact et le même niveau de maîtrise à Nantes et dans le Grand Ouest.';
+
+// Les 3 etapes du parcours. Ajouter ou reformuler = editer cette table.
+const ETAPES = [
+  {
+    num: '01',
+    titre: 'Vous nous briefez',
+    texte:
+      'Date, lieux, nombre de personnes, contraintes. Un seul échange suffit, vous avez un interlocuteur unique du début à la fin.',
+  },
+  {
+    num: '02',
+    titre: 'On assemble et on orchestre la flotte',
+    texte:
+      'On dimensionne les véhicules selon le volume, berlines, vans ou autocars, et on cale trajets, rotations, horaires et chauffeurs. Vous ne gérez aucun déplacement.',
+  },
+  {
+    num: '03',
+    titre: 'Le jour J, tout roule',
+    texte:
+      'Arrivées à l\'heure, navettes, transferts, retours de nuit. Tout est coordonné, vous profitez de votre événement.',
+  },
+];
+
+// Phrase incitative au dessus du CTA de fin.
+const CTA_PHRASE = 'Décrivez-nous votre événement, on orchestre tous les trajets.';
 ---
 
 <section
@@ -29,11 +54,11 @@ const t = dict.process;
     <!-- En-tete : cascade eyebrow, H2, sous-titre -->
     <div class="mx-auto max-w-3xl text-center" data-reveal-stagger="120">
       <div class="flex justify-center" data-reveal>
-        <Eyebrow tone="light">{t.eyebrow}</Eyebrow>
+        <Eyebrow tone="light">Comment ça marche</Eyebrow>
       </div>
-      <h2 class="type-h2 mt-6 text-ink" data-reveal>{t.title}</h2>
+      <h2 class="type-h2 mt-6 text-ink" data-reveal>{H2}</h2>
       <p class="type-body mx-auto mt-6 max-w-[60ch] text-ink-muted" data-reveal>
-        {t.subtitle}
+        {SOUS_TITRE}
       </p>
     </div>
 
@@ -43,7 +68,7 @@ const t = dict.process;
       data-reveal-stagger="140"
     >
       {
-        t.steps.map((etape, index) => (
+        ETAPES.map((etape, index) => (
           <li class="etape relative flex flex-col px-0 md:px-8" data-reveal>
             {/* Filet dore vertical entre les etapes (desktop) */}
             {index > 0 && (
@@ -83,8 +108,8 @@ const t = dict.process;
 
     <!-- CTA de fin de section, centre -->
     <div class="mt-16 flex flex-col items-center text-center md:mt-20" data-reveal>
-      <p class="type-body mb-6 max-w-md text-ink-muted">{t.ctaPhrase}</p>
-      <ButtonArrow variant="solid" href={t.ctaHref} label={dict.common.ctaDevis} />
+      <p class="type-body mb-6 max-w-md text-ink-muted">{CTA_PHRASE}</p>
+      <ButtonArrow variant="solid" href="#formulaire-devis" label="Demander un devis" />
     </div>
   </div>
 </section>
