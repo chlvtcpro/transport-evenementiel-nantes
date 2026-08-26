@@ -288,6 +288,14 @@ const BESOINS = [
         const data = await response.json();
 
         if (response.ok && data.success) {
+          // Conversion : un lead n'est compte QUE sur une reponse acceptee par
+          // Web3Forms. Aucun push dans les branches d'erreur ou de reseau, sinon
+          // le taux de conversion mesure serait faux.
+          // Le push precede la redirection : une fois la navigation lancee, le
+          // contexte JS de cette page est detruit.
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({ event: 'generate_lead' });
+
           // Succes : on quitte la page pour l'ecran de confirmation. Le bouton
           // reste desactive pendant la navigation, ce qui evite un second envoi
           // si la redirection tarde.

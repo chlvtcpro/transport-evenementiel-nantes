@@ -10,6 +10,11 @@ import Footer from '../components/Footer.astro';
 import { SITE_DATA, SERVICES } from '../data/site.ts';
 import { FAQ } from '../data/faq.ts';
 
+// Conteneur Google Tag Manager. Une seule ligne a editer pour changer de
+// conteneur : l'identifiant alimente a la fois le script du <head> et le
+// <noscript> d'ouverture du <body>.
+const GTM_ID = 'GTM-KQ393ZFD';
+
 interface Props {
   title?: string;
   description?: string;
@@ -140,6 +145,25 @@ const jsonLd = jsonLdOverride ?? {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Tag Manager, place le plus haut possible dans le <head> pour
+         que dataLayer existe avant tout autre script de la page.
+         is:inline est indispensable : sans lui Astro bundlerait le snippet en
+         module differe, il s'executerait trop tard et les push emis ailleurs
+         seraient perdus. -->
+    <script is:inline define:vars={{ GTM_ID }}>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', GTM_ID);
+    </script>
+
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#14261C" />
@@ -185,6 +209,17 @@ const jsonLd = jsonLdOverride ?? {
     />
   </head>
   <body>
+    <!-- Google Tag Manager, repli sans JavaScript. Doit rester le tout
+         premier element du <body>. -->
+    <noscript>
+      <iframe
+        src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+        title="Google Tag Manager"></iframe>
+    </noscript>
+
     <a
       href="#hero"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-gold focus:px-4 focus:py-2 focus:text-ink"
