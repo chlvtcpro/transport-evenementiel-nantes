@@ -5,8 +5,49 @@
 
 /* Clash Display (titres, display, logo, stats) via Fontshare. */
 @import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
-/* Inter (corps, labels, nav, boutons) via Google Fonts. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* ---------------------------------------------------------
+   Inter, auto-heberge.
+
+   Auparavant chargee via @import depuis fonts.googleapis.com. Cet import
+   faisait partir l'adresse IP de chaque visiteur chez Google des le
+   premier octet de CSS, avant meme l'affichage du bandeau, donc sans
+   consentement possible. Les fichiers sont desormais servis par le site.
+
+   Sous-ensemble latin uniquement : il couvre l'integralite du francais,
+   accents, ligature oe, guillemets et apostrophe typographique compris.
+   Trois graisses seulement, 400 / 500 / 600, qui sont les seules
+   reellement rendues sur le site (mesure faite sur les 12 pages, panneau
+   de consentement inclus).
+
+   font-display: swap : le texte s'affiche immediatement dans la police de
+   repli, puis bascule sur Inter une fois chargee. On evite le texte
+   invisible pendant le telechargement.
+
+   Fichiers issus de @fontsource/inter 5.3.0, sous licence SIL OFL 1.1,
+   dont la copie est conservee dans public/fonts/inter/LICENSE.
+   --------------------------------------------------------- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/inter/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter/inter-latin-600-normal.woff2') format('woff2');
+}
 
 @tailwind base;
 @tailwind components;
@@ -44,8 +85,9 @@
        --font-display : Clash Display (Fontshare), grotesque display large et
        tranche, pour tous les titres (H1, H2, H3), le logo et les chiffres de
        stats. Fallback system-ui sans-serif.
-       --font-body : Inter (Google Fonts), poids 400/500/600, pour le corps,
-       les labels, la nav et les boutons. Fallback system-ui sans-serif. */
+       --font-body : Inter (auto-hebergee, voir les @font-face en haut de
+       ce fichier), poids 400/500/600, pour le corps, les labels, la nav et
+       les boutons. Fallback system-ui sans-serif. */
     --font-display: 'Clash Display', system-ui, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
   }

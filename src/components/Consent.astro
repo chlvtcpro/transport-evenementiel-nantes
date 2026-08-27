@@ -487,6 +487,24 @@ const { gtmId } = Astro.props;
     color: var(--on-dark) !important;
     border-bottom: 1px solid var(--line-on-dark) !important;
     font-family: var(--font-body) !important;
+    /* La feuille d'origine met ce bouton en 700. C'etait le seul endroit de
+       tout le site a demander de l'Inter 700 : le conserver aurait impose
+       d'embarquer une quatrieme graisse, environ 24 Ko, pour un unique
+       libelle de six lettres. On l'aligne sur les autres commandes du
+       panneau, qui sont deja en 500. */
+    font-weight: 500 !important;
+  }
+
+  /* Liens « En savoir plus » et « Voir le site officiel ».
+     Mis en 700 par la feuille d'origine, seule autre demande d'Inter 700
+     du site apres le bouton Fermer. Ramenes en 500, comme le reste des
+     libelles du panneau, pour ne pas avoir a embarquer une graisse
+     supplementaire. */
+  html body #tarteaucitronRoot .tarteaucitronReadmoreInfo,
+  html body #tarteaucitronRoot .tarteaucitronReadmoreOfficial,
+  html body #tarteaucitronRoot .tarteaucitronReadmoreSeparator {
+    font-weight: 500 !important;
+    color: var(--on-dark) !important;
   }
 
   /* Lien vers la politique dans le panneau : pilule secondaire, pas un
