@@ -3,8 +3,11 @@
   /mentions-legales : page legale, fond clair, largeur de lecture 720px.
   Reutilise le design system via Base (header variante claire, footer).
   robots noindex,follow : page utile aux visiteurs mais pas destinee a
-  l'indexation. Les informations inconnues restent en PLACEHOLDER visible
-  et doivent etre remplacees avant mise en ligne definitive.
+  l'indexation.
+
+  Identite de l'editeur renseignee avec les donnees reelles. Restent en
+  PLACEHOLDER visible, a remplacer des communication : le numero de licence
+  de transport interieur de personnes et le telephone.
 */
 import Base from '../layouts/Base.astro';
 import Eyebrow from '../components/Eyebrow.astro';
@@ -60,10 +63,11 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
           </p>
           <ul>
             <li>Raison sociale : CHL VTC</li>
-            <li>Forme juridique : [FORME JURIDIQUE À REMPLIR]</li>
-            <li>Siège social : [ADRESSE DU SIÈGE À REMPLIR]</li>
-            <li>SIREN / SIRET : [NUMÉRO SIREN/SIRET À REMPLIR]</li>
-            <li>Numéro de TVA intracommunautaire : [NUMÉRO DE TVA À REMPLIR]</li>
+            <li>Forme juridique : EURL</li>
+            <li>Siège social : Nantes</li>
+            <li>SIREN : 984 775 528</li>
+            <li>SIRET : 984 775 528 00032</li>
+            <li>Numéro de TVA intracommunautaire : FR21 984 775 528</li>
             <li>
               Licence de transport intérieur de personnes : [NUMÉRO DE LICENCE À
               REMPLIR]
@@ -75,12 +79,13 @@ const dateMaj = new Date().toLocaleDateString('fr-FR', {
               </a>
             </li>
             <li>Téléphone : [TÉLÉPHONE À REMPLIR]</li>
+            <li>Conception et réalisation : Outvolt</li>
           </ul>
 
           <h2>Directeur de la publication</h2>
           <p>
             Le directeur de la publication est le représentant légal de CHL VTC :
-            [NOM DU DIRECTEUR DE PUBLICATION À REMPLIR].
+            Simon Couchellou.
           </p>
 
           <h2>Hébergement</h2>
