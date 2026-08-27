@@ -72,6 +72,43 @@ const PRECISION =
       </div>
     </div>
   </section>
+
+  {/*
+    Conversion generate_lead.
+
+    Le push se fait ici, et non dans Devis.astro au moment de l'envoi : la
+    redirection y detruisait le contexte JS avant que GTM ait traite
+    l'evenement, qui etait donc perdu. Devis.astro pose seulement un marqueur
+    en sessionStorage apres une reponse Web3Forms acceptee, et cette page le
+    consomme.
+
+    Le marqueur est retire AVANT le push : un rechargement de /devis-envoye ne
+    trouve plus rien et ne repousse pas l'evenement. Une arrivee directe sur
+    l'URL, sans formulaire soumis, n'a jamais de marqueur : aucun push.
+
+    is:inline pour que le code parte tel quel dans le HTML, sans passer par un
+    bundle charge en differe : l'evenement rejoint la file dataLayer le plus
+    tot possible. Si GTM n'est pas encore la, faute de consentement ou de
+    chargement termine, la file est relue a son initialisation.
+  */}
+  <script is:inline>
+    (function () {
+      var marqueur = null;
+      try {
+        marqueur = sessionStorage.getItem('devis-envoye');
+        sessionStorage.removeItem('devis-envoye');
+      } catch (e) {
+        // Stockage indisponible : on ne pousse rien plutot que de risquer une
+        // conversion inventee.
+        return;
+      }
+
+      if (marqueur !== '1') return;
+
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'generate_lead' });
+    })();
+  </script>
 </Base>
 
 <style>

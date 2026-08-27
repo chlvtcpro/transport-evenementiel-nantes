@@ -289,12 +289,22 @@ const BESOINS = [
 
         if (response.ok && data.success) {
           // Conversion : un lead n'est compte QUE sur une reponse acceptee par
-          // Web3Forms. Aucun push dans les branches d'erreur ou de reseau, sinon
-          // le taux de conversion mesure serait faux.
-          // Le push precede la redirection : une fois la navigation lancee, le
-          // contexte JS de cette page est detruit.
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({ event: 'generate_lead' });
+          // Web3Forms. Aucun marqueur dans les branches d'erreur ou de reseau,
+          // sinon le taux de conversion mesure serait faux.
+          //
+          // L'evenement generate_lead n'est PAS pousse ici : la redirection qui
+          // suit detruit le contexte JS de la page, souvent avant que GTM ait eu
+          // le temps de traiter le push, et l'evenement est perdu. On depose
+          // seulement un marqueur, et c'est /devis-envoye qui pousse l'evenement
+          // une fois chargee. sessionStorage plutot qu'un parametre d'URL : une
+          // URL se partage et se met en favori, le marqueur serait falsifiable.
+          try {
+            sessionStorage.setItem('devis-envoye', '1');
+          } catch {
+            // Stockage indisponible (navigation privee stricte, quota). La
+            // demande est partie, on redirige quand meme : perdre la mesure vaut
+            // mieux que bloquer le visiteur sur le formulaire.
+          }
 
           // Succes : on quitte la page pour l'ecran de confirmation. Le bouton
           // reste desactive pendant la navigation, ce qui evite un second envoi
