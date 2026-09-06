@@ -1,0 +1,80 @@
+---
+/*
+  Landing page campagne Google Ads : location de vehicule avec chauffeur.
+
+  Intention de recherche differente de l'accueil. Ici le visiteur cherche a
+  LOUER UN VEHICULE AVEC CHAUFFEUR (autocariste Nantes, location minibus
+  Nantes, location autocar Nantes), pas un coordinateur d'evenement. Le
+  vocabulaire de la page reste donc "location autocar / bus / minibus avec
+  chauffeur" et jamais "transport evenementiel".
+
+  Contraintes d'audience issues de la campagne :
+    - 83 % du trafic est mobile : tout se concoit mobile d'abord
+    - audience majoritairement 45-65 ans : lisibilite, contraste, cibles
+      tactiles genereuses, pas d'interaction subtile
+
+  ETAPE 1 : structure seule. Les sections sont volontairement vides, elles
+  seront remplies a l'etape suivante.
+*/
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import { SITE_DATA } from '../data/site.ts';
+
+const title = 'Location autocar, bus et minibus avec chauffeur à Nantes';
+const description =
+  'Location d\'autocar, bus, minibus et van avec chauffeur à Nantes et en Loire-Atlantique. De 3 à 120 places. Devis sous 24h.';
+
+// JSON-LD propre a la page. Fourni en @graph et rattache au meme @id
+// d'entite que le reste du site, pour que les moteurs reconcilient une
+// seule entite et non deux.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'LocalBusiness',
+      '@id': `${SITE_DATA.url}#organization`,
+      name: 'Transport Événementiel Nantes',
+      url: SITE_DATA.url,
+      description,
+      telephone: '+33684338625',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: '17 rue Vaucanson',
+        postalCode: '44100',
+        addressLocality: 'Nantes',
+        addressCountry: 'FR',
+      },
+      areaServed: {
+        '@type': 'AdministrativeArea',
+        name: 'Loire-Atlantique',
+      },
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: SITE_DATA.geo.latitude,
+        longitude: SITE_DATA.geo.longitude,
+      },
+      priceRange: SITE_DATA.priceRange,
+    },
+  ],
+};
+---
+
+<Base title={title} description={description} jsonLd={jsonLd} headerTheme="dark">
+  <!-- 1. HERO : promesse location vehicule avec chauffeur + CTA devis -->
+  <Section id="hero" tone="dark"></Section>
+
+  <!-- 2. FLOTTE : van, minibus, bus, autocar, de 3 a 120 places -->
+  <Section id="flotte" tone="cream"></Section>
+
+  <!-- 3. ZONE DESSERVIE : Nantes et Loire-Atlantique -->
+  <Section id="zone-desservie" tone="cream-soft"></Section>
+
+  <!-- 4. COMMENT CA MARCHE : de la demande au jour J -->
+  <Section id="comment-ca-marche" tone="cream"></Section>
+
+  <!-- 5. FAQ : questions de location, a baliser en FAQPage a l'etape contenu -->
+  <Section id="faq" tone="cream-soft"></Section>
+
+  <!-- 6. FORMULAIRE : demande de devis, conversion finale -->
+  <Section id="formulaire-devis" tone="dark"></Section>
+</Base>
