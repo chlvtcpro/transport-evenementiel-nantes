@@ -13,8 +13,8 @@
     - audience majoritairement 45-65 ans : lisibilite, contraste, cibles
       tactiles genereuses, pas d'interaction subtile
 
-  ETAPE 1 : structure seule. Les sections sont volontairement vides, elles
-  seront remplies a l'etape suivante.
+  Le hero est ecrit ici et non dans un composant partage : il ne ressemble
+  pas au hero de l'accueil et n'a pas vocation a etre reutilise.
 */
 import Base from '../layouts/Base.astro';
 import Section from '../components/Section.astro';
@@ -23,6 +23,21 @@ import { SITE_DATA } from '../data/site.ts';
 const title = 'Location autocar, bus et minibus avec chauffeur à Nantes';
 const description =
   'Location d\'autocar, bus, minibus et van avec chauffeur à Nantes et en Loire-Atlantique. De 3 à 120 places. Devis sous 24h.';
+
+// Telephone : une seule source, SITE_DATA, pour le lien d'appel comme pour
+// l'affichage. Le NAP publie ne peut donc pas diverger de la fiche Google
+// Business. +33684338625 devient 06 84 33 86 25 a l'ecran.
+const telHref = `tel:${SITE_DATA.telephone}`;
+const telDisplay = SITE_DATA.telephone
+  .replace(/^\+33/, '0')
+  .replace(/(\d{2})(?=\d)/g, '$1 ');
+
+// Ligne de reassurance sous les CTA.
+const REASSURANCE = [
+  'Devis sous 24h',
+  'Chauffeurs professionnels',
+  'Nantes et Grand Ouest',
+];
 
 // Villes du signal local. Aucune adresse postale : l'entite est un
 // service-area business, exactement comme la fiche Google Business qui
@@ -72,8 +87,66 @@ const jsonLd = {
 ---
 
 <Base title={title} description={description} jsonLd={jsonLd} headerTheme="dark">
-  <!-- 1. HERO : promesse location vehicule avec chauffeur + CTA devis -->
-  <Section id="hero" tone="dark"></Section>
+  <!-- 1. HERO : promesse location vehicule avec chauffeur + appel en CTA
+       principal. Aucune image de fond, aucun reveal, aucune animation
+       d'entree : le trafic est paye, le premier rendu ne doit dependre
+       d'aucun telechargement ni d'aucun script. Le LCP est le H1 texte. -->
+  <section
+    id="hero"
+    data-tone="dark"
+    class="relative overflow-hidden bg-green-900 text-on-dark"
+  >
+    <div class="hero-glow absolute inset-0" aria-hidden="true"></div>
+
+    <div class="container relative z-10 pb-14 pt-28 sm:pt-32 lg:pb-24 lg:pt-40">
+      <h1 class="hero-title max-w-[16ch]">
+        Location d'autocar, bus et minibus avec chauffeur à Nantes
+      </h1>
+
+      <p class="hero-subtitle mt-5 max-w-[46ch]">
+        De la berline 3 places à l'autocar 120 places. Nantes, Saint-Nazaire
+        et toute la Loire-Atlantique.
+      </p>
+
+      <!-- CTA. Ordre du DOM = ordre mobile : le bouton d'appel est premier,
+           c'est l'action que fait reellement cette audience. -->
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <a
+          href={telHref}
+          class="hero-cta-tel"
+          aria-label={`Appeler Transport Événementiel Nantes au ${telDisplay}`}
+        >
+          <svg
+            class="h-6 w-6 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .58 3.6 1 1 0 0 1-.25 1Z"
+            ></path>
+          </svg>
+          <span class="hero-cta-tel-number">{telDisplay}</span>
+        </a>
+
+        <a href="#formulaire-devis" class="hero-cta-devis">
+          Demander un devis
+        </a>
+      </div>
+
+      <ul class="hero-reassurance mt-7">
+        {
+          REASSURANCE.map((item) => (
+            <li>{item}</li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
 
   <!-- 2. FLOTTE : van, minibus, bus, autocar, de 3 a 120 places -->
   <Section id="flotte" tone="cream"></Section>
@@ -90,3 +163,176 @@ const jsonLd = {
   <!-- 6. FORMULAIRE : demande de devis, conversion finale -->
   <Section id="formulaire-devis" tone="dark"></Section>
 </Base>
+
+<style>
+  /* ============ HERO ============
+     Ecrit mobile d'abord : les regles de base ciblent 375px, les media
+     queries montent ensuite. 83 % du trafic arrive sur mobile.
+
+     Aucune image, aucun degrade lourd : un halo radial en CSS pur donne de
+     la profondeur sans une seule requete reseau. */
+
+  .hero-glow {
+    background:
+      radial-gradient(
+        ellipse 90% 60% at 15% 0%,
+        rgba(42, 70, 54, 0.55) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 70% 50% at 100% 100%,
+        rgba(201, 162, 75, 0.1) 0%,
+        transparent 65%
+      );
+  }
+
+  /* H1. Pas de uppercase, contrairement au hero de l'accueil : le titre est
+     long (57 caracteres) et la capitale ajoute environ 12 % de largeur, donc
+     deux lignes de plus sur un ecran de 375px. En bas de casse il tient plus
+     haut dans l'ecran et se lit plus vite, ce qui compte pour une audience
+     de 45 a 65 ans. */
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.95rem, 7vw, 3.4rem);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    color: var(--on-dark);
+  }
+
+  /* Sous-titre. Couleur posee en CSS et non via text-on-dark/[0.92] :
+     l'opacite arbitraire de Tailwind ne produit aucune regle sur une
+     variable non-RGB (verifie dans le CSS compile, la classe n'existe pas).
+     Voir CLAUDE.md. */
+  .hero-subtitle {
+    font-family: var(--font-body);
+    font-weight: 400;
+    /* 17px minimum sur mobile, au-dessus du plancher de 16px demande. */
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--on-dark);
+    opacity: 0.92;
+  }
+
+  /* ---- CTA 1 : appel telephonique, action dominante ----
+     Pleine largeur sur mobile, hauteur 60px (le minimum demande etait 48px),
+     numero a 1.5rem. C'est l'element le plus lourd visuellement de la page,
+     volontairement. */
+  .hero-cta-tel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    width: 100%;
+    min-height: 60px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    background-color: var(--gold);
+    color: var(--ink);
+    text-decoration: none;
+    transition: background-color 300ms var(--ease);
+  }
+
+  .hero-cta-tel-number {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    /* Le numero ne doit jamais se couper en deux lignes. */
+    white-space: nowrap;
+  }
+
+  /* ---- CTA 2 : devis, secondaire ---- */
+  .hero-cta-devis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 52px;
+    padding: 0.75rem 1.75rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line-on-dark);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--on-dark);
+    text-decoration: none;
+    transition:
+      border-color 300ms var(--ease),
+      background-color 300ms var(--ease);
+  }
+
+  /* ---- Reassurance ----
+     Les trois arguments ne tiennent pas sur une ligne a 375px (environ 62
+     caracteres pour 335px utiles). Plutot qu'une ligne a separateurs qui se
+     casse n'importe ou, on empile en liste sur mobile, un point dore devant
+     chaque item, et on revient a la ligne separee des 640px ou la place
+     existe.
+
+     Les puces sont en ::before : le point n'est ni lu par les lecteurs
+     d'ecran, ni copie avec le texte. */
+  .hero-reassurance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--on-dark);
+    opacity: 0.88;
+  }
+
+  .hero-reassurance li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .hero-reassurance li::before {
+    content: '';
+    flex: none;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background-color: var(--gold);
+  }
+
+  /* ---- A partir de 640px : les CTA passent cote a cote et se dimensionnent
+       a leur contenu, la reassurance revient sur une seule ligne. ---- */
+  @media (min-width: 640px) {
+    .hero-cta-tel,
+    .hero-cta-devis {
+      width: auto;
+    }
+
+    .hero-reassurance {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem 0.85rem;
+    }
+
+    /* En ligne, le premier item n'a pas de separateur devant lui. */
+    .hero-reassurance li:first-child::before {
+      display: none;
+    }
+  }
+
+  /* Le hover n'existe pas sur mobile. On le reserve aux appareils qui
+     pointent vraiment, pour eviter les etats colles au tap. */
+  @media (hover: hover) {
+    .hero-cta-tel:hover {
+      background-color: var(--gold-soft);
+    }
+    .hero-cta-devis:hover {
+      border-color: var(--gold);
+      background-color: rgba(237, 231, 218, 0.06);
+    }
+  }
+</style>
