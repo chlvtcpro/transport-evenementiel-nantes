@@ -20,7 +20,7 @@ export const SITE_DATA = {
 
   // Contact. A REMPLIR : renseigner le vrai numero et le vrai email. Ne pas
   // publier les placeholders dans le schema.
-  telephone: '[TELEPHONE A REMPLIR]',
+  telephone: '+33684338625',
   email: '[EMAIL A REMPLIR]',
 
   // Zone desservie (service-area business, pas de vitrine physique : on
