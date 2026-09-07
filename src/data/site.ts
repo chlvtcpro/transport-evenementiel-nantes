@@ -13,8 +13,23 @@ export const SITE_DATA = {
   // Domaine de production (doit correspondre a `site` dans astro.config.mjs).
   // Sans slash final.
   url: 'https://transport-evenementiel-nantes.fr',
+  /*
+    Meta description par defaut, et description de l'entite dans le JSON-LD.
+
+    L'argument bas-carbone a ete retire : aucun vehicule n'est detenu en
+    propre, le modele est la coordination de transporteurs partenaires. Une
+    promesse d'empreinte sur un parc qu'on ne possede pas n'est pas tenable,
+    ni juridiquement ni au regard de Google Ads. Ne pas le reintroduire ici.
+    Ce qui reste est vrai sans condition : l'interlocuteur unique et la zone.
+
+    Longueur : 152 caracteres, dans la fenetre 120-165 affichee par Google.
+    La version precedente en faisait 172, elle etait donc deja tronquee avant
+    cette reecriture. "Grand Ouest" a ete retire pour tenir : c'est le terme
+    le moins recherche des trois, et la portee reste portee structurellement
+    par `areaServed` ci-dessous. Ne pas rallonger sans recompter.
+  */
   description:
-    'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et dans le Grand Ouest. Un seul interlocuteur, flotte bas-carbone. Devis rapide.',
+    'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et en Loire-Atlantique. Un seul interlocuteur. Devis rapide.',
   foundingDate: '2023',
   priceRange: '€€',
 
