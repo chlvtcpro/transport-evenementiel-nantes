@@ -103,9 +103,22 @@ const { gtmId } = Astro.props;
 */}
 <script is:inline>
   window.tarteaucitronCustomText = {
-    /* Bandeau. Deux phrases, vouvoiement, aucun jargon. */
+    /* Bandeau. Deux phrases, vouvoiement, aucun jargon.
+
+       tarteaucitron concatene cette valeur dans une chaine HTML (voir
+       userInterface.openAlert), le balisage y est donc rendu. On s'en
+       sert pour degrader la phrase sur mobile : ce qui est dans
+       .tac-detail disparait sous 600px, ou chaque ligne de texte coute
+       21px de bandeau fixe pose par-dessus la page.
+
+       Ce qui reste sur mobile enonce les deux finalites, ce qui est le
+       minimum exige : mesure d'audience et efficacite des campagnes. Le
+       reste, la reversibilite du choix, est du confort de lecture : il
+       est de toute facon repete dans le panneau "Choisir" et dans la
+       politique de confidentialite, tous deux a un clic. Sur desktop la
+       phrase est inchangee, au caractere pres. */
     alertBigPrivacy:
-      "Nous utilisons des cookies pour mesurer l'audience du site et l'efficacité de nos campagnes. Vous choisissez, et vous pouvez changer d'avis à tout moment.",
+      "Nous utilisons des cookies pour mesurer l'audience<span class=\"tac-detail\"> du site</span> et l'efficacité de nos campagnes.<span class=\"tac-detail\"> Vous choisissez, et vous pouvez changer d'avis à tout moment.</span>",
     acceptAll: 'Tout accepter',
     denyAll: 'Tout refuser',
     personalize: 'Choisir',
@@ -624,15 +637,103 @@ const { gtmId } = Astro.props;
   }
 
   /* =========================================================
-     6. Mobile : les deux CTA passent en pleine largeur, empiles,
-     toujours de meme taille l'un que l'autre.
+     6. Mobile : bandeau compact
+
+     Le bandeau est en position fixe : chaque pixel qu'il occupe est un
+     pixel de page en moins, et il recouvre ce qui est dessous. Mesure a
+     375 x 667 avant compactage : 348px de haut, soit plus de la moitie
+     de la hauteur utile d'un iPhone SE, CTA de la page compris.
+
+     Trois leviers, par ordre d'impact :
+       1. le texte perd son detail (.tac-detail), qui reste accessible
+          derriere "Choisir" ;
+       2. les deux CTA passent cote a cote au lieu d'etre empiles ;
+       3. les deux acces secondaires passent en texte simple reduit.
+
+     La parite CNIL n'est pas entamee : les deux CTA gardent la meme
+     typographie, la meme geometrie et, par flex: 1 1 45%, la meme
+     largeur au pixel. Ni la taille ni le contraste du refus ne sont
+     reduits par rapport a l'acceptation.
+
+     Rien ici ne s'applique au-dessus de 600px : le rendu desktop est
+     inchange.
      ========================================================= */
   @media (max-width: 600px) {
+    /* Le detail de la phrase. Voir alertBigPrivacy plus haut. */
+    html body #tarteaucitronRoot #tarteaucitronAlertBig .tac-detail {
+      display: none !important;
+    }
+
+    /* La feuille d'origine laisse ces elements en content-box. Avec
+       width:100% et 20px de padding lateral, le bandeau mesurait 415px
+       dans un viewport de 375 (40px hors ecran) et les boutons 433px.
+       Sans cette ligne, la rangee de CTA deborde de la meme facon. */
+    html body #tarteaucitronRoot #tarteaucitronAlertBig,
+    html body #tarteaucitronRoot #tarteaucitronAlertBig * {
+      box-sizing: border-box !important;
+    }
+
+    /* Trois rangees obtenues par retour a la ligne, sans toucher au DOM
+       genere par la librairie : texte / les deux CTA / les deux acces. */
+    html body #tarteaucitronRoot #tarteaucitronAlertBig {
+      display: flex !important;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      /* Le budget vertical est serre : 12 + 12 de padding, 1 de bordure,
+         42 de texte, 44 de CTA, 34 d'acces, plus deux gouttieres. A
+         0.5rem le total sortait a 161px. */
+      gap: 0.45rem;
+      padding: 0.75rem 1rem !important;
+    }
+
+    /* Contrepartie obligatoire du !important ci-dessus. tarteaucitron
+       ferme le bandeau en posant un style INLINE `display: none`
+       (userInterface.css, voir tarteaucitron.min.js). Or une declaration
+       !important venue d'une feuille l'emporte sur un style inline qui
+       n'en a pas : sans cette regle, le bandeau ne se fermait plus. Il
+       restait dans le flux, invisible parce que la librairie passe aussi
+       l'opacite a 0, mais toujours cliquable, et il avalait les taps sur
+       les 159 px de bas de page, CTA telephone compris.
+       Ne pas retirer sans retirer aussi le !important sur display. */
+    html body #tarteaucitronRoot #tarteaucitronAlertBig[style*='display: none'] {
+      display: none !important;
+    }
+
+    /* Rangee 1 : le texte, pleine largeur. 15px, au-dessus du plancher
+       de lisibilite, pour une audience de 45 a 65 ans. */
+    html body #tarteaucitronRoot #tarteaucitronDisclaimerAlert,
+    html body #tarteaucitronRoot #tarteaucitronDisclaimerAlert strong {
+      flex: 0 0 100%;
+      max-width: none;
+      margin: 0 !important;
+      font-size: 0.9375rem !important;
+      line-height: 1.4 !important;
+    }
+
+    /* Rangee 2 : les deux CTA. La base de 45% fait deux choses a la
+       fois : les deux tiennent sur la meme ligne et s'y partagent la
+       place a egalite, et le bouton suivant ne peut plus y entrer, donc
+       il passe a la ligne. Aucun element intercalaire n'est necessaire.
+       44px de haut : cible tactile confortable. */
     html body #tarteaucitronRoot #tarteaucitronAlertBig button.tarteaucitronCTAButton {
-      display: block !important;
-      width: 100% !important;
+      flex: 1 1 45%;
       min-width: 0 !important;
-      margin: 0.45rem 0 !important;
+      margin: 0 !important;
+      padding: 0.5rem !important;
+      min-height: 44px !important;
+    }
+
+    /* Rangee 3 : "Choisir" et la politique, en texte simple. Ce sont des
+       acces, pas des choix de consentement : les reduire ne cree pas de
+       dissymetrie entre accepter et refuser. */
+    html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronCloseAlert,
+    html body #tarteaucitronRoot #tarteaucitronAlertBig button#tarteaucitronPrivacyUrl {
+      flex: 0 0 auto;
+      margin: 0 !important;
+      padding: 0.3rem 0.25rem !important;
+      font-size: 0.875rem !important;
+      min-height: 34px !important;
     }
   }
 
