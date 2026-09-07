@@ -35,6 +35,67 @@ const REASSURANCE = [
   'Nantes et Grand Ouest',
 ];
 
+/*
+  Vehicules mobilisables.
+
+  ATTENTION, contrainte juridique et Google Ads, pas un choix de style :
+  aucun vehicule n'est detenu en propre. Le modele est la coordination de
+  transporteurs partenaires. Sont donc INTERDITS sur toute la page, y
+  compris dans les meta et le JSON-LD : "notre flotte", "nos vehicules",
+  "nos chauffeurs", "notre parc". Toute formulation possessive sur le
+  materiel ou les conducteurs serait une allegation intenable.
+
+  Formulations utilisables : "vehicules de nos transporteurs partenaires",
+  "nous mobilisons", "nous selectionnons le vehicule adapte", "chauffeurs
+  professionnels de nos partenaires".
+
+  Aucune photo : montrer un autocar qui n'est pas celui qu'on fournit pose
+  exactement le meme probleme que le vocabulaire possessif. La capacite
+  porte donc seule la charge visuelle de chaque carte.
+
+  La capacite est composee en trois morceaux pour que seul le nombre soit
+  gros : "jusqu'a" + "3" + "passagers" se lit comme une phrase ordinaire,
+  mais le 3 seul porte le poids typographique.
+
+  `plage` distingue une fourchette (15 a 22) d'un plafond (3, 8, 120) : la
+  premiere occupe six caracteres au lieu d'un a trois et passe donc un cran
+  en dessous, sinon la ligne se casse dans la grille a deux colonnes.
+*/
+const VEHICULES = [
+  {
+    nom: 'Berline',
+    prefixe: 'jusqu\'à',
+    nombre: '3',
+    plage: false,
+    description:
+      'Transferts VIP, dirigeants, intervenants. Gare, aéroport, hôtel.',
+  },
+  {
+    nom: 'Van',
+    prefixe: 'jusqu\'à',
+    nombre: '8',
+    plage: false,
+    description:
+      'Petits groupes, équipes, transferts aéroport Nantes Atlantique.',
+  },
+  {
+    nom: 'Minibus',
+    prefixe: 'de',
+    nombre: '15 à 22',
+    plage: true,
+    description:
+      'Navettes, séminaires, groupes constitués, rotations sur la journée.',
+  },
+  {
+    nom: 'Autocar',
+    prefixe: 'jusqu\'à',
+    nombre: '120',
+    plage: false,
+    description:
+      'Grands groupes, congrès, événements d\'entreprise, mariages.',
+  },
+];
+
 // Villes du signal local. Aucune adresse postale : l'entite est un
 // service-area business, exactement comme la fiche Google Business qui
 // n'affiche aucune adresse et ne declare que des zones desservies. Le NAP
@@ -144,8 +205,65 @@ const jsonLd = {
     </div>
   </section>
 
-  <!-- 2. FLOTTE : van, minibus, bus, autocar, de 3 a 120 places -->
-  <Section id="flotte" tone="cream"></Section>
+  <!-- 2. VEHICULES : berline, van, minibus, autocar, de 3 a 120 passagers.
+       Section nommee "vehicules" et non "flotte" : le mot flotte appelle le
+       possessif ("notre flotte"), qui est precisement interdit ici. Voir le
+       bloc VEHICULES dans le frontmatter. -->
+  <Section id="vehicules" tone="cream">
+    <p class="type-eyebrow vehicules-eyebrow">Véhicules avec chauffeur</p>
+
+    <h2 class="type-h2 mt-3 max-w-[18ch]">Quel véhicule pour votre groupe ?</h2>
+
+    <!-- Le modele est enonce des la premiere phrase, sans detour. Un
+         visiteur qui cherche un autocariste doit savoir tout de suite a qui
+         il parle : un coordinateur, pas un depot de bus. -->
+    <!-- 68ch et non 52 : a 52 la phrase tombait sur trois lignes en desktop
+         avec un "J." orphelin sur la derniere. La contrainte ne joue de
+         toute facon pas sous 640px, ou le container est plus etroit. -->
+    <p class="vehicules-intro mt-5 max-w-[68ch]">
+      Nous mobilisons les véhicules et les chauffeurs professionnels de nos
+      transporteurs partenaires. Un seul interlocuteur, du devis au jour J.
+    </p>
+
+    <ul class="vehicules-liste mt-10">
+      {
+        VEHICULES.map((v) => (
+          <li class="vehicule">
+            <p class="vehicule-capacite">
+              <span class="vehicule-prefixe">{v.prefixe}</span>
+              <span
+                class:list={[
+                  'type-stat',
+                  'vehicule-nombre',
+                  v.plage && 'vehicule-nombre--plage',
+                ]}
+              >
+                {v.nombre}
+              </span>
+              <span class="vehicule-unite">passagers</span>
+            </p>
+
+            <h3 class="vehicule-nom">{v.nom}</h3>
+            <p class="vehicule-description">{v.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <!-- Aide au choix. Le visiteur qui hesite entre minibus et autocar est
+         exactement celui qui repart sans rien faire : on lui donne l'appel
+         comme sortie, au moment ou l'hesitation se produit. -->
+    <p class="vehicules-aide mt-10">
+      Vous ne savez pas quel véhicule choisir ?{' '}
+      <a
+        href={TEL_HREF}
+        class="vehicules-aide-lien"
+        aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
+      >
+        Appelez-nous
+      </a>, on vous oriente en deux minutes.
+    </p>
+  </Section>
 
   <!-- 3. ZONE DESSERVIE : Nantes et Loire-Atlantique -->
   <Section id="zone-desservie" tone="cream-soft"></Section>
@@ -334,6 +452,145 @@ const jsonLd = {
     .hero-cta-devis:hover {
       border-color: var(--gold);
       background-color: rgba(237, 231, 218, 0.06);
+    }
+  }
+
+  /* ============ VEHICULES ============
+     Aucune image disponible, et aucune image d'illustration : montrer un
+     autocar qui n'est pas celui qu'on fournit poserait le meme probleme
+     que d'ecrire "notre flotte". La capacite porte donc seule la charge
+     visuelle, en typographie.
+
+     Capacite au-dessus du texte, et non dans une colonne a gauche : la
+     colonne testee ne laissait que 203px au descriptif a 375px, qui partait
+     alors sur quatre lignes. En pleine largeur il tient sur deux, pour une
+     hauteur de carte identique. A encombrement egal, on prend la version
+     lisible.
+
+     Pas de carrousel horizontal : il masque une partie de l'offre derriere
+     un geste, et cette audience ne le fait pas. Les quatre capacites
+     doivent etre lisibles d'un seul coup d'oeil. */
+
+  .vehicules-eyebrow {
+    color: var(--gold);
+  }
+
+  .vehicules-intro {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  .vehicules-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vehicule {
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background-color: var(--cream-soft);
+  }
+
+  /* Capacite sur une ligne, alignee sur la ligne de base : le nombre est
+     trois fois plus gros que ce qui l'entoure, mais l'ensemble se lit
+     quand meme comme une phrase, "jusqu'a 3 passagers". */
+  .vehicule-capacite {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+  }
+
+  .vehicule-prefixe,
+  .vehicule-unite {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+    color: var(--ink-muted);
+  }
+
+  .vehicule-nombre {
+    color: var(--gold);
+    /* Une capacite ne se coupe jamais en deux lignes, "15 a 22" comprise. */
+    white-space: nowrap;
+  }
+
+  /* Une fourchette occupe six caracteres la ou un plafond en occupe un a
+     trois. Sans ce cran en dessous, la ligne du minibus se casse dans la
+     grille a deux colonnes. */
+  .vehicule-nombre--plage {
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+  }
+
+  .vehicule-nom {
+    margin-top: 0.6rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+
+  .vehicule-description {
+    margin-top: 0.35rem;
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+
+  /* ---- Aide au choix ---- */
+  .vehicules-aide {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  /* Lien d'appel en plein texte. La cible est modeste, mais elle ne porte
+     pas l'appel a elle seule : a ce niveau de scroll la barre d'appel fixe
+     est affichee en bas de l'ecran, avec ses 56px de haut sur toute la
+     largeur. Ce lien est un rappel dans le fil de la lecture, pas le
+     dispositif principal. Souligne et dore : reconnaissable comme lien sans
+     dependre de la seule couleur. */
+  .vehicules-aide-lien {
+    display: inline-block;
+    padding: 0.15rem 0.1rem;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    transition: color 300ms var(--ease);
+  }
+
+  @media (min-width: 640px) {
+    /* Deux colonnes des que la place existe : la gamme se lit alors en un
+       seul bloc, sans scroll. */
+    .vehicules-liste {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .vehicule {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (hover: hover) {
+    .vehicules-aide-lien:hover {
+      color: var(--gold);
     }
   }
 </style>
