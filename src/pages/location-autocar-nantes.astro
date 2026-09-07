@@ -18,19 +18,15 @@
 */
 import Base from '../layouts/Base.astro';
 import Section from '../components/Section.astro';
-import { SITE_DATA } from '../data/site.ts';
+import CallBar from '../components/CallBar.astro';
+// Telephone : une seule source, SITE_DATA, pour le lien d'appel comme pour
+// l'affichage, ici comme dans la barre d'appel. Le NAP publie ne peut donc
+// pas diverger de la fiche Google Business.
+import { SITE_DATA, TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
 
 const title = 'Location autocar, bus et minibus avec chauffeur à Nantes';
 const description =
   'Location d\'autocar, bus, minibus et van avec chauffeur à Nantes et en Loire-Atlantique. De 3 à 120 places. Devis sous 24h.';
-
-// Telephone : une seule source, SITE_DATA, pour le lien d'appel comme pour
-// l'affichage. Le NAP publie ne peut donc pas diverger de la fiche Google
-// Business. +33684338625 devient 06 84 33 86 25 a l'ecran.
-const telHref = `tel:${SITE_DATA.telephone}`;
-const telDisplay = SITE_DATA.telephone
-  .replace(/^\+33/, '0')
-  .replace(/(\d{2})(?=\d)/g, '$1 ');
 
 // Ligne de reassurance sous les CTA.
 const REASSURANCE = [
@@ -112,9 +108,9 @@ const jsonLd = {
            c'est l'action que fait reellement cette audience. -->
       <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
         <a
-          href={telHref}
+          href={TEL_HREF}
           class="hero-cta-tel"
-          aria-label={`Appeler Transport Événementiel Nantes au ${telDisplay}`}
+          aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
         >
           <svg
             class="h-6 w-6 shrink-0"
@@ -130,7 +126,7 @@ const jsonLd = {
               d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .58 3.6 1 1 0 0 1-.25 1Z"
             ></path>
           </svg>
-          <span class="hero-cta-tel-number">{telDisplay}</span>
+          <span class="hero-cta-tel-number">{TEL_AFFICHE}</span>
         </a>
 
         <a href="#formulaire-devis" class="hero-cta-devis">
@@ -162,6 +158,11 @@ const jsonLd = {
 
   <!-- 6. FORMULAIRE : demande de devis, conversion finale -->
   <Section id="formulaire-devis" tone="dark"></Section>
+
+  <!-- Barre d'appel fixe, mobile uniquement. Prend le relais du CTA du hero
+       des qu'il sort de l'ecran. Voir CallBar.astro pour les conditions
+       d'affichage. -->
+  <CallBar />
 </Base>
 
 <style>

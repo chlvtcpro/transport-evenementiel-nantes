@@ -56,6 +56,21 @@ export const SITE_DATA = {
   dateModified: '2026-07-04',
 };
 
+/*
+  Telephone, formes derivees.
+
+  Le NAP publie doit rester strictement identique a la fiche Google
+  Business. Une seule valeur saisie, SITE_DATA.telephone, et tout le
+  reste en decoule : le schema, le lien d'appel et l'affichage a
+  l'ecran. Recalculer ce formatage dans chaque page ou composant
+  rouvrirait la porte a une divergence.
+*/
+export const TEL_HREF = `tel:${SITE_DATA.telephone}`;
+// +33684338625 devient 06 84 33 86 25.
+export const TEL_AFFICHE = SITE_DATA.telephone
+  .replace(/^\+33/, '0')
+  .replace(/(\d{2})(?=\d)/g, '$1 ');
+
 // Les 3 services, rattaches au provider LocalBusiness dans le JSON-LD.
 export const SERVICES = [
   {

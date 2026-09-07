@@ -1,0 +1,262 @@
+---
+/*
+  Barre d'appel fixe, mobile uniquement.
+
+  Raison d'etre : sur cette landing, 83 % du trafic est mobile et cette
+  audience appelle plutot qu'elle ne remplit un formulaire. Le numero est
+  dans le hero, donc visible a l'arrivee, puis il disparait des le premier
+  scroll. Cette barre le remet a portee de pouce pour tout le reste de la
+  page, sans jamais obliger a remonter.
+
+  Trois regles de comportement, dans cet ordre de priorite :
+
+    1. Elle ne s'affiche jamais tant que le bandeau de consentement est
+       ouvert. Les deux sont en position fixe en bas de l'ecran : ils se
+       superposeraient, et le bandeau, a z-index 100000, gagnerait. Le
+       visiteur verrait une barre a moitie mangee.
+
+    2. Elle ne s'affiche pas tant que le CTA telephone du hero est a
+       l'ecran. Afficher deux fois le meme numero a 200px d'ecart ne fait
+       rien gagner et coute 72px de page a un moment ou le hero fait
+       justement son travail.
+
+    3. En dehors de ces deux cas, elle est la.
+
+  Sans JavaScript, la barre reste masquee : le numero est deja dans le hero
+  et dans le footer, l'appel reste possible. C'est une amelioration
+  progressive, pas un point de defaillance.
+
+  Composant volontairement local a la landing : les 12 autres pages du site
+  ne recoivent pas de trafic paye et n'ont pas cette contrainte.
+*/
+import { TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
+
+interface Props {
+  /**
+   * Element dont la visibilite pilote la barre. Tant qu'il est a l'ecran,
+   * la barre reste masquee. Par defaut le CTA telephone du hero.
+   */
+  watch?: string;
+}
+const { watch = '.hero-cta-tel' } = Astro.props;
+---
+
+<!-- aria-hidden au repos plutot qu'un simple display:none pilote par le
+     CSS : l'etat est porte par data-visible, et les lecteurs d'ecran
+     n'annoncent pas un lien qui n'est pas encore la. Le numero reste
+     accessible dans le hero et le footer en permanence. -->
+<div
+  class="call-bar"
+  data-call-bar
+  data-visible="false"
+  data-watch={watch}
+  aria-hidden="true"
+>
+  <a
+    href={TEL_HREF}
+    class="call-bar-link"
+    aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
+    tabindex="-1"
+  >
+    <svg
+      class="call-bar-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .58 3.6 1 1 0 0 1-.25 1Z"
+      ></path>
+    </svg>
+    <span class="call-bar-number">{TEL_AFFICHE}</span>
+  </a>
+</div>
+
+<style>
+  /* La barre n'existe pas au-dessus de 640px : au-dela, le numero du hero
+     et celui du footer suffisent, et l'ecran n'a pas le meme probleme de
+     hauteur utile. 640px est la meme frontiere que celle ou les CTA du
+     hero passent cote a cote. */
+  .call-bar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    /* Sous le header (z-50) : si le menu mobile s'ouvre en accordeon sur un
+       ecran court, c'est le menu qui recouvre la barre, pas l'inverse. */
+    z-index: 40;
+    padding: 0.5rem 1rem;
+    /* Barre d'accueil iOS et geste de retour Android : sans cette reserve,
+       le bas du bouton passe sous la zone systeme et devient intappable. */
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    background-color: var(--green-900);
+    border-top: 1px solid var(--line-on-dark);
+    /* Etat de repos : hors ecran, sans transition, pour qu'aucune barre ne
+       glisse a l'arrivee sur la page. */
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+      transform 260ms var(--ease),
+      visibility 0s linear 260ms;
+  }
+
+  .call-bar[data-visible='true'] {
+    transform: translateY(0);
+    visibility: visible;
+    transition:
+      transform 260ms var(--ease),
+      visibility 0s;
+  }
+
+  @media (min-width: 640px) {
+    .call-bar {
+      display: none;
+    }
+  }
+
+  /* Cible unique et pleine largeur. Pas de second bouton "Devis" a cote :
+     couper la largeur en deux diviserait la cible tactile et creerait des
+     erreurs de tap sur une audience de 45 a 65 ans, pour proposer une
+     action que ce trafic ne fait pas. */
+  .call-bar-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 56px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    background-color: var(--gold);
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .call-bar-icon {
+    width: 1.375rem;
+    height: 1.375rem;
+    flex: none;
+  }
+
+  .call-bar-number {
+    font-family: var(--font-body);
+    font-weight: 600;
+    /* 1.25rem et non 1.5rem comme dans le hero : la barre doit rester
+       lisible sans devenir un second hero. */
+    font-size: 1.25rem;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  /* Reserve de place en bas de page, posee une seule fois par le script.
+     Sans elle, la barre recouvre en permanence les dernieres lignes du
+     footer, qui portent les mentions legales et la politique de
+     confidentialite.
+
+     73px = 8 + 56 + 8 de la barre, plus 1px de bordure haute. A recalculer
+     si min-height ou padding changent ci-dessus. */
+  :global(html.has-call-bar body) {
+    padding-bottom: calc(73px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    :global(html.has-call-bar body) {
+      padding-bottom: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .call-bar {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /*
+    Pilotage de la barre d'appel.
+
+    Deux conditions independantes, combinees a chaque evaluation :
+      - heroVisible : le CTA telephone du hero est a l'ecran
+      - consentOuvert : le bandeau tarteaucitron occupe le bas de l'ecran
+
+    La barre s'affiche uniquement si les deux sont fausses.
+  */
+  const barre = document.querySelector<HTMLElement>('[data-call-bar]');
+
+  if (barre) {
+    const lien = barre.querySelector<HTMLAnchorElement>('.call-bar-link');
+    let heroVisible = true;
+    let consentOuvert = false;
+
+    const appliquer = () => {
+      const visible = !heroVisible && !consentOuvert;
+      barre.dataset.visible = String(visible);
+      barre.setAttribute('aria-hidden', String(!visible));
+      // Un lien masque ne doit pas etre atteignable au clavier : sinon le
+      // focus part sur un element hors ecran et la page semble sauter.
+      if (lien) lien.tabIndex = visible ? 0 : -1;
+    };
+
+    // La reserve de place est posee des maintenant, pas au premier
+    // affichage de la barre : ajouter 72px au document en cours de
+    // lecture deplacerait le contenu sous le doigt du visiteur.
+    document.documentElement.classList.add('has-call-bar');
+
+    // --- Condition 1 : le CTA du hero ---
+    // Le header est fixe et masque les 86 premiers pixels. Sans cette
+    // marge negative, un CTA glisse sous le header serait encore compte
+    // comme visible et la barre resterait absente alors que le numero ne
+    // se voit plus.
+    const cible = document.querySelector(barre.dataset.watch || '');
+    if (cible) {
+      new IntersectionObserver(
+        ([entree]) => {
+          heroVisible = entree.isIntersecting;
+          appliquer();
+        },
+        { rootMargin: '-86px 0px 0px 0px', threshold: 0 }
+      ).observe(cible);
+    } else {
+      // Pas de cible : la barre se comporte comme si le hero etait passe.
+      heroVisible = false;
+      appliquer();
+    }
+
+    // --- Condition 2 : le bandeau de consentement ---
+    // tarteaucitron ouvre et ferme son bandeau en ecrivant un style INLINE
+    // sur l'element (voir le commentaire correspondant dans Consent.astro).
+    // On surveille donc l'attribut style, pas une classe.
+    const lireBandeau = (el: HTMLElement) => {
+      consentOuvert = getComputedStyle(el).display !== 'none';
+      appliquer();
+    };
+
+    const brancherBandeau = (el: HTMLElement) => {
+      lireBandeau(el);
+      new MutationObserver(() => lireBandeau(el)).observe(el, {
+        attributes: true,
+        attributeFilter: ['style'],
+      });
+    };
+
+    const bandeau = document.getElementById('tarteaucitronAlertBig');
+    if (bandeau) {
+      brancherBandeau(bandeau);
+    } else {
+      // Le bandeau est injecte apres coup par la librairie : on attend son
+      // arrivee dans le DOM, puis on cesse d'observer le body.
+      const attente = new MutationObserver(() => {
+        const el = document.getElementById('tarteaucitronAlertBig');
+        if (el) {
+          attente.disconnect();
+          brancherBandeau(el);
+        }
+      });
+      attente.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+</script>
