@@ -29,6 +29,26 @@ import { SITE_DATA, TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
 import { WEB3FORMS_KEY, PAGE_ENVOI } from '../lib/devisEnvoi.ts';
 
 const title = 'Location autocar, bus et minibus avec chauffeur à Nantes';
+// NE PAS elargir « Nantes et en Loire-Atlantique » en « Grand Ouest » pour
+// s'aligner sur la section Zone desservie. Ce n'est pas un oubli, c'est un
+// arbitrage.
+//
+// Une meta description n'annonce pas un perimetre commercial, elle gagne un
+// clic dans une page de resultats. Elle doit donc reprendre le vocabulaire
+// REELLEMENT tape par les visiteurs, et ce vocabulaire est « Nantes » et
+// « Loire-Atlantique », pas « Grand Ouest » : la correspondance entre le
+// mot-cle de la requete et le texte de la meta est ce qui declenche la mise
+// en gras dans le resultat, et cette mise en gras porte le taux de clic. La
+// page est en plus une cible de campagne payante, ou le meme mecanisme joue
+// sur le score de pertinence.
+//
+// Le perimetre elargi n'est pas perdu : il est annonce dans le corps de la
+// page, section Zone desservie, sept departements plus le balisage
+// areaServed correspondant. C'est le bon endroit pour une promesse, pas la
+// meta.
+//
+// Meme raisonnement et meme avertissement sur SITE_DATA.description dans
+// src/data/site.ts.
 const description =
   'Location d\'autocar, bus, minibus et van avec chauffeur à Nantes et en Loire-Atlantique. De 3 à 120 places. Devis sous 24h.';
 

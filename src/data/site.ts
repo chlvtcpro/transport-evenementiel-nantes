@@ -30,6 +30,23 @@ export const SITE_DATA = {
     deja portee par Nantes et Loire-Atlantique, et structurellement par
     `areaServed` ci-dessous ; l'incitation, elle, n'a aucun doublon ailleurs.
     Ne pas rallonger sans recompter.
+
+    NE PAS elargir "a Nantes et en Loire-Atlantique" en "Grand Ouest" au
+    pretexte que la landing /location-autocar-nantes annonce desormais sept
+    departements. Ce n'est pas une incoherence a corriger, c'est un arbitrage.
+
+    Une meta description n'annonce pas un perimetre commercial, elle gagne un
+    clic dans une page de resultats. Elle doit donc reprendre le vocabulaire
+    REELLEMENT tape par les visiteurs, et ce vocabulaire est "Nantes" et
+    "Loire-Atlantique", pas "Grand Ouest" : c'est la correspondance entre le
+    mot-cle de la requete et le texte de la meta qui declenche la mise en gras
+    dans le resultat, et cette mise en gras porte le taux de clic. Le meme
+    mecanisme joue sur la pertinence des annonces payantes.
+
+    Le perimetre elargi est annonce la ou une promesse a sa place : dans le
+    corps des pages, et structurellement par les `areaServed`. Meme
+    avertissement sur la constante `description` de
+    src/pages/location-autocar-nantes.astro.
   */
   description:
     'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et en Loire-Atlantique. Un seul interlocuteur. Devis rapide.',
