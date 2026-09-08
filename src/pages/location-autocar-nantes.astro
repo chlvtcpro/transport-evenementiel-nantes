@@ -106,54 +106,27 @@ const VEHICULES = [
 // publie ici se limite donc au nom et au telephone, a l'identique.
 //
 // Une seule liste alimente l'affichage ET le areaServed du JSON-LD : une
-// ville visible que le balisage ignore, ou l'inverse, est un signal local
+// zone visible que le balisage ignore, ou l'inverse, est un signal local
 // incoherent.
 //
-// Ordre par bassin, pas alphabetique ni par notoriete : le visiteur cherche
-// sa commune et s'arrete des qu'il la voit. Regrouper par bassin lui donne
-// un endroit ou regarder, la ou une liste alphabetique l'oblige a balayer
-// les 28.
+// Des departements et non des communes. Une liste de villes, meme longue,
+// se lit comme un perimetre ferme : le visiteur qui ne trouve pas la sienne
+// en conclut qu'on n'y va pas. Le modele est la coordination de
+// transporteurs partenaires, il n'a pas de frontiere communale. Le
+// departement est la maille qui dit le plus large sans rien promettre de
+// faux.
 //
-// La coupure a 12 n'est pas arbitraire : les 12 premieres sont exactement
-// l'agglomeration nantaise. C'est ce qui est visible sans deplier, et c'est
-// la que se trouve la majorite du trafic de la campagne.
-const VILLES_AGGLO = [
-  'Nantes',
-  'Saint-Herblain',
-  'Rezé',
-  'Orvault',
-  'Vertou',
-  'Carquefou',
-  'Sainte-Luce-sur-Loire',
-  'Bouguenais',
-  'Couëron',
-  'Saint-Sébastien-sur-Loire',
-  'La Chapelle-sur-Erdre',
-  'Basse-Goulaine',
+// Loire-Atlantique en premier, c'est le coeur d'activite. Ensuite les
+// limitrophes des Pays de la Loire, puis la Bretagne, puis la Sarthe.
+const DEPARTEMENTS = [
+  { numero: '44', nom: 'Loire-Atlantique' },
+  { numero: '85', nom: 'Vendée' },
+  { numero: '49', nom: 'Maine-et-Loire' },
+  { numero: '56', nom: 'Morbihan' },
+  { numero: '35', nom: 'Ille-et-Vilaine' },
+  { numero: '53', nom: 'Mayenne' },
+  { numero: '72', nom: 'Sarthe' },
 ];
-
-// Erdre et vignoble, puis littoral, puis sud et nord-ouest du departement.
-const VILLES_DEPARTEMENT = [
-  'Nort-sur-Erdre',
-  'Treillières',
-  'Clisson',
-  'Vallet',
-  'Ancenis',
-  'Châteaubriant',
-  'Saint-Nazaire',
-  'Pornichet',
-  'La Baule',
-  'Guérande',
-  'Le Croisic',
-  'Pornic',
-  'Saint-Brevin-les-Pins',
-  'Machecoul',
-  'Blain',
-  'Savenay',
-];
-
-// Le balisage ne connait pas la coupure d'affichage : il declare les 28.
-const VILLES_DESSERVIES = [...VILLES_AGGLO, ...VILLES_DEPARTEMENT];
 
 /*
   Les 3 etapes.
@@ -231,7 +204,7 @@ const FAQ_LOCATION = [
   {
     question: 'Intervenez-vous en dehors de Nantes ?',
     reponse:
-      'Oui, dans toute la Loire-Atlantique, dont Saint-Nazaire, La Baule, Pornic, Guérande, Clisson et Châteaubriant, ainsi que dans le Grand Ouest. Les trajets longue distance au départ de la région sont également organisés.',
+      'Oui, dans sept départements : Loire-Atlantique, Vendée, Maine-et-Loire, Morbihan, Ille-et-Vilaine, Mayenne et Sarthe. Saint-Nazaire, La Baule, Pornic, Guérande, Clisson et Châteaubriant sont desservies comme le reste de la zone, et les trajets longue distance au départ de la région sont également organisés.',
   },
   {
     question: 'Proposez-vous des navettes pour un mariage ou un événement privé ?',
@@ -288,11 +261,15 @@ const jsonLd = {
       url: SITE_DATA.url,
       description,
       telephone: SITE_DATA.telephone,
+      // Le balisage suit l'affichage a l'identique : les 7 departements
+      // montres, plus la region qui les englobe pour la majorite d'entre
+      // eux. Aucune City : declarer 28 communes quand la page en montre
+      // zero produirait exactement l'incoherence que ce balisage doit eviter.
       areaServed: [
-        { '@type': 'AdministrativeArea', name: 'Loire-Atlantique' },
-        ...VILLES_DESSERVIES.map((ville) => ({
-          '@type': 'City',
-          name: ville,
+        { '@type': 'State', name: 'Pays de la Loire' },
+        ...DEPARTEMENTS.map((d) => ({
+          '@type': 'AdministrativeArea',
+          name: d.nom,
         })),
       ],
       geo: {
@@ -350,9 +327,15 @@ const jsonLd = {
         Location d'autocar, bus et minibus avec chauffeur à Nantes
       </h1>
 
+      <!-- L'accroche s'ouvre sur le Grand Ouest et non sur le seul 44 : la
+           section Zone desservie annonce sept departements, une accroche
+           limitee a un departement la contredirait des la premiere ligne de
+           la page. Nantes et Saint-Nazaire restent nommes, ce sont les
+           reperes locaux que cherchent les requetes payantes ; ils ouvrent
+           maintenant sur un perimetre au lieu de le fermer. -->
       <p class="hero-subtitle mt-5 max-w-[46ch]">
         De la berline 3 places à l'autocar 120 places. Nantes, Saint-Nazaire
-        et toute la Loire-Atlantique.
+        et tout le Grand Ouest.
       </p>
 
       <!-- CTA. Ordre du DOM = ordre mobile : le bouton d'appel est premier,
@@ -455,67 +438,44 @@ const jsonLd = {
     </p>
   </Section>
 
-  <!-- 3. ZONE DESSERVIE : Nantes et Loire-Atlantique -->
+  <!-- 3. ZONE DESSERVIE : les sept departements du Grand Ouest -->
   <Section id="zone-desservie" tone="cream-soft">
     <p class="type-eyebrow zone-eyebrow">Zone desservie</p>
 
     <h2 class="type-h2 mt-3 max-w-[20ch]">
-      Nous intervenons dans toute la Loire-Atlantique
+      Nous intervenons dans tout le Grand Ouest
     </h2>
 
-    <!-- Les villes sont une liste, pas une phrase : le visiteur ne lit pas,
-         il cherche la sienne et s'arrete des qu'il la voit. Aucun lien, donc
-         aucune pastille bordee ni fond colore qui ferait croire a un bouton
-         cliquable. Le point dore separe sans suggerer d'affordance. -->
-    <ul class="zone-villes mt-8">
-      {VILLES_AGGLO.map((ville) => <li class="zone-ville">{ville}</li>)}
+    <!-- Le numero porte la lecture, exactement comme la capacite sur les
+         cartes vehicules : dore, en police d'affichage, nettement plus gros
+         que le nom. C'est ce que l'oeil accroche en premier et c'est ce qui
+         se reconnait le plus vite, un Vendeen sait qu'il est en 85 avant de
+         lire "Vendee".
+
+         Aucun lien, donc aucune pastille bordee ni fond colore qui ferait
+         croire a un element cliquable. -->
+    <ul class="zone-departements mt-8">
+      {
+        DEPARTEMENTS.map((d) => (
+          <li class="zone-departement">
+            <span class="zone-numero">{d.numero}</span>
+            <span class="zone-nom">{d.nom}</span>
+          </li>
+        ))
+      }
     </ul>
 
-    <!-- Repli en <details> natif, et non en display:none pilote par le JS.
-         Trois raisons, dans cet ordre :
+    <!-- Le repli « Voir toutes les villes » a disparu avec les 28 communes :
+         sept entrees tiennent sans depasser un ecran, un bouton pour les
+         montrer n'aurait plus d'objet.
 
-           1. Le contenu reste dans le DOM et dans le HTML servi. Un
-              display:none ajoute au chargement par un script sortirait les
-              16 communes du HTML initial que lit le crawler.
-           2. Sans JavaScript, le repli fonctionne quand meme. La zone
-              desservie est un signal local, elle ne peut pas dependre d'un
-              script.
-           3. Le clavier et les lecteurs d'ecran sont geres par le navigateur,
-              pas par nous : etat plie/deplie annonce, pas d'aria a maintenir.
-
-         Le <summary> reste visible a toutes les largeurs, y compris sur
-         desktop ou les 4 colonnes rendraient le repli inutile. C'est un choix
-         de robustesse : forcer l'ouverture en CSS au-dessus de 640px demande
-         de neutraliser le masquage du navigateur, dont l'implementation a
-         change (::details-content). Si cette regle echouait sur un moteur, le
-         summary serait masque ET le contenu ferme : 16 communes injoignables.
-         Un clic de plus sur desktop coute moins cher que ce risque. -->
-    <details class="zone-plus mt-6">
-      <summary class="zone-plus-bouton">
-        <span class="zone-plus-plie">Voir toutes les villes</span>
-        <span class="zone-plus-deplie">Masquer les autres villes</span>
-        <svg
-          class="zone-plus-chevron"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="m6 9 6 6 6-6"></path>
-        </svg>
-      </summary>
-
-      <ul class="zone-villes zone-villes-suite mt-6">
-        {VILLES_DEPARTEMENT.map((ville) => <li class="zone-ville">{ville}</li>)}
-      </ul>
-    </details>
-
+         La phrase qui citait la gare de Nantes, l'aeroport et la Cite des
+         Congres est retiree elle aussi. Nommer trois points nantais juste
+         sous une carte qui annonce sept departements laissait entendre que
+         les departs partent de Nantes, ce qui referme le perimetre qu'on
+         vient d'ouvrir. -->
     <p class="zone-points mt-8 max-w-[60ch]">
-      Départs et retours depuis la gare de Nantes, l'aéroport Nantes Atlantique
-      et la Cité des Congrès.
+      Départ et retour depuis le lieu de votre choix, dans toute la zone.
     </p>
   </Section>
 
@@ -1128,133 +1088,66 @@ const jsonLd = {
     color: var(--gold);
   }
 
-  /* Liste inline qui coule comme du texte. Le point dore est en ::after sur
-     chaque item sauf le dernier, plutot qu'en caractere dans le contenu :
-     un lecteur d'ecran enonce donc les villes, pas une suite de points. */
-  /* Colonnes, et non un flux inline separe par des points.
-
-     Deux raisons. La tache reelle du visiteur est de chercher SA ville, pas
-     de lire treize noms : une colonne se balaie verticalement, un flux
-     wrappe oblige a lire. Et en flex-wrap, aucun selecteur CSS ne sait quel
-     element termine une ligne visuelle : le separateur pose en ::after
-     restait suspendu en fin de chaque ligne.
+  /* Grille de departements.
 
      margin-bottom seul, jamais `margin: 0` : le style scope d'Astro pese
      (0,2,0) contre (0,1,0) pour une utilitaire Tailwind, un raccourci
      `margin` ecraserait le `mt-8` pose sur l'element et collerait la liste
      au titre. */
-  .zone-villes {
+  .zone-departements {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem 1.5rem;
+    gap: 1.75rem 1.5rem;
     list-style: none;
     padding: 0;
     margin-bottom: 0;
   }
 
-  .zone-ville {
+  .zone-departement {
     display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  /* Meme traitement que la capacite des cartes vehicules : le nombre est
+     dore, en police d'affichage, et nettement plus gros que ce qui
+     l'accompagne. Il ne se coupe jamais. */
+  .zone-numero {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 4.2vw, 2.6rem);
+    line-height: 1;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .zone-nom {
     font-family: var(--font-body);
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 500;
-    line-height: 1.4;
+    line-height: 1.35;
     color: var(--ink);
   }
 
-  /* Puce doree en tete de ligne : elle marque l'entree de liste sans jamais
-     se retrouver orpheline, contrairement a un separateur de fin. */
-  .zone-ville::before {
-    content: '';
-    flex-shrink: 0;
-    width: 4px;
-    height: 4px;
-    border-radius: 9999px;
-    background-color: var(--gold);
-    /* Remonte la puce sur la ligne de base du texte. */
-    transform: translateY(-0.3em);
-  }
-
   @media (min-width: 640px) {
-    .zone-villes {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .zone-villes {
+    .zone-departements {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
-  /* ---- Repli des 16 communes hors agglomeration ---- */
-
-  .zone-plus {
-    /* Aucune bordure ni fond : le repli est un prolongement de la liste,
-       pas un encart. */
-    border: 0;
-  }
-
-  /* Le marqueur natif (triangle) est remplace par le chevron du site. Les
-     deux syntaxes sont necessaires : list-style pour Firefox et Chrome
-     recent, ::-webkit-details-marker pour Safari. */
-  .zone-plus-bouton {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    /* 48px de haut : c'est la seule cible tactile de cette section, et
-       l'audience a plus de 45 ans. */
-    min-height: 48px;
-    padding: 0.25rem 0;
-    list-style: none;
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--ink);
-    text-decoration: underline;
-    text-underline-offset: 0.3em;
-    text-decoration-color: var(--gold);
-    text-decoration-thickness: 1px;
-  }
-
-  .zone-plus-bouton::-webkit-details-marker {
-    display: none;
-  }
-
-  .zone-plus-bouton:hover,
-  .zone-plus-bouton:focus-visible {
-    color: var(--green-700);
-  }
-
-  .zone-plus-chevron {
-    width: 1.1rem;
-    height: 1.1rem;
-    flex: none;
-    color: var(--gold);
-    transition: transform 200ms var(--ease);
-  }
-
-  .zone-plus[open] .zone-plus-chevron {
-    transform: rotate(180deg);
-  }
-
-  /* Le libelle change avec l'etat. Deux <span> permutes en CSS plutot qu'un
-     textContent reecrit en JS : sans script, le libelle reste juste. */
-  .zone-plus-deplie {
-    display: none;
-  }
-  .zone-plus[open] .zone-plus-plie {
-    display: none;
-  }
-  .zone-plus[open] .zone-plus-deplie {
-    display: inline;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .zone-plus-chevron {
-      transition: none;
+  /* Sept colonnes et non quatre a partir de 1024px : les sept departements
+     tiennent alors sur une seule ligne, et une ligne unique se lit comme un
+     territoire continu la ou une grille 4 + 3 laisse un rang incomplet qui
+     donne l'impression d'une liste tronquee. Le seuil est mesure : c'est la
+     largeur a partir de laquelle « Loire-Atlantique » et « Ille-et-Vilaine »,
+     les deux noms les plus longs, tiennent sans se couper. */
+  @media (min-width: 1024px) {
+    .zone-departements {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 1.5rem 1rem;
+    }
+    .zone-nom {
+      font-size: 0.9375rem;
     }
   }
 
@@ -1272,7 +1165,7 @@ const jsonLd = {
      police display qu'a l'accueil, pour que ce soit visiblement le meme
      process raconte deux fois. */
 
-  /* Voir la note sur .zone-villes : margin-bottom seul, pas de raccourci
+  /* Voir la note sur .zone-departements : margin-bottom seul, pas de raccourci
      `margin`, sinon le `mt-10` de l'element saute. */
   .etapes-liste {
     display: flex;
