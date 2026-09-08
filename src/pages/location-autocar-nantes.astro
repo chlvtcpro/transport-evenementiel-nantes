@@ -100,16 +100,115 @@ const VEHICULES = [
 // service-area business, exactement comme la fiche Google Business qui
 // n'affiche aucune adresse et ne declare que des zones desservies. Le NAP
 // publie ici se limite donc au nom et au telephone, a l'identique.
+//
+// Une seule liste alimente l'affichage ET le areaServed du JSON-LD : une
+// ville visible que le balisage ignore, ou l'inverse, est un signal local
+// incoherent. Ordre de notoriete, pas alphabetique : le visiteur cherche
+// d'abord la sienne et s'arrete des qu'il la voit.
 const VILLES_DESSERVIES = [
   'Nantes',
+  'Saint-Herblain',
+  'Rezé',
   'Saint-Nazaire',
   'La Baule',
   'Pornic',
   'Carquefou',
   'Vertou',
+  'Orvault',
   'Clisson',
   'Ancenis',
   'Guérande',
+  'Châteaubriant',
+];
+
+/*
+  Les 3 etapes.
+
+  Alignees sur la section #comment-ca-marche de l'accueil, qui suit deja le
+  meme parcours brief -> dimensionnement -> jour J. Seule l'etape 02 differe :
+  l'accueil dit "on assemble et on orchestre", sans delai ; ici le devis sous
+  24h est la promesse de la page, elle figure deja dans le hero et la meta.
+  Ce n'est pas une contradiction mais un engagement supplementaire, assume
+  parce que la page est une page de conversion.
+
+  Le registre est volontairement plus direct qu'a l'accueil ("vous nous dites"
+  et non "vous nous briefez") : l'audience arrive de la publicite, elle a
+  45-65 ans, elle ne connait pas la marque.
+*/
+const ETAPES = [
+  {
+    num: '01',
+    texte: 'Vous nous dites combien vous êtes, quand et où',
+  },
+  {
+    num: '02',
+    texte: 'Nous vous envoyons un devis sous 24h avec le véhicule adapté',
+  },
+  {
+    num: '03',
+    texte: 'Le jour J, le chauffeur est sur place, vous n\'avez rien à gérer',
+  },
+];
+
+/*
+  FAQ de la page.
+
+  Source unique : le JSON-LD FAQPage plus bas est genere depuis ce meme
+  tableau, le texte affiche et le texte balise ne peuvent donc pas diverger.
+
+  Trois contraintes tenues ici :
+
+  1. Aucun prix chiffre. Le devis gratuit sous 24h est la seule reponse
+     tarifaire, coherente avec faq.ts qui renvoie deja tout au devis.
+
+  2. Vocabulaire du bloc VEHICULES. C'est dans ces reponses que le possessif
+     revient le plus naturellement ("nos autocars", "nos chauffeurs") : rien
+     n'est possede, on ecrit "nous mobilisons" et "le chauffeur".
+
+  3. Coherence avec l'existant, verifiee ligne a ligne :
+     - faq.ts:34 annonce "de quelques personnes a plusieurs centaines", alors
+       que la page plafonne l'autocar a 120. Ce n'est contradictoire qu'en
+       apparence : 120 est une capacite par vehicule, plusieurs centaines une
+       capacite par dispositif. La reponse 2 le dit explicitement, sinon les
+       deux pages se contredisent aux yeux du lecteur comme du moteur.
+     - faq.ts:39 couvre "Nantes, Loire-Atlantique et tout le Grand Ouest" :
+       la reponse 4 reprend ce perimetre a l'identique.
+     - le delai de la reponse 6 recopie le tableau de
+       blog/delai-reservation-autocar-evenement-entreprise.md (2 a 4 semaines
+       van/minibus creuse, 1 a 2 mois autocar creuse, 3 a 4 mois haute
+       saison). Ne pas modifier l'un sans l'autre.
+*/
+const FAQ_LOCATION = [
+  {
+    question: 'Combien coûte la location d\'un autocar avec chauffeur à Nantes ?',
+    reponse:
+      'Le tarif dépend de la distance, de la durée de mise à disposition et du véhicule mobilisé. Nous établissons un devis gratuit sous 24h après un point sur votre trajet, vos horaires et le nombre de passagers.',
+  },
+  {
+    question: 'Quelle est la capacité maximale d\'un autocar ?',
+    reponse:
+      'Un autocar accueille jusqu\'à 120 passagers. Au-delà, nous mobilisons plusieurs véhicules coordonnés sur le même dispositif, ce qui permet de transporter plusieurs centaines de personnes sur un même événement.',
+  },
+  {
+    question: 'Peut-on louer un minibus avec chauffeur pour une journée entière ?',
+    reponse:
+      'Oui, la mise à disposition à la journée est possible sur un minibus de 15 à 22 places. Le véhicule et le chauffeur restent affectés à votre groupe pour toutes les rotations prévues, et l\'amplitude horaire est intégrée au devis.',
+  },
+  {
+    question: 'Intervenez-vous en dehors de Nantes ?',
+    reponse:
+      'Oui, dans toute la Loire-Atlantique, dont Saint-Nazaire, La Baule, Pornic, Guérande, Clisson et Châteaubriant, ainsi que dans le Grand Ouest. Les trajets longue distance au départ de la région sont également organisés.',
+  },
+  {
+    question: 'Proposez-vous des navettes pour un mariage ou un événement privé ?',
+    reponse:
+      'Oui. Navettes entre la cérémonie, la réception et les lieux d\'hébergement, avec les rotations et les retours de nuit. Nous sélectionnons le véhicule adapté au nombre d\'invités, de la berline à l\'autocar.',
+  },
+  {
+    question: 'Sous quel délai faut-il réserver ?',
+    reponse:
+      'Comptez 2 à 4 semaines pour un van ou un minibus en période creuse, et 1 à 2 mois pour un autocar. De mai à septembre, ainsi qu\'à la rentrée, prévoyez 3 à 4 mois. Une demande de dernière minute reste possible : appelez-nous, nous vérifions les disponibilités immédiatement.',
+  },
 ];
 
 // JSON-LD propre a la page. Fourni en @graph et rattache au meme @id
@@ -138,6 +237,33 @@ const jsonLd = {
         longitude: SITE_DATA.geo.longitude,
       },
       priceRange: SITE_DATA.priceRange,
+    },
+    /*
+      FAQPage de la page, generee depuis FAQ_LOCATION : le texte balise est
+      par construction celui qui est affiche, condition posee par Google.
+
+      Pas de conflit avec le LocalBusiness ci-dessus : ce sont deux noeuds
+      de types differents dans un meme @graph, ce que schema.org prevoit.
+      Le LocalBusiness porte un @id partage avec le reste du site pour que
+      les moteurs reconcilient une seule entite ; la FAQPage n'en porte pas,
+      elle n'a pas a etre referencee ailleurs.
+
+      Pas de conflit non plus avec la FAQPage du layout : cette page passe
+      la prop `jsonLd`, qui remplace tout le graphe par defaut. Le faqNode
+      de Base.astro, alimente par faq.ts, n'est donc pas emis ici. Une seule
+      FAQPage par page, et ses 6 questions sont distinctes de celles de
+      l'accueil : aucun doublon de balisage entre les deux URL.
+    */
+    {
+      '@type': 'FAQPage',
+      mainEntity: FAQ_LOCATION.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.reponse,
+        },
+      })),
     },
   ],
 };
@@ -266,13 +392,101 @@ const jsonLd = {
   </Section>
 
   <!-- 3. ZONE DESSERVIE : Nantes et Loire-Atlantique -->
-  <Section id="zone-desservie" tone="cream-soft"></Section>
+  <Section id="zone-desservie" tone="cream-soft">
+    <p class="type-eyebrow zone-eyebrow">Zone desservie</p>
 
-  <!-- 4. COMMENT CA MARCHE : de la demande au jour J -->
-  <Section id="comment-ca-marche" tone="cream"></Section>
+    <h2 class="type-h2 mt-3 max-w-[20ch]">
+      Nous intervenons dans toute la Loire-Atlantique
+    </h2>
 
-  <!-- 5. FAQ : questions de location, a baliser en FAQPage a l'etape contenu -->
-  <Section id="faq" tone="cream-soft"></Section>
+    <!-- Les villes sont une liste, pas une phrase : le visiteur ne lit pas,
+         il cherche la sienne et s'arrete des qu'il la voit. Aucun lien, donc
+         aucune pastille bordee ni fond colore qui ferait croire a un bouton
+         cliquable. Le point dore separe sans suggerer d'affordance. -->
+    <ul class="zone-villes mt-8">
+      {
+        VILLES_DESSERVIES.map((ville) => (
+          <li class="zone-ville">{ville}</li>
+        ))
+      }
+    </ul>
+
+    <p class="zone-points mt-8 max-w-[60ch]">
+      Départs et retours depuis la gare de Nantes, l'aéroport Nantes Atlantique
+      et la Cité des Congrès.
+    </p>
+  </Section>
+
+  <!-- 4. COMMENT CA MARCHE : de la demande au jour J.
+       Meme parcours que la section homonyme de l'accueil, en trois etapes et
+       avec le meme traitement de numero dore. Le texte est plus court et
+       plus direct : ici on convertit, on ne presente pas une methode. -->
+  <Section id="comment-ca-marche" tone="cream">
+    <p class="type-eyebrow etapes-eyebrow">Comment ça marche</p>
+
+    <h2 class="type-h2 mt-3 max-w-[20ch]">Trois étapes, et c'est réglé</h2>
+
+    <ol class="etapes-liste mt-10">
+      {
+        ETAPES.map((etape) => (
+          <li class="etape">
+            <span class="etape-num" aria-hidden="true">{etape.num}</span>
+            <p class="etape-texte">{etape.texte}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <!-- 5. FAQ : questions de location, balisees en FAQPage depuis le meme
+       tableau FAQ_LOCATION que l'affichage.
+
+       <details> natif : accordeon sans une ligne de JavaScript, donc aucun
+       risque que la reponse reste inaccessible si le script echoue sur du
+       trafic paye. Clavier et lecteurs d'ecran sont geres par le navigateur.
+       La premiere question est ouverte : sur une audience 45-65 ans, c'est
+       ce qui signale que les autres s'ouvrent aussi. -->
+  <Section id="faq" tone="cream-soft">
+    <p class="type-eyebrow faq-eyebrow">Questions fréquentes</p>
+
+    <h2 class="type-h2 mt-3 max-w-[20ch]">Ce qu'on nous demande le plus</h2>
+
+    <div class="faq-liste mt-10">
+      {
+        FAQ_LOCATION.map((item, index) => (
+          <details class="faq-item" open={index === 0}>
+            <summary class="faq-question">
+              <span>{item.question}</span>
+              <svg
+                class="faq-chevron"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
+            <p class="faq-reponse">{item.reponse}</p>
+          </details>
+        ))
+      }
+    </div>
+
+    <p class="faq-aide mt-10">
+      Votre question n'est pas là ?{' '}
+      <a
+        href={TEL_HREF}
+        class="faq-aide-lien"
+        aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
+      >
+        Appelez-nous
+      </a>, on vous répond directement.
+    </p>
+  </Section>
 
   <!-- 6. FORMULAIRE : demande de devis, conversion finale -->
   <Section id="formulaire-devis" tone="dark"></Section>
@@ -591,6 +805,253 @@ const jsonLd = {
   @media (hover: hover) {
     .vehicules-aide-lien:hover {
       color: var(--gold);
+    }
+  }
+
+  /* ============ ZONE DESSERVIE ============ */
+
+  .zone-eyebrow,
+  .etapes-eyebrow,
+  .faq-eyebrow {
+    color: var(--gold);
+  }
+
+  /* Liste inline qui coule comme du texte. Le point dore est en ::after sur
+     chaque item sauf le dernier, plutot qu'en caractere dans le contenu :
+     un lecteur d'ecran enonce donc les villes, pas une suite de points. */
+  /* Colonnes, et non un flux inline separe par des points.
+
+     Deux raisons. La tache reelle du visiteur est de chercher SA ville, pas
+     de lire treize noms : une colonne se balaie verticalement, un flux
+     wrappe oblige a lire. Et en flex-wrap, aucun selecteur CSS ne sait quel
+     element termine une ligne visuelle : le separateur pose en ::after
+     restait suspendu en fin de chaque ligne.
+
+     margin-bottom seul, jamais `margin: 0` : le style scope d'Astro pese
+     (0,2,0) contre (0,1,0) pour une utilitaire Tailwind, un raccourci
+     `margin` ecraserait le `mt-8` pose sur l'element et collerait la liste
+     au titre. */
+  .zone-villes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .zone-ville {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  /* Puce doree en tete de ligne : elle marque l'entree de liste sans jamais
+     se retrouver orpheline, contrairement a un separateur de fin. */
+  .zone-ville::before {
+    content: '';
+    flex-shrink: 0;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background-color: var(--gold);
+    /* Remonte la puce sur la ligne de base du texte. */
+    transform: translateY(-0.3em);
+  }
+
+  @media (min-width: 640px) {
+    .zone-villes {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .zone-villes {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .zone-points {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  /* ============ COMMENT CA MARCHE ============
+     Le numero est en colonne fixe a gauche : les trois textes s'alignent
+     alors sur une meme verticale, ce qui fait lire la sequence comme une
+     progression et non comme trois blocs. Meme traitement dore et meme
+     police display qu'a l'accueil, pour que ce soit visiblement le meme
+     process raconte deux fois. */
+
+  /* Voir la note sur .zone-villes : margin-bottom seul, pas de raccourci
+     `margin`, sinon le `mt-10` de l'element saute. */
+  .etapes-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .etape {
+    display: grid;
+    grid-template-columns: 3.25rem 1fr;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .etape-num {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold);
+  }
+
+  .etape-texte {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  @media (min-width: 640px) {
+    .etape {
+      grid-template-columns: 4.5rem 1fr;
+      gap: 0.5rem;
+    }
+
+    .etape-num {
+      font-size: 2.25rem;
+    }
+
+    .etape-texte {
+      font-size: 1.1875rem;
+    }
+  }
+
+  /* ============ FAQ ============ */
+
+  .faq-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .faq-item {
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    background-color: var(--cream-soft);
+    overflow: hidden;
+  }
+
+  /* Le marqueur natif du <summary> est retire des deux facons : `list-style`
+     couvre Firefox et Chrome, `::-webkit-details-marker` l'ancien Safari.
+     Sans la seconde, un triangle noir subsiste sur iOS. */
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    /* 56px de haut au minimum une fois le padding compte : cible tactile
+       confortable, la meme que le bouton d'appel. */
+    min-height: 56px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-chevron {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: var(--gold);
+    transition: transform 260ms var(--ease);
+  }
+
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Le padding haut est nul : la reponse doit sembler attachee a sa
+     question, pas flotter au milieu de la carte. */
+  .faq-reponse {
+    padding: 0 1.25rem 1.25rem;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  /* Focus visible sur le summary : c'est la seule cible clavier de la
+     section, la perdre rendrait la FAQ inutilisable sans souris. */
+  .faq-question:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+  }
+
+  .faq-aide {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  .faq-aide-lien {
+    display: inline-block;
+    padding: 0.15rem 0.1rem;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    transition: color 300ms var(--ease);
+  }
+
+  @media (min-width: 640px) {
+    .faq-question {
+      font-size: 1.125rem;
+      padding: 1.125rem 1.5rem;
+    }
+
+    .faq-reponse {
+      padding: 0 1.5rem 1.5rem;
+      font-size: 1.0625rem;
+    }
+  }
+
+  @media (hover: hover) {
+    .faq-aide-lien:hover {
+      color: var(--gold);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-chevron {
+      transition: none;
     }
   }
 </style>

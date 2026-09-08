@@ -24,9 +24,12 @@ export const SITE_DATA = {
 
     Longueur : 152 caracteres, dans la fenetre 120-165 affichee par Google.
     La version precedente en faisait 172, elle etait donc deja tronquee avant
-    cette reecriture. "Grand Ouest" a ete retire pour tenir : c'est le terme
-    le moins recherche des trois, et la portee reste portee structurellement
-    par `areaServed` ci-dessous. Ne pas rallonger sans recompter.
+    cette reecriture.
+
+    Arbitrage : c'est "Grand Ouest" qui saute, pas "Devis rapide". La geo est
+    deja portee par Nantes et Loire-Atlantique, et structurellement par
+    `areaServed` ci-dessous ; l'incitation, elle, n'a aucun doublon ailleurs.
+    Ne pas rallonger sans recompter.
   */
   description:
     'Organisateur de transport pour vos séminaires, événements d\'entreprise et mariages à Nantes et en Loire-Atlantique. Un seul interlocuteur. Devis rapide.',
