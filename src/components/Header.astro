@@ -25,9 +25,29 @@ const logoSrc =
 
 // Liens d'ancre prefixes par '/' : fonctionnent depuis l'accueil ET depuis
 // les pages blog (une ancre nue #... ne cible que la page courante).
+//
+// « Location » est la seule entree qui pointe vers une PAGE et non vers une
+// ancre de l'accueil. Elle est placee juste apres « Offres » parce qu'elle en
+// est une declinaison : les autres entrees decrivent une facon de travailler,
+// celle-ci decrit ce qu'on loue. Sans elle, la landing n'avait aucun lien
+// entrant du site et restait orpheline pour le crawl.
+//
+// Le libelle est court par contrainte mesuree, pas par gout. La barre est
+// pleine : marge restante du CTA a 1280px (logo protege), 6 liens.
+//
+//   Location de vehicules   -49px    Location cars   +10px
+//   Location de cars        -12px    Location        +45px
+//
+// Le libelle complet imposerait de basculer sur le burger en dessous de
+// ~1500px, donc de priver du menu les portables 1280 / 1366 / 1440 sur les
+// 13 pages du site. Le mot-cle complet n'est pas perdu pour autant : il est
+// porte par l'ancre du lien contextuel de la section Offres de l'accueil,
+// « Location d'autocar, bus et minibus avec chauffeur », qui compte davantage
+// qu'une entree de menu pour le crawl.
 const links = [
   { href: '/#comment-ca-marche', label: 'Comment ça marche' },
   { href: '/#offres', label: 'Offres' },
+  { href: '/location-autocar-nantes', label: 'Location' },
   { href: '/#cas-client', label: 'Réalisations' },
   { href: '/#differenciateurs', label: 'Notre approche' },
   { href: '/blog', label: 'Ressources' },
@@ -161,12 +181,19 @@ const links = [
 
 <style>
   /* =========================================================
-     Bascule desktop / mobile a 1180px (et non 1024px) : avec cinq
-     liens plus le CTA, la barre ne tient plus sur une ligne entre
-     1024 et 1180px. On bascule donc sur le burger plus tot pour ne
-     jamais afficher une navigation cassee. Visibilite pilotee ici en
-     CSS scope (pas via les utilitaires lg: de Tailwind) pour maitriser
-     le point de bascule exact.
+     Bascule desktop / mobile a 1280px (et non 1024px) : le conteneur
+     plafonne a 1240px moins son padding, soit 1112px utiles, et six
+     liens plus le CTA remplissent cette largeur. On bascule donc sur
+     le burger plus tot pour ne jamais afficher une navigation cassee.
+     Visibilite pilotee ici en CSS scope (pas via les utilitaires lg:
+     de Tailwind) pour maitriser le point de bascule exact.
+
+     Le seuil etait a 1180px avec cinq liens. Le sixieme le repousse a
+     1280 : mesure, le CTA debordait encore de 19px a 1180. On ne s'est
+     pas arrete a 1220 (ou ca tient de 14px) parce que cette marge est
+     du meme ordre que l'ecart de rendu des polices entre navigateurs
+     sur six liaisons. 1280 laisse 45px, et aucune largeur de portable
+     courante ne tombe dans la bande 1180-1279 perdue.
      ========================================================= */
   .nav-desktop,
   .cta-desktop {
@@ -175,7 +202,7 @@ const links = [
   .menu-toggle {
     display: inline-flex;
   }
-  @media (min-width: 1180px) {
+  @media (min-width: 1280px) {
     .nav-desktop {
       display: flex;
       /* Gap fluide, strictement identique entre chaque lien. Se resserre
@@ -211,6 +238,14 @@ const links = [
     display: inline-flex;
     align-items: center;
     transition: opacity 300ms var(--ease);
+    /* Garde-fou. Les liens de nav sont en white-space: nowrap, donc
+       increvables ; le logo est une <img>, dont la largeur min-content vaut
+       zero. Dans un flex, tout manque de place se reporte donc en entier sur
+       le logo, qui s'ecrase sans rien casser d'autre : c'est invisible a la
+       mesure du debordement et ca ne se voit qu'a l'oeil. Mesure avant ce
+       garde-fou, avec six liens : 194px de large a 1600, 22px a 1180. Avec
+       flex: none, un manque de place redevient un debordement visible. */
+    flex: none;
   }
   .site-logo:hover {
     opacity: 0.82;
@@ -309,7 +344,7 @@ const links = [
   }
   /* Au-dela du point de bascule, le menu mobile est masque (la nav
      desktop prend le relais). */
-  @media (min-width: 1180px) {
+  @media (min-width: 1280px) {
     .mobile-menu {
       display: none;
     }

@@ -107,23 +107,53 @@ const VEHICULES = [
 //
 // Une seule liste alimente l'affichage ET le areaServed du JSON-LD : une
 // ville visible que le balisage ignore, ou l'inverse, est un signal local
-// incoherent. Ordre de notoriete, pas alphabetique : le visiteur cherche
-// d'abord la sienne et s'arrete des qu'il la voit.
-const VILLES_DESSERVIES = [
+// incoherent.
+//
+// Ordre par bassin, pas alphabetique ni par notoriete : le visiteur cherche
+// sa commune et s'arrete des qu'il la voit. Regrouper par bassin lui donne
+// un endroit ou regarder, la ou une liste alphabetique l'oblige a balayer
+// les 28.
+//
+// La coupure a 12 n'est pas arbitraire : les 12 premieres sont exactement
+// l'agglomeration nantaise. C'est ce qui est visible sans deplier, et c'est
+// la que se trouve la majorite du trafic de la campagne.
+const VILLES_AGGLO = [
   'Nantes',
   'Saint-Herblain',
   'Rezé',
-  'Saint-Nazaire',
-  'La Baule',
-  'Pornic',
-  'Carquefou',
-  'Vertou',
   'Orvault',
-  'Clisson',
-  'Ancenis',
-  'Guérande',
-  'Châteaubriant',
+  'Vertou',
+  'Carquefou',
+  'Sainte-Luce-sur-Loire',
+  'Bouguenais',
+  'Couëron',
+  'Saint-Sébastien-sur-Loire',
+  'La Chapelle-sur-Erdre',
+  'Basse-Goulaine',
 ];
+
+// Erdre et vignoble, puis littoral, puis sud et nord-ouest du departement.
+const VILLES_DEPARTEMENT = [
+  'Nort-sur-Erdre',
+  'Treillières',
+  'Clisson',
+  'Vallet',
+  'Ancenis',
+  'Châteaubriant',
+  'Saint-Nazaire',
+  'Pornichet',
+  'La Baule',
+  'Guérande',
+  'Le Croisic',
+  'Pornic',
+  'Saint-Brevin-les-Pins',
+  'Machecoul',
+  'Blain',
+  'Savenay',
+];
+
+// Le balisage ne connait pas la coupure d'affichage : il declare les 28.
+const VILLES_DESSERVIES = [...VILLES_AGGLO, ...VILLES_DEPARTEMENT];
 
 /*
   Les 3 etapes.
@@ -438,12 +468,50 @@ const jsonLd = {
          aucune pastille bordee ni fond colore qui ferait croire a un bouton
          cliquable. Le point dore separe sans suggerer d'affordance. -->
     <ul class="zone-villes mt-8">
-      {
-        VILLES_DESSERVIES.map((ville) => (
-          <li class="zone-ville">{ville}</li>
-        ))
-      }
+      {VILLES_AGGLO.map((ville) => <li class="zone-ville">{ville}</li>)}
     </ul>
+
+    <!-- Repli en <details> natif, et non en display:none pilote par le JS.
+         Trois raisons, dans cet ordre :
+
+           1. Le contenu reste dans le DOM et dans le HTML servi. Un
+              display:none ajoute au chargement par un script sortirait les
+              16 communes du HTML initial que lit le crawler.
+           2. Sans JavaScript, le repli fonctionne quand meme. La zone
+              desservie est un signal local, elle ne peut pas dependre d'un
+              script.
+           3. Le clavier et les lecteurs d'ecran sont geres par le navigateur,
+              pas par nous : etat plie/deplie annonce, pas d'aria a maintenir.
+
+         Le <summary> reste visible a toutes les largeurs, y compris sur
+         desktop ou les 4 colonnes rendraient le repli inutile. C'est un choix
+         de robustesse : forcer l'ouverture en CSS au-dessus de 640px demande
+         de neutraliser le masquage du navigateur, dont l'implementation a
+         change (::details-content). Si cette regle echouait sur un moteur, le
+         summary serait masque ET le contenu ferme : 16 communes injoignables.
+         Un clic de plus sur desktop coute moins cher que ce risque. -->
+    <details class="zone-plus mt-6">
+      <summary class="zone-plus-bouton">
+        <span class="zone-plus-plie">Voir toutes les villes</span>
+        <span class="zone-plus-deplie">Masquer les autres villes</span>
+        <svg
+          class="zone-plus-chevron"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </summary>
+
+      <ul class="zone-villes zone-villes-suite mt-6">
+        {VILLES_DEPARTEMENT.map((ville) => <li class="zone-ville">{ville}</li>)}
+      </ul>
+    </details>
 
     <p class="zone-points mt-8 max-w-[60ch]">
       Départs et retours depuis la gare de Nantes, l'aéroport Nantes Atlantique
@@ -1117,6 +1185,76 @@ const jsonLd = {
   @media (min-width: 1024px) {
     .zone-villes {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  /* ---- Repli des 16 communes hors agglomeration ---- */
+
+  .zone-plus {
+    /* Aucune bordure ni fond : le repli est un prolongement de la liste,
+       pas un encart. */
+    border: 0;
+  }
+
+  /* Le marqueur natif (triangle) est remplace par le chevron du site. Les
+     deux syntaxes sont necessaires : list-style pour Firefox et Chrome
+     recent, ::-webkit-details-marker pour Safari. */
+  .zone-plus-bouton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    /* 48px de haut : c'est la seule cible tactile de cette section, et
+       l'audience a plus de 45 ans. */
+    min-height: 48px;
+    padding: 0.25rem 0;
+    list-style: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+    text-decoration-color: var(--gold);
+    text-decoration-thickness: 1px;
+  }
+
+  .zone-plus-bouton::-webkit-details-marker {
+    display: none;
+  }
+
+  .zone-plus-bouton:hover,
+  .zone-plus-bouton:focus-visible {
+    color: var(--green-700);
+  }
+
+  .zone-plus-chevron {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+    color: var(--gold);
+    transition: transform 200ms var(--ease);
+  }
+
+  .zone-plus[open] .zone-plus-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Le libelle change avec l'etat. Deux <span> permutes en CSS plutot qu'un
+     textContent reecrit en JS : sans script, le libelle reste juste. */
+  .zone-plus-deplie {
+    display: none;
+  }
+  .zone-plus[open] .zone-plus-plie {
+    display: none;
+  }
+  .zone-plus[open] .zone-plus-deplie {
+    display: inline;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .zone-plus-chevron {
+      transition: none;
     }
   }
 

@@ -227,10 +227,56 @@ const DEFAULT_OPEN = OFFRES.findIndex((o) => o.phare);
         ))
       }
     </div>
+
+    <!-- Passerelle vers la page de location.
+
+         Placee SOUS l'accordeon et non dans un panneau : deux panneaux sur
+         trois sont replies au chargement. Un lien enferme dedans serait dans
+         le DOM mais invisible, et un lien qu'on ne voit pas ne recoit pas de
+         clic. L'interet du lien contextuel tient autant au parcours qu'au
+         crawl.
+
+         L'ancre est la requete elle-meme, pas un « en savoir plus » : c'est
+         ce texte que le moteur associe a la page de destination. -->
+    <p class="offres-passerelle mt-10 text-center text-ink-muted" data-reveal>
+      Vous cherchez un véhicule seul, sans coordination d'événement ?
+      <a class="offres-passerelle-lien" href="/location-autocar-nantes">
+        Location d'autocar, bus et minibus avec chauffeur
+      </a>
+    </p>
   </div>
 </section>
 
 <style>
+  /* Passerelle vers /location-autocar-nantes. Volontairement en texte
+     courant et pas en bouton : trois boutons « Demander un devis » existent
+     deja au-dessus, un quatrieme bouton entrerait en concurrence avec eux.
+     Un lien souligne se lit comme une sortie de parcours, pas comme une
+     action. */
+  .offres-passerelle {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 58ch;
+    margin-inline: auto;
+    margin-bottom: 0;
+  }
+
+  .offres-passerelle-lien {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-color: var(--gold);
+    text-decoration-thickness: 1px;
+    transition: color 200ms var(--ease);
+  }
+
+  .offres-passerelle-lien:hover,
+  .offres-passerelle-lien:focus-visible {
+    color: var(--green-700);
+  }
+
   /* ============================================================
      ACCORDEON. Base commune : rangee de trois panneaux. Par defaut (mobile)
      accordeon VERTICAL ; en desktop (>= 900px) accordeon HORIZONTAL.
