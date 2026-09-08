@@ -15,10 +15,20 @@
        superposeraient, et le bandeau, a z-index 100000, gagnerait. Le
        visiteur verrait une barre a moitie mangee.
 
-    2. Elle ne s'affiche pas tant que le CTA telephone du hero est a
+    2. Elle ne s'affiche pas tant qu'une zone d'appel de la page est a
        l'ecran. Afficher deux fois le meme numero a 200px d'ecart ne fait
-       rien gagner et coute 72px de page a un moment ou le hero fait
+       rien gagner et coute 73px de page a un moment ou la page fait
        justement son travail.
+
+       Deux zones sur la landing : le CTA telephone du hero, et le bloc
+       d'action du formulaire, qui porte le bouton d'envoi et le meme numero
+       juste en dessous.
+
+       Le second n'est pas un ajout de confort. Mesure faite au pas de 40px
+       sur toute la page : sans cette regle, le bouton d'envoi passait
+       DERRIERE la barre sur environ 160px de defilement, masque jusqu'a
+       126px. Sur une audience de 45 a 65 ans, un tap manque a cet endroit ne
+       coute pas un clic, il declenche un appel a la place d'un envoi.
 
     3. En dehors de ces deux cas, elle est la.
 
@@ -33,12 +43,13 @@ import { TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
 
 interface Props {
   /**
-   * Element dont la visibilite pilote la barre. Tant qu'il est a l'ecran,
-   * la barre reste masquee. Par defaut le CTA telephone du hero.
+   * Selecteur des zones dont la visibilite pilote la barre. Tant qu'au moins
+   * une est a l'ecran, la barre reste masquee. Plusieurs selecteurs se
+   * separent par une virgule.
    */
   watch?: string;
 }
-const { watch = '.hero-cta-tel' } = Astro.props;
+const { watch = '.hero-cta-tel, .form-actions' } = Astro.props;
 ---
 
 <!-- aria-hidden au repos plutot qu'un simple display:none pilote par le
@@ -180,7 +191,7 @@ const { watch = '.hero-cta-tel' } = Astro.props;
     Pilotage de la barre d'appel.
 
     Deux conditions independantes, combinees a chaque evaluation :
-      - heroVisible : le CTA telephone du hero est a l'ecran
+      - zoneVisible : au moins une zone d'appel de la page est a l'ecran
       - consentOuvert : le bandeau tarteaucitron occupe le bas de l'ecran
 
     La barre s'affiche uniquement si les deux sont fausses.
@@ -189,11 +200,15 @@ const { watch = '.hero-cta-tel' } = Astro.props;
 
   if (barre) {
     const lien = barre.querySelector<HTMLAnchorElement>('.call-bar-link');
-    let heroVisible = true;
+    // Zones d'appel actuellement a l'ecran. Un Set et non un booleen : deux
+    // zones peuvent se croiser pendant un defilement rapide, et un simple
+    // drapeau garderait la valeur de la derniere entree traitee.
+    const zonesAEcran = new Set<Element>();
+    let zoneVisible = true;
     let consentOuvert = false;
 
     const appliquer = () => {
-      const visible = !heroVisible && !consentOuvert;
+      const visible = !zoneVisible && !consentOuvert;
       barre.dataset.visible = String(visible);
       barre.setAttribute('aria-hidden', String(!visible));
       // Un lien masque ne doit pas etre atteignable au clavier : sinon le
@@ -206,23 +221,29 @@ const { watch = '.hero-cta-tel' } = Astro.props;
     // lecture deplacerait le contenu sous le doigt du visiteur.
     document.documentElement.classList.add('has-call-bar');
 
-    // --- Condition 1 : le CTA du hero ---
+    // --- Condition 1 : les zones d'appel de la page ---
     // Le header est fixe et masque les 86 premiers pixels. Sans cette
-    // marge negative, un CTA glisse sous le header serait encore compte
-    // comme visible et la barre resterait absente alors que le numero ne
-    // se voit plus.
-    const cible = document.querySelector(barre.dataset.watch || '');
-    if (cible) {
-      new IntersectionObserver(
-        ([entree]) => {
-          heroVisible = entree.isIntersecting;
+    // marge negative, une zone glissee sous le header serait encore
+    // comptee comme visible et la barre resterait absente alors que le
+    // numero ne se voit plus.
+    const cibles = document.querySelectorAll(barre.dataset.watch || '');
+    if (cibles.length) {
+      const observateur = new IntersectionObserver(
+        (entrees) => {
+          for (const entree of entrees) {
+            if (entree.isIntersecting) zonesAEcran.add(entree.target);
+            else zonesAEcran.delete(entree.target);
+          }
+          zoneVisible = zonesAEcran.size > 0;
           appliquer();
         },
         { rootMargin: '-86px 0px 0px 0px', threshold: 0 }
-      ).observe(cible);
+      );
+      cibles.forEach((cible) => observateur.observe(cible));
     } else {
-      // Pas de cible : la barre se comporte comme si le hero etait passe.
-      heroVisible = false;
+      // Aucune zone declaree : la barre se comporte comme si elles etaient
+      // toutes passees.
+      zoneVisible = false;
       appliquer();
     }
 

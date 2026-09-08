@@ -12,23 +12,39 @@
   pastille de validation doree reprend le trait de l'ancien message de
   succes qui s'affichait en place dans le formulaire.
 
-  `DELAI` est la SEULE promesse de temps de reponse du site. Elle reprend
-  volontairement la formulation deja employee ailleurs ("Devis rapide") :
-  ne la remplacer par un engagement chiffre (24 h, 48 h) qu'en connaissance
-  de cause.
+  DELAI : engagement chiffre a 24 h ouvrees. C'etait auparavant une formule
+  vague ("tres vite"), alignee sur le "Devis rapide" de la meta, avec une
+  consigne de ne pas la chiffrer sans raison. La raison existe desormais.
+
+  La landing /location-autocar-nantes, qui recoit le trafic Google Ads, promet
+  "Devis sous 24h" a trois endroits : la meta (donc l'annonce), la ligne de
+  reassurance du hero et l'etape 02 de "Comment ca marche". Un visiteur qui
+  envoyait le formulaire atterrissait ici sur une promesse PLUS FAIBLE que
+  celle qui l'avait fait cliquer. C'est le moment exact ou il arbitre entre
+  attendre et appeler un concurrent : le tunnel ne doit pas reculer.
+
+  "ouvrees" est la seule precision ajoutee par rapport a la landing, et elle
+  est tenable : un formulaire envoye le samedi soir n'engage pas a repondre
+  dimanche. Ne pas etendre le delai ici sans le corriger aussi sur la landing
+  et dans l'annonce, sous peine de recreer l'ecart qu'on vient de fermer.
+
+  Le rappel telephonique sous DELAI n'est pas decoratif : sur l'audience de la
+  campagne (70 % de plus de 45 ans, 83 % de mobile), beaucoup preferent appeler
+  apres avoir envoye le formulaire plutot que d'attendre. On leur donne la
+  sortie ici plutot que de les laisser la chercher.
 */
 import Base from '../layouts/Base.astro';
 import Eyebrow from '../components/Eyebrow.astro';
-import { SITE_DATA } from '../data/site.ts';
+import { SITE_DATA, TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
 
 const TITRE_META = `Demande envoyée | ${SITE_DATA.name}`;
 const DESCRIPTION_META =
   'Votre demande de devis a bien été transmise à Transport Événementiel Nantes.';
 
 const DELAI =
-  'On revient vers vous très vite avec un premier devis, par téléphone ou par email.';
+  'Vous recevez votre devis sous 24h ouvrées, par téléphone ou par email.';
 const PRECISION =
-  "Si vous ne voyez rien arriver, pensez à vérifier vos courriers indésirables. Vous pouvez aussi nous rappeler directement en réponse à l'email de confirmation.";
+  'Si vous ne voyez rien arriver, pensez à vérifier vos courriers indésirables.';
 ---
 
 <Base
@@ -60,6 +76,38 @@ const PRECISION =
         <p class="envoye-precision mt-4 text-ink-muted" data-reveal>
           {PRECISION}
         </p>
+
+        {/*
+          Sortie telephonique. Placee apres le delai, pas avant : le visiteur
+          lit d'abord que sa demande est traitee, puis on lui laisse le choix
+          d'accelerer. Cible tactile pleine largeur en mobile.
+        */}
+        <div class="envoye-appel mt-10" data-reveal>
+          <p class="envoye-appel-question text-ink-muted">
+            Besoin d'une réponse immédiate ?
+          </p>
+          <a
+            class="envoye-appel-lien mt-3"
+            href={TEL_HREF}
+            data-cta="appel-confirmation"
+            aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              class="envoye-appel-icone"
+              aria-hidden="true"
+            >
+              <path
+                d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7 2 2 0 0 1 6.5 3.5Z"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="envoye-appel-numero">{TEL_AFFICHE}</span>
+          </a>
+        </div>
 
         <div class="mt-12" data-reveal>
           <a
@@ -141,5 +189,58 @@ const PRECISION =
     font-family: var(--font-body);
     font-size: 0.95rem;
     line-height: 1.65;
+  }
+
+  /* Sortie telephonique. Contour dore plutot que bouton plein : elle ne doit
+     pas concurrencer visuellement la confirmation, seulement rester
+     immediatement cliquable. 56px de haut, au-dessus des 48px de cible
+     tactile confortable. */
+  .envoye-appel-question {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .envoye-appel-lien {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 56px;
+    padding: 0 1.5rem;
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+    transition:
+      background-color 300ms var(--ease),
+      color 300ms var(--ease);
+  }
+
+  .envoye-appel-lien:hover,
+  .envoye-appel-lien:focus-visible {
+    background-color: var(--gold);
+    color: var(--cream);
+  }
+
+  .envoye-appel-icone {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--gold);
+    flex-shrink: 0;
+    transition: color 300ms var(--ease);
+  }
+
+  .envoye-appel-lien:hover .envoye-appel-icone,
+  .envoye-appel-lien:focus-visible .envoye-appel-icone {
+    color: var(--cream);
+  }
+
+  .envoye-appel-numero {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
   }
 </style>

@@ -19,10 +19,14 @@
 import Base from '../layouts/Base.astro';
 import Section from '../components/Section.astro';
 import CallBar from '../components/CallBar.astro';
+import ButtonArrow from '../components/ButtonArrow.astro';
 // Telephone : une seule source, SITE_DATA, pour le lien d'appel comme pour
 // l'affichage, ici comme dans la barre d'appel. Le NAP publie ne peut donc
 // pas diverger de la fiche Google Business.
 import { SITE_DATA, TEL_HREF, TEL_AFFICHE } from '../data/site.ts';
+// Cle Web3Forms et page de confirmation : memes valeurs que le formulaire de
+// l'accueil, importees et non recopiees. Voir le bloc FORMULAIRE plus bas.
+import { WEB3FORMS_KEY, PAGE_ENVOI } from '../lib/devisEnvoi.ts';
 
 const title = 'Location autocar, bus et minibus avec chauffeur à Nantes';
 const description =
@@ -210,6 +214,36 @@ const FAQ_LOCATION = [
       'Comptez 2 à 4 semaines pour un van ou un minibus en période creuse, et 1 à 2 mois pour un autocar. De mai à septembre, ainsi qu\'à la rentrée, prévoyez 3 à 4 mois. Une demande de dernière minute reste possible : appelez-nous, nous vérifions les disponibilités immédiatement.',
   },
 ];
+
+/*
+  FORMULAIRE.
+
+  Rien de la chaine d'envoi n'est reecrit ici. La cle Web3Forms, la page de
+  confirmation et la logique complete (envoi -> marqueur sessionStorage ->
+  redirection -> push generate_lead sur /devis-envoye) viennent de
+  src/lib/devisEnvoi.ts, exactement comme pour le formulaire de l'accueil.
+  Le suivi de conversion Google Ads depend de cette sequence : elle a une
+  implementation et une seule.
+
+  Seul le SUJET differe de celui de l'accueil, et c'est volontaire : c'est lui
+  qui, dans la boite de reception, distingue un lead issu de la campagne payee
+  d'un lead organique. Sans cette distinction, impossible d'attribuer le cout
+  au clic aux demandes qu'il produit reellement.
+*/
+const SUJET_FORMULAIRE =
+  'Demande de devis location avec chauffeur (campagne Google Ads)';
+
+/*
+  Tranches de passagers. Bornes calees sur les capacites annoncees dans la
+  section VEHICULES : 1 a 8 couvre berline et van, 9 a 20 le minibus, 21 a 50
+  le minibus haut et le petit autocar, 51 a 120 l'autocar. Un visiteur qui a
+  lu les cartes retrouve ses reperes.
+
+  Un select plutot qu'un champ nombre : sur mobile, avec une audience de 45 a
+  65 ans, choisir dans une liste courte est plus sur que saisir un chiffre au
+  clavier, et une tranche suffit pour dimensionner un devis.
+*/
+const TRANCHES_PASSAGERS = ['1 à 8', '9 à 20', '21 à 50', '51 à 120'];
 
 // JSON-LD propre a la page. Fourni en @graph et rattache au meme @id
 // d'entite que le reste du site, pour que les moteurs reconcilient une
@@ -488,14 +522,224 @@ const jsonLd = {
     </p>
   </Section>
 
-  <!-- 6. FORMULAIRE : demande de devis, conversion finale -->
-  <Section id="formulaire-devis" tone="dark"></Section>
+  <!-- 6. FORMULAIRE : demande de devis, conversion finale.
+
+       Le <form> porte data-devis-form : c'est ce seul attribut qui le branche
+       sur la chaine d'envoi partagee (src/lib/devisEnvoi.ts), la meme que le
+       formulaire de l'accueil. Ne pas le retirer, le formulaire enverrait
+       alors en POST classique et la conversion Google Ads ne serait plus
+       comptee. -->
+  <Section id="formulaire-devis" tone="dark">
+    <div class="form-entete">
+      <h2 class="type-h2">Demandez votre devis</h2>
+      <p class="form-sous-titre mt-4">
+        Quelques informations suffisent pour dimensionner le véhicule et vous
+        chiffrer le trajet.
+      </p>
+    </div>
+
+    <form
+      class="form-devis mt-10"
+      novalidate
+      data-devis-form
+      data-sent-href={PAGE_ENVOI}
+    >
+      <!-- Champs caches Web3Forms -->
+      <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
+      <input type="hidden" name="subject" value={SUJET_FORMULAIRE} />
+      <input
+        type="hidden"
+        name="from_name"
+        value="Landing location avec chauffeur"
+      />
+
+      <!-- Honeypot anti-spam : doit rester vide. C'est le dispositif du site,
+           il n'y a pas de Turnstile a repliquer. Sorti de l'ecran en CSS et
+           retire du parcours clavier comme de l'arbre d'accessibilite. -->
+      <input
+        type="checkbox"
+        name="botcheck"
+        class="form-honeypot"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+      />
+
+      <!-- Nom + Telephone. Le telephone est le canal de rappel privilegie de
+           cette audience, il vient donc juste apres le nom. -->
+      <div class="form-duo">
+        <div class="form-champ">
+          <label class="form-label" for="loc-nom">
+            Nom <span class="form-requis" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="loc-nom"
+            name="Nom"
+            type="text"
+            autocomplete="name"
+            class="form-input"
+            required
+          />
+        </div>
+
+        <div class="form-champ">
+          <label class="form-label" for="loc-tel">
+            Téléphone <span class="form-requis" aria-hidden="true">*</span>
+          </label>
+          <!-- inputmode="tel" en plus de type="tel" : c'est lui qui garantit
+               le pave numerique a l'ouverture sur Android comme sur iOS. -->
+          <input
+            id="loc-tel"
+            name="Téléphone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel"
+            class="form-input"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Email + Societe -->
+      <div class="form-duo">
+        <div class="form-champ">
+          <label class="form-label" for="loc-email">
+            Email <span class="form-requis" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="loc-email"
+            name="Email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            class="form-input"
+            required
+          />
+        </div>
+
+        <div class="form-champ">
+          <label class="form-label" for="loc-societe">
+            Société <span class="form-requis" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="loc-societe"
+            name="Société"
+            type="text"
+            autocomplete="organization"
+            class="form-input"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Nombre de passagers + Date -->
+      <div class="form-duo">
+        <div class="form-champ">
+          <label class="form-label" for="loc-passagers">
+            Nombre de passagers
+            <span class="form-requis" aria-hidden="true">*</span>
+          </label>
+          <div class="form-select-enveloppe">
+            <select
+              id="loc-passagers"
+              name="Nombre de passagers"
+              class="form-input form-select"
+              required
+            >
+              <option value="" disabled selected>Choisir...</option>
+              {
+                TRANCHES_PASSAGERS.map((tranche) => (
+                  <option value={tranche}>{tranche} passagers</option>
+                ))
+              }
+            </select>
+            <span class="form-select-fleche" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="form-champ">
+          <label class="form-label" for="loc-date">
+            Date de la prestation
+          </label>
+          <input
+            id="loc-date"
+            name="Date de la prestation"
+            type="date"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <!-- Trajet ou besoin, optionnel. Le seul champ libre : on ne demande pas
+           au visiteur de rediger, on lui laisse la possibilite de le faire. -->
+      <div class="form-champ">
+        <label class="form-label" for="loc-trajet">
+          Trajet ou besoin <span class="form-facultatif">(facultatif)</span>
+        </label>
+        <textarea
+          id="loc-trajet"
+          name="Trajet ou besoin"
+          rows="4"
+          class="form-input form-textarea"
+          placeholder="Ex : Nantes gare vers Château de..., aller-retour le 12 juin"
+        ></textarea>
+      </div>
+
+      <!-- Message d'erreur. Deux classes, deux roles distincts :
+           .devis-error est le CONTRAT avec le module d'envoi, qui cherche cet
+           element a l'interieur du <form> ; .form-error ne fait que l'habiller
+           pour cette page. Retirer .devis-error rendrait toute erreur
+           silencieuse, le visiteur cliquerait sans rien voir se passer. -->
+      <p
+        class="devis-error form-error"
+        role="alert"
+        aria-live="assertive"
+        hidden
+      >
+      </p>
+
+      <div class="form-actions">
+        <ButtonArrow
+          variant="solid"
+          type="submit"
+          label="Envoyer ma demande"
+          class="devis-submit form-submit"
+        />
+
+        <!-- Rappel du delai et sortie telephonique. Le meme engagement que le
+             hero, la meta et l'etape 02 : "sous 24h". "ouvrees" est la seule
+             precision ajoutee, elle vaut aussi sur /devis-envoye. -->
+        <p class="form-delai">
+          Réponse sous 24h ouvrées. Ou appelez directement le{' '}
+          <a
+            href={TEL_HREF}
+            class="form-delai-tel"
+            aria-label={`Appeler Transport Événementiel Nantes au ${TEL_AFFICHE}`}
+          >
+            {TEL_AFFICHE}
+          </a>
+        </p>
+      </div>
+    </form>
+  </Section>
 
   <!-- Barre d'appel fixe, mobile uniquement. Prend le relais du CTA du hero
        des qu'il sort de l'ecran. Voir CallBar.astro pour les conditions
        d'affichage. -->
   <CallBar />
 </Base>
+
+<script>
+  /*
+    Branchement du formulaire sur la chaine d'envoi partagee. Rien n'est
+    reimplemente ici : c'est le module que le formulaire de l'accueil appelle,
+    au mot pres. Web3Forms, marqueur sessionStorage, redirection vers
+    /devis-envoye, puis push generate_lead par la page de confirmation.
+  */
+  import { brancherFormulairesDevis } from '../lib/devisEnvoi.ts';
+
+  brancherFormulairesDevis();
+</script>
 
 <style>
   /* ============ HERO ============
@@ -1052,6 +1296,247 @@ const jsonLd = {
   @media (prefers-reduced-motion: reduce) {
     .faq-chevron {
       transition: none;
+    }
+  }
+
+  /* ============ FORMULAIRE ============
+     Fond sombre (--green-900) : les champs sont donc en creux, plus sombres
+     que la section, avec une bordure claire faible. Contraste calibre pour
+     une audience de 45 a 65 ans, sur mobile, souvent en exterieur.
+
+     Regle structurante de tout ce bloc : 56px de hauteur minimale sur chaque
+     controle, contre les 48px demandes. La marge de 8px absorbe le fait que
+     Safari iOS et Chrome Android n'appliquent pas les paddings d'un <select>
+     ni d'un <input type=date> de la meme facon ; caler pile a 48px ferait
+     passer certains d'entre eux sous la cible. */
+
+  .form-entete {
+    max-width: 34rem;
+  }
+
+  .form-sous-titre {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--on-dark);
+    /* Pas de text-on-dark/[0.78] : Tailwind ne resout pas l'opacite arbitraire
+       sur --on-dark, qui est un hexa et non des canaux RGB. Le rendu serait
+       gris sombre au lieu de creme attenue. */
+    opacity: 0.78;
+  }
+
+  .form-devis {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 44rem;
+  }
+
+  /* Une colonne sur mobile. Les paires ne se forment qu'a partir de 640px :
+     en dessous, deux champs cote a cote reduisent chacun a une largeur ou le
+     libelle se casse et la cible tactile devient etroite. */
+  .form-duo {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .form-champ {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Libelle visible et permanent, jamais un placeholder seul : un placeholder
+     disparait des la premiere frappe, et le visiteur qui verifie sa saisie ne
+     sait plus ce qu'on lui demandait. */
+  .form-label {
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--on-dark);
+  }
+
+  .form-requis {
+    color: var(--gold);
+    margin-left: 0.15rem;
+  }
+
+  .form-facultatif {
+    font-weight: 400;
+    opacity: 0.6;
+  }
+
+  .form-input {
+    width: 100%;
+    min-height: 56px;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line-on-dark);
+    border-radius: 0.5rem;
+    background-color: var(--green-800);
+    color: var(--on-dark);
+    font-family: var(--font-body);
+    /* 1rem strict : en dessous de 16px, iOS zoome automatiquement au focus et
+       la page part de travers au premier champ touche. */
+    font-size: 1rem;
+    line-height: 1.4;
+    transition:
+      border-color 200ms var(--ease),
+      background-color 200ms var(--ease);
+  }
+
+  .form-input::placeholder {
+    color: var(--on-dark);
+    opacity: 0.4;
+  }
+
+  .form-input:focus-visible {
+    outline: none;
+    border-color: var(--gold);
+    background-color: var(--green-700);
+  }
+
+  /* Champ en erreur : la bordure ne suffit pas seule, elle double le message
+     texte affiche en bas de formulaire, elle ne le remplace pas. Cible
+     :user-invalid et non :invalid : un champ encore vierge n'est pas une
+     erreur, seulement un champ pas encore rempli. */
+  .form-input:user-invalid {
+    border-color: rgba(210, 120, 105, 0.8);
+  }
+
+  .form-textarea {
+    min-height: 7rem;
+    resize: vertical;
+  }
+
+  /* Select : la fleche native est illisible sur fond sombre selon les
+     navigateurs, on la remplace par un chevron trace en bordures. */
+  .form-select-enveloppe {
+    position: relative;
+  }
+
+  .form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.75rem;
+  }
+
+  .form-select-fleche {
+    position: absolute;
+    right: 1.15rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 1.5px solid var(--gold);
+    border-bottom: 1.5px solid var(--gold);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* L'icone de calendrier native est noire sur fond sombre : invisible.
+     L'inversion la rend claire. */
+  .form-input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+  }
+
+  /* Honeypot. !important assume : la regle doit resister a toute utilitaire
+     posee sur l'element, un champ piege visible serait rempli par un humain
+     et sa demande serait rejetee silencieusement. */
+  .form-honeypot {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .form-error {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(210, 120, 105, 0.45);
+    border-radius: 0.5rem;
+    background-color: rgba(180, 70, 60, 0.15);
+    color: #f0c9c1;
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .form-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Bouton pleine largeur sur mobile : c'est l'action de la section, elle ne
+     doit pas se chercher. ButtonArrow donne deja 48px de haut (py-1.5 plus un
+     rond de 36px), on monte a 56px pour rester au niveau des champs et de la
+     barre d'appel.
+
+     :global() obligatoire ici, et pas un simple `.form-submit` : le <button>
+     est rendu par ButtonArrow, Astro ne pose donc PAS l'attribut de scope
+     dessus. Une regle scopee compile en `.form-submit[data-astro-cid-...]`,
+     ne matche jamais, et echoue en silence : le bouton restait a 48px et en
+     largeur auto sans qu'aucune erreur ne le signale. On ancre la regle sur
+     .form-actions, qui appartient a cette page et porte le scope : la portee
+     reste locale, seule la cible traverse. */
+  .form-actions :global(.form-submit) {
+    width: 100%;
+    justify-content: center;
+    min-height: 56px;
+  }
+
+  /* Etat d'envoi. Le libelle passe deja a "Envoi..." cote script ; ce retrait
+     de contraste dit en plus que le bouton n'est plus cliquable, sans quoi un
+     second tap semble simplement ne rien faire. */
+  .form-actions :global(.form-submit[disabled]) {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .form-delai {
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--on-dark);
+    opacity: 0.72;
+  }
+
+  /* Le numero reste un lien tel: sur toutes les tailles, y compris desktop :
+     une partie de cette audience appelle depuis un mobile ou le site est
+     ouvert en second onglet. Souligne pour qu'il se lise comme cliquable
+     meme sans survol possible. */
+  .form-delai-tel {
+    color: var(--gold);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 640px) {
+    .form-duo {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .form-actions :global(.form-submit) {
+      width: auto;
+    }
+
+    .form-actions {
+      gap: 1.25rem;
+    }
+  }
+
+  @media (hover: hover) {
+    .form-delai-tel:hover {
+      color: var(--cream);
     }
   }
 </style>
