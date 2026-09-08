@@ -1,30 +1,64 @@
 ---
 /*
-  Bandeau de consentement (tarteaucitron.js) + Google Consent Mode v2.
+  Bandeau de consentement (tarteaucitron.js) + Google Consent Mode v2,
+  en mode AVANCE.
 
   ---------------------------------------------------------------------
-  BLOCAGE STRICT
+  POURQUOI LE MODE AVANCE
   ---------------------------------------------------------------------
-  Google Tag Manager n'est PAS charge tant que le visiteur n'a pas
-  explicitement accepte. Aucun script googletagmanager.com n'est demande
-  avant le clic. Trois garde-fous, volontairement redondants :
+  Jusqu'a la migration, gtm.js n'etait demande qu'apres un clic sur
+  "Tout accepter" : c'est le mode "basic". Les trois parcours reels ont
+  ete mesures en production, et le resultat etait sans appel :
 
-  1. `serviceDefaultState: 'wait'` : le service demarre en attente, ni
-     autorise ni refuse.
-  2. `highPrivacy: true` : pas de consentement implicite. Sans lui,
-     tarteaucitron considere une simple navigation comme un accord et
-     lance le service.
-  3. `googleConsentMode: false` + `softConsentMode: true` : le `fallback`
-     du service googletagmanager de tarteaucitron charge gtm.js meme sans
-     consentement quand `googleConsentMode` est actif et `softConsentMode`
-     faux (c'est le mode "advanced" de Google). Les deux valeurs ci-dessous
-     neutralisent ce chemin. NE PAS LES INVERSER sans relire
-     tarteaucitron.services.js, sinon GTM repart avant consentement.
+    bandeau accepte  -> GTM charge, conversion envoyee
+    bandeau refuse   -> rien, ce qui est le comportement voulu
+    bandeau IGNORE   -> rien non plus, ce qui ne l'etait pas
 
-  On renonce donc au Consent Mode integre de tarteaucitron, qui de toute
-  facon ne cable ses `consent update` que sur les services `gtag`,
-  `googleads` et `gcmads`, jamais sur `googletagmanager`. Le Consent Mode
-  est reimplemente ci-dessous, explicitement.
+  Le troisieme cas est de loin le plus frequent, et c'etait le symptome
+  observe : la demande de devis arrivait par email, la conversion
+  n'apparaissait jamais dans Google Ads. Le trafic est paye 2,50 EUR le
+  clic ; une conversion non mesuree ne coute pas seulement un chiffre
+  dans un rapport, elle prive l'algorithme d'enchere du signal sur
+  lequel il optimise.
+
+  En mode avance, gtm.js est charge sur toutes les pages, mais avec tous
+  les signaux de stockage a 'denied'. Google recoit alors un ping sans
+  cookie : il n'ecrit ni ne lit quoi que ce soit sur le terminal, ne
+  permet aucune identification, et sert uniquement a modeliser les
+  conversions manquantes. Au clic sur "Tout accepter", un
+  `consent update` fait passer les signaux a 'granted' et la mesure
+  redevient nominale.
+
+  Conformite : l'article 82 de la loi Informatique et Libertes porte sur
+  la lecture et l'ecriture d'informations dans le terminal, pas sur le
+  chargement d'un script. Aucun cookie n'est depose tant que le
+  consentement n'est pas donne. Ce point n'est pas suppose, il a ete
+  verifie par releve des cookies sous CDP dans les trois parcours.
+  Toute modification de ce fichier doit refaire ce releve.
+
+  ---------------------------------------------------------------------
+  CE QUI EMPECHE UN DOUBLE CHARGEMENT DE GTM
+  ---------------------------------------------------------------------
+  gtm.js est desormais charge par le snippet ci-dessous, une fois, sans
+  condition. Le service `googletagmanager` de tarteaucitron sait faire
+  la meme chose, et le ferait une seconde fois au moment de
+  l'acceptation : deux gtm.js pour un meme conteneur, donc chaque balise
+  declenchee deux fois, donc chaque conversion comptee deux fois.
+
+  Il est neutralise par `tarteaucitronMagic`. C'est le point de sortie
+  prevu par la librairie : dans `userInterface.respond`, l'appel a
+  `service.js()` et a `service.fallback()` est garde par
+  `tarteaucitronMagic.indexOf('_' + service.key + '_') < 0`. Le service
+  continue d'exister, d'apparaitre dans le panneau et d'emettre ses
+  evenements de consentement ; il ne charge simplement plus rien.
+
+  ON NE PEUT PAS retirer le service de `tarteaucitron.job` a la place.
+  `userInterface.openAlert()` n'est appele que depuis `addService`, dans
+  la branche `wait`, une seule occurrence dans tout le fichier : sans
+  service en attente, le bandeau ne s'affiche jamais, aucun
+  consentement n'est jamais recueilli, et le site passe de "mesure
+  incomplete" a "aucune base legale". Le service reste donc declare,
+  c'est son comportement de chargement qui est retire.
 
   ---------------------------------------------------------------------
   ORDRE DES SIGNAUX DANS LE DATALAYER
@@ -32,14 +66,13 @@
   L'ordre est ce qui rend le Consent Mode correct, il n'est pas cosmetique :
 
     consent default (tout denied)   <- script 1, avant toute autre chose
+    gtm.start + chargement gtm.js   <- script 1, juste apres
     consent update  (granted)       <- sur googletagmanager_consentModeOk
-    gtm.start + chargement gtm.js   <- service.js() de tarteaucitron
 
-  tarteaucitron emet `<service>_consentModeOk` AVANT d'executer le `js()`
-  du service (voir userInterface.respond dans tarteaucitron.js). L'update
-  est donc toujours dans la file avant que gtm.js ne soit demande : au
-  chargement, GTM rejoue la file dans l'ordre et voit l'etat final. C'est
-  le "basic consent mode" de Google.
+  Le `default` doit preceder le chargement de gtm.js dans le meme script
+  synchrone : c'est la seule facon de garantir que GTM ne voie jamais
+  d'etat non renseigne. L'`update` peut arriver plus tard, GTM rejoue la
+  file dans l'ordre.
 
   ---------------------------------------------------------------------
   ASSETS
@@ -60,9 +93,10 @@ const { gtmId } = Astro.props;
 ---
 
 {/*
-  1. Consent Mode v2. Doit s'executer avant tout le reste, d'ou is:inline
-     (sans lui Astro en ferait un module differe, execute trop tard) et la
-     position en tete du <head>.
+  1. Consent Mode v2, puis chargement de GTM. Les deux dans le MEME script
+     synchrone : c'est ce qui garantit l'ordre. is:inline est indispensable,
+     sans lui Astro en ferait un module differe, execute bien trop tard, et
+     gtm.js verrait un etat de consentement vide.
 
      Tous les signaux soumis a consentement partent a 'denied'.
      `security_storage` est la seule exception et reste 'granted' : c'est
@@ -73,9 +107,12 @@ const { gtmId } = Astro.props;
      anti-fraude.
 
      `wait_for_update` laisse 800 ms a un update pour arriver avant que les
-     balises ne decident quoi faire.
+     balises ne decident quoi faire. Sur un visiteur qui ignore le bandeau,
+     aucun update n'arrive jamais : au bout de 800 ms les balises partent
+     avec l'etat 'denied', c'est-a-dire en ping sans cookie. C'est
+     exactement le comportement recherche.
 */}
-<script is:inline>
+<script is:inline define:vars={{ gtmId }}>
   window.dataLayer = window.dataLayer || [];
   window.gtagConsent = function gtagConsent() {
     window.dataLayer.push(arguments);
@@ -90,6 +127,23 @@ const { gtmId } = Astro.props;
     security_storage: 'granted',
     wait_for_update: 800,
   });
+
+  /* Snippet GTM officiel, sans condition de consentement : le mode avance
+     repose sur le fait que le conteneur soit la pour recevoir les signaux.
+     Le <noscript> qui accompagne habituellement ce snippet reste
+     volontairement absent : l'iframe se declenche hors de tout controle du
+     Consent Mode, donc sans aucun signal, ce que l'article 82 ne permet
+     pas. NE PAS LE REINTRODUIRE. */
+  (function (w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async = true;
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, 'script', 'dataLayer', gtmId);
 </script>
 
 {/*
@@ -154,6 +208,16 @@ const { gtmId } = Astro.props;
   4. Initialisation, declaration du service GTM et cablage du Consent Mode.
 */}
 <script is:inline define:vars={{ gtmId }}>
+  /* Neutralise le chargeur du service googletagmanager. Voir le commentaire
+     de tete : gtm.js est deja charge par le script 1, laisser tarteaucitron
+     le charger une seconde fois doublerait chaque conversion.
+
+     Doit etre pose AVANT init() : c'est init() qui declenche addService,
+     donc la lecture de cette variable. Format impose par la librairie :
+     les cles sont encadrees d'underscores, concatenees pour en neutraliser
+     plusieurs ('_a__b_'). */
+  window.tarteaucitronMagic = '_googletagmanager_';
+
   tarteaucitron.init({
     privacyUrl: '/confidentialite',
     readmoreLink: '/confidentialite',
@@ -178,8 +242,13 @@ const { gtmId } = Astro.props;
     // Rien n'est lance tant que le visiteur n'a pas tranche.
     serviceDefaultState: 'wait',
 
-    // Voir le commentaire de tete : ces deux lignes sont ce qui empeche
-    // GTM de se charger avant consentement.
+    // Consent Mode integre de tarteaucitron : desactive. Il installe son
+    // propre `tac_gtag` avec ses propres valeurs par defaut, qui entreraient
+    // en concurrence avec le `default` pose par le script 1. Le Consent Mode
+    // du site est ecrit explicitement, en un seul endroit, plus bas.
+    // softConsentMode reste a true : a false, la librairie va debloquer
+    // d'elle-meme des domaines via tarteaucitron_block, ce dont on n'a pas
+    // besoin puisque rien n'est bloque.
     googleConsentMode: false,
     softConsentMode: true,
 
@@ -210,14 +279,25 @@ const { gtmId } = Astro.props;
     useExternalJs: false,
   });
 
-  // Service unique : le conteneur GTM. Tout ce qui est mesure d'audience
-  // et suivi de conversion publicitaire passe par lui, c'est donc lui
-  // qu'on soumet au consentement.
+  // Service unique : le conteneur GTM. Il ne charge plus rien, il porte le
+  // choix du visiteur, affiche une entree dans le panneau de reglages et,
+  // surtout, declenche l'ouverture du bandeau tant qu'aucun choix n'est
+  // fait. L'identifiant reste renseigne pour le libelle du panneau.
   tarteaucitron.user.googletagmanagerId = gtmId;
   (tarteaucitron.job = tarteaucitron.job || []).push('googletagmanager');
 
-  // Accord : on passe les signaux a 'granted'. Emis avant service.js(),
-  // donc avant gtm.start et avant le chargement de gtm.js.
+  /*
+    Les deux seules choses que tarteaucitron pilote desormais : la valeur
+    des signaux. Rien d'autre. Ces evenements sont emis par
+    userInterface.respond et par la reponse groupee des CTA du bandeau.
+
+    Ils ne sont PAS emis pour un visiteur qui n'a pas encore tranche : la
+    branche 'wait' de addService n'envoie aucun evenement de consentement.
+    Les signaux restent donc sur le `default` denied du script 1, ce qui
+    est exactement l'etat voulu pour un bandeau ignore.
+  */
+
+  // Accord.
   document.addEventListener('googletagmanager_consentModeOk', function () {
     window.gtagConsent('consent', 'update', {
       ad_storage: 'granted',
@@ -227,9 +307,10 @@ const { gtmId } = Astro.props;
     });
   });
 
-  // Refus, ou retrait du consentement depuis le panneau. On reaffirme
-  // 'denied' : si GTM avait ete charge lors d'une visite precedente,
-  // l'etat courant doit redescendre.
+  // Refus explicite, ou retrait du consentement depuis le panneau. GTM
+  // etant maintenant charge dans tous les cas, cette reaffirmation n'est
+  // plus theorique : elle fait effectivement redescendre l'etat courant du
+  // conteneur, qui repasse en ping sans cookie.
   document.addEventListener('googletagmanager_consentModeKo', function () {
     window.gtagConsent('consent', 'update', {
       ad_storage: 'denied',

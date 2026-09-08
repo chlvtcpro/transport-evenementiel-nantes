@@ -12,9 +12,10 @@ import { SITE_DATA, SERVICES } from '../data/site.ts';
 import { FAQ } from '../data/faq.ts';
 
 // Conteneur Google Tag Manager. Une seule ligne a editer pour changer de
-// conteneur. L'identifiant n'est plus consomme ici : il est transmis a
-// <Consent>, seul endroit d'ou GTM peut etre charge, et uniquement apres
-// consentement explicite du visiteur.
+// conteneur. L'identifiant n'est pas consomme ici : il est transmis a
+// <Consent>, seul endroit d'ou GTM est charge. Depuis le passage en Consent
+// Mode avance, il est charge sur toutes les pages, mais avec tous les
+// signaux de stockage a 'denied' tant que le visiteur n'a pas accepte.
 const GTM_ID = 'GTM-KQ393ZFD';
 
 interface Props {
@@ -150,9 +151,8 @@ const jsonLd = jsonLdOverride ?? {
 
     <!-- Consentement. Place le plus haut possible dans le <head> : le
          Consent Mode doit poser ses valeurs par defaut (tout refuse) avant
-         que quoi que ce soit d'autre ne s'execute. C'est aussi le seul
-         endroit d'ou Google Tag Manager peut etre charge, et uniquement
-         apres un clic explicite du visiteur. -->
+         que quoi que ce soit d'autre ne s'execute, Google Tag Manager
+         compris. Ne pas descendre ce composant sous un autre script. -->
     <Consent gtmId={GTM_ID} />
 
     <title>{title}</title>

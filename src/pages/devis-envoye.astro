@@ -124,37 +124,80 @@ const PRECISION =
   {/*
     Conversion generate_lead.
 
-    Le push se fait ici, et non dans Devis.astro au moment de l'envoi : la
+    Le push se fait ici, et non dans devisEnvoi.ts au moment de l'envoi : la
     redirection y detruisait le contexte JS avant que GTM ait traite
-    l'evenement, qui etait donc perdu. Devis.astro pose seulement un marqueur
-    en sessionStorage apres une reponse Web3Forms acceptee, et cette page le
-    consomme.
+    l'evenement, qui etait donc perdu. devisEnvoi.ts pose seulement un
+    marqueur en sessionStorage apres une reponse Web3Forms acceptee, et cette
+    page le consomme.
 
-    Le marqueur est retire AVANT le push : un rechargement de /devis-envoye ne
-    trouve plus rien et ne repousse pas l'evenement. Une arrivee directe sur
-    l'URL, sans formulaire soumis, n'a jamais de marqueur : aucun push.
+    CONSOMMATION CONDITIONNELLE. Le marqueur etait auparavant retire des la
+    lecture, avant meme le push. C'etait faux : quand GTM n'etait pas charge,
+    le push tombait dans un dataLayer que personne ne lisait, et le marqueur
+    etait detruit malgre tout. La conversion etait perdue definitivement,
+    sans trace et sans rattrapage possible. C'est ce qui se produisait pour
+    tout visiteur qui ignorait le bandeau de consentement.
 
-    is:inline pour que le code parte tel quel dans le HTML, sans passer par un
-    bundle charge en differe : l'evenement rejoint la file dataLayer le plus
-    tot possible. Si GTM n'est pas encore la, faute de consentement ou de
-    chargement termine, la file est relue a son initialisation.
+    Le marqueur n'est donc plus retire qu'a la confirmation de GTM, via
+    `eventCallback`. GTM n'appelle ce callback qu'apres avoir traite
+    l'evenement : s'il n'est jamais charge, le callback n'est jamais appele,
+    le marqueur survit, et un rechargement ou un retour sur la page rejoue le
+    push. C'est le rattrapage.
+
+    Pas de eventTimeout : il est gere par GTM lui-meme, donc lui aussi
+    inoperant sans GTM. La borne cote site, c'est le TTL ci-dessous.
+
+    TTL. Un marqueur qui survit a besoin d'une peremption, sinon un onglet
+    laisse ouvert plusieurs heures pourrait rejouer une conversion sans
+    rapport avec la session en cours. 30 minutes couvrent tres largement le
+    cas reel, qui est une redirection immediate suivie eventuellement d'un
+    rechargement.
+
+    Le double comptage est ecarte des deux cotes : si GTM est charge, il
+    confirme et le marqueur disparait ; s'il ne l'est pas, rien n'a ete
+    compte, donc rejouer ne double rien.
+
+    is:inline pour que le code parte tel quel dans le HTML, sans passer par
+    un bundle charge en differe : l'evenement rejoint la file dataLayer le
+    plus tot possible. GTM relit la file entiere a son initialisation, l'ordre
+    d'arrivee n'a donc pas d'importance.
   */}
   <script is:inline>
     (function () {
-      var marqueur = null;
+      var CLE = 'devis-envoye';
+      var TTL = 30 * 60 * 1000;
+
+      var brut = null;
       try {
-        marqueur = sessionStorage.getItem('devis-envoye');
-        sessionStorage.removeItem('devis-envoye');
+        brut = sessionStorage.getItem(CLE);
       } catch (e) {
         // Stockage indisponible : on ne pousse rien plutot que de risquer une
         // conversion inventee.
         return;
       }
+      if (!brut) return;
 
-      if (marqueur !== '1') return;
+      var oublie = function () {
+        try {
+          sessionStorage.removeItem(CLE);
+        } catch (e) {
+          /* rien a faire de plus */
+        }
+      };
+
+      // '1' est l'ancien format, sans horodatage. Le cas ne se produit que
+      // pendant le deploiement, pour un visiteur ayant charge le formulaire
+      // avec l'ancien code et la confirmation avec le nouveau. On le traite
+      // comme un envoi a l'instant plutot que de jeter sa conversion. Cette
+      // ligne pourra etre retiree.
+      var pose = brut === '1' ? Date.now() : parseInt(brut, 10);
+      // Marqueur illisible ou perime : on le retire sans rien pousser.
+      if (!pose || Date.now() - pose > TTL) {
+        oublie();
+        return;
+      }
 
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: 'generate_lead' });
+      window.dataLayer.push({ event: 'generate_lead', eventCallback: oublie });
     })();
   </script>
 </Base>

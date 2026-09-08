@@ -5,10 +5,11 @@
   conversion Google Ads repose sur une sequence precise, et sur elle seule.
 
       envoi accepte par Web3Forms
-        -> sessionStorage['devis-envoye'] = '1'
+        -> sessionStorage['devis-envoye'] = horodatage
         -> redirection vers /devis-envoye
-        -> la page de confirmation lit le marqueur, le supprime,
-           puis pousse dataLayer { event: 'generate_lead' }
+        -> la page de confirmation lit le marqueur, pousse
+           dataLayer { event: 'generate_lead' }, et ne supprime le
+           marqueur que lorsque GTM confirme avoir traite l'evenement
 
   Deux copies de cette sequence, c'est deux occasions de diverger, et une
   divergence ne se voit pas : le formulaire continue d'envoyer, seule la
@@ -143,7 +144,12 @@ function brancher(form: HTMLFormElement): void {
 
       if (response.ok && data.success) {
         try {
-          sessionStorage.setItem(MARQUEUR, '1');
+          // Horodatage, et non '1' : la page de confirmation ne consomme
+          // plus le marqueur des qu'elle le lit, elle attend que GTM ait
+          // reellement traite le push. Un marqueur qui survit a besoin
+          // d'une date de peremption, sinon un onglet laisse ouvert
+          // pourrait le rejouer beaucoup plus tard. Voir devis-envoye.astro.
+          sessionStorage.setItem(MARQUEUR, String(Date.now()));
         } catch {
           // Stockage indisponible (navigation privee stricte, quota). La
           // demande est partie, on redirige quand meme : perdre la mesure
